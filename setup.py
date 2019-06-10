@@ -34,6 +34,14 @@ if not python_is_supported():
     raise RuntimeError(versions_required_message.format(version=sys.version))
 
 
+extra_deps = {
+    'requests': ['requests']
+    'pytest': ['pytest', 'pytest-runner']
+}
+dependencies = []
+test_deps = []
+
+
 def get_version():
     """Get a valid pywikibot module version string."""
     version = '3.0'
@@ -88,12 +96,12 @@ setup(
                             for package in find_packages()
                             if package.startswith('pywikibot.')],
     python_requires='>=2.7.4, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
-    install_requires=['requests'],
-    extras_require={},
+    install_requires=dependencies,
+    extras_require=extra_deps,
     url='https://www.mediawiki.org/wiki/Manual:Pywikibot',
     download_url='https://tools.wmflabs.org/pywikibot/',
     test_suite='tests.collector',
-    tests_require=['pytest-runner'],
+    tests_require=test_deps,
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
