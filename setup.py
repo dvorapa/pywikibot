@@ -36,7 +36,7 @@ if not python_is_supported():
 
 extra_deps = {
     'requests': ['requests'],
-    'pytest': ['pytest', 'pytest-runner']
+    'pytest': ['pytest', 'pytest-runner', 'pytest-timeout', 'pytest-cov']
 }
 dependencies = []
 test_deps = []
