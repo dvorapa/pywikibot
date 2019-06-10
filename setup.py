@@ -88,12 +88,12 @@ setup(
                             for package in find_packages()
                             if package.startswith('pywikibot.')],
     python_requires='>=2.7.4, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
-    install_requires=[],
+    install_requires=['requests'],
     extras_require={},
     url='https://www.mediawiki.org/wiki/Manual:Pywikibot',
     download_url='https://tools.wmflabs.org/pywikibot/',
     test_suite='tests.collector',
-    tests_require=[],
+    tests_require=['pytest'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
