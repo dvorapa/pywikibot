@@ -475,11 +475,11 @@ class TestScriptSimulate(DefaultSiteTestCase, PwbTestCase):
 
     site = Site()
 
-    _expected_failures = {
+    _expected_failures = set(
 #        'catall',          # stdout user interaction
 #        'disambredir',  # T223048: missing [q] option
 #        'upload',          # raises custom ValueError
-    }.union(failed_dep_script_set)
+    ).union(failed_dep_script_set)
 
     if PY2:
         _expected_failures.update({
