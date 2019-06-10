@@ -15,8 +15,6 @@ ADD . /srv/pwb
 # pip version in jessie is too old :(
 RUN pip3 install -U pip
 
-RUN pip3 install -r /srv/pwb/requirements.txt
-RUN pip3 install -r /srv/pwb/dev-requirements.txt
 RUN pip3 install /srv/pwb/
 
 CMD /bin/bash
