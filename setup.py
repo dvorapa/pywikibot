@@ -93,7 +93,7 @@ setup(
     url='https://www.mediawiki.org/wiki/Manual:Pywikibot',
     download_url='https://tools.wmflabs.org/pywikibot/',
     test_suite='tests.collector',
-    tests_require=['pytest'],
+    tests_require=['pytest-runner'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
