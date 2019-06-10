@@ -39,6 +39,9 @@ before_install:
       export PYWIKIBOT_TEST_WRITE_FAIL=1 ;
     fi
 
+before_script:
+  - pip install -e .[requests,pytest]
+
 script:
   - mkdir ~/.pywikibot
 
