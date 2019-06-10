@@ -40,7 +40,15 @@ before_install:
     fi
 
 before_script:
-  - pip install -e .[requests,pytest]
+  # When PYSETUP_TEST_EXTRAS is not enabled, do not allow the
+  # default 'install' step to install all dependencies listed in
+  # setup.py to verify that a minimal install works as expected.
+  # Instead install requests in the before_script step below.
+  - if [[ $PYWIKIBOT_TEST_EXTRAS == '1' ]]; then
+      pip install -e .;
+    else
+      pip install -e .[requests,pytest];
+    fi
 
 script:
   - mkdir ~/.pywikibot
