@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, unicode_literals
 import os
 import sys
 
+from pywikibot import Site
 from pywikibot.tools import has_module, PY2, StringTypes
 
 from tests import join_root_path, unittest_print
@@ -54,7 +55,7 @@ failed_dep_script_set = {name for name in script_deps
                          if not check_script_deps(name)}
 
 unrunnable_script_set = {
-    'version',  # does not use global args
+    'version'  # does not use global args
 }
 
 
@@ -75,48 +76,109 @@ runnable_script_list = (
 
 script_input = {
     'catall': 'q\n',  # q for quit
+    'disambredir': 'q\n',
     'editarticle': 'Test page\n',
+    'followlive': 'q\n',
+    'freebasemappingupload': 'q\n',
     'imageuncat': 'q\n',
     'imageharvest':
         'https://upload.wikimedia.org/wikipedia/commons/'
         '8/80/Wikipedia-logo-v2.svg\n\n',
     'interwiki': 'Test page that should not exist\n',
+    'lonelypages': 'q\n',
+    'makecat': 'q\n',
     'misspelling': 'q\n',
+    'movepages': 'q\n',
     'pagefromfile': 'q\n',
     'replace': 'foo\nbar\n\n\n',  # match, replacement,
                                   # Enter to begin, Enter for default summary.
     'shell': '\n',  # exits on end of stdin
-    'solve_disambiguation': 'Test page\nq\n',
+#    'solve_disambiguation': 'Test page\nq\n',
     'upload':
         'https://upload.wikimedia.org/wikipedia/commons/'
         '8/80/Wikipedia-logo-v2.svg\n\n\n',
 }
 
 auto_run_script_list = [
+    'add_text',
+    'archivebot',
+    'basic',
     'blockpageschecker',
+    'capitalize_redirects',
     'casechecker',
     'catall',
+    'category',
     'category_redirect',
     'cfd',
     'checkimages',
+    'claimit',
     'clean_sandbox',
+    'commonscat',
+    'commons_link',
+    'coordinate_import',
+    'cosmetic_changes',
+    'create_categories',
+    'data_ingestion',
+    'delete',
     'disambredir',
+    'djvutext',
+    'editarticle',
+    'fixing_redirects',
+    'flickrripper',
     'followlive',
+    'freebasemappingupload',
+    'harvest_template',
+    'illustrate_wikidata',
+    'imagecopy',
+    'imagecopy_self',
+    'imageharvest',
+    'image',
     'imagerecat',
+    'imagetransfer',
+    'imageuncat',
+    'interwikidata',
+    'interwiki',
+    'isbn',
+    'listpages',
     'login',
     'lonelypages',
+    'makecat',
+    'match_images',
     'misspelling',
-    'revertbot',
+    'movepages',
+    'ndashredir',
+    'newitem',
     'noreferences',
     'nowcommons',
+    'pagefromfile',
     'patrol',
+    'piper',
+    'protect',
+    'redirect',
+    'reflinks',
+    'replace',
+    'replicate_wiki',
+    'revertbot',
+    'selflink',
     'shell',
+    'sisters_link',
+    'solve_disambiguation',
+    'spamremove',
     'standardize_interwiki',
     'states_redirect',
+    'surnames_redirects',
+    'table2wiki',
+    'templatecount',
+    'template',
+    'touch',
+    'transferbot',
+    'unlink',
     'unusedfiles',
     'upload',
     'watchlist',
+    'weblinkchecker',
     'welcome',
+    'wikisourcetext'
 ]
 
 # Expected result for no arguments
@@ -124,28 +186,35 @@ auto_run_script_list = [
 # and not backtraces starting deep in the pywikibot package.
 no_args_expected_results = {
     # TODO: until done here, remember to set editor = None in user-config.py
-    'checkimages': 'Execution time: 0 seconds',
-    'editarticle': 'Nothing changed',
+#    'cfd': 'ERROR: CFD working page ',
+#    'checkimages': 'Execution time: 0 seconds',
+    'disambredir': ('Working on ', ('Should the link target to ',
+                                    'Script terminated successfully')),
+#    'editarticle': 'Nothing changed',
+#    'followlive': 'Working on ',
     'freebasemappingupload': 'Cannot find ',
-    'harvest_template': 'ERROR: Please specify',
-    'imageuncat':
-        'WARNING: This script is primarily written for Wikimedia Commons',
+#    'harvest_template': 'ERROR: Please specify',
+#    'imageuncat':
+#        'WARNING: This script is primarily written for Wikimedia Commons',
     # script_input['interwiki'] above lists a title that should not exist
-    'interwiki': 'does not exist. Skipping.',
-    'imageharvest': 'From what URL should I get the images',
-    'login': 'Logged in on ',
-    'pagefromfile': 'Please enter the file name',
-    'replace': 'Press Enter to use this automatic message',
+#    'interwiki': 'does not exist. Skipping.',
+#    'imageharvest': 'From what URL should I get the images',
+#    'login': 'Logged in on ',
+#    'misspelling': 'Working on ',
+    'nowcommons': ('Working on ', ('Does the description on',
+                                   'No transcluded files ')),
+#    'pagefromfile': 'Please enter the file name',
+#    'replace': 'Press Enter to use this automatic message',
     'shell': ('>>> ', 'Welcome to the'),
-    'transferbot': 'Target site not different from source site',
-    'unusedfiles': ('Working on', None),
-    'watchlist': 'Retrieving watchlist',
+#    'transferbot': 'Target site not different from source site',
+#    'unusedfiles': ('Working on', None),
+#    'watchlist': 'Retrieving watchlist',
 
     # The following auto-run and typically can't be validated,
     # however these strings are very likely to exist within
     # the timeout of 5 seconds.
-    'revertbot': 'Fetching new batch of contributions',
-    'upload': 'ERROR: Upload error',
+#    'revertbot': 'Fetching new batch of contributions',
+#    'upload': 'ERROR: Upload error',
 }
 
 if not PY2:
@@ -252,8 +321,13 @@ class TestScriptMeta(MetaTestCaseClass):
                 if not hasattr(self, 'net') or not self.net:
                     test_overrides['pywikibot.Site'] = 'None'
 
+                if isinstance(error, (list, tuple)):
+                    msg = error[0]
+                else:
+                    msg = error
+
                 result = execute_pwb(cmd, data_in, timeout=timeout,
-                                     error=error, overrides=test_overrides)
+                                     error=msg, overrides=test_overrides)
 
                 stderr = result['stderr'].splitlines()
                 stderr_sleep = [l for l in stderr
@@ -266,8 +340,17 @@ class TestScriptMeta(MetaTestCaseClass):
                 if result['exit_code'] == -9:
                     unittest_print(' killed', end='  ')
 
+                if isinstance(error, (list, tuple)):
+                    for msg in error:
+                        if msg in result['stderr']:
+                            error = msg
+                            break
+                    else:
+                        error = None
+
                 if error:
-                    self.assertIn(error, result['stderr'])
+                    if isinstance(error, StringTypes):
+                        self.assertIn(error, result['stderr'])
 
                     exit_codes = [0, 1, 2, -9]
                 elif not is_autorun:
@@ -300,7 +383,7 @@ class TestScriptMeta(MetaTestCaseClass):
                                  result['stderr'])
                 self.assertNotIn('deprecated', result['stderr'].lower())
 
-                # If stdout doesn't include global help..
+                # If stdout doesn't include global help.
                 if global_args not in result['stdout']:
                     # Specifically look for deprecated
                     self.assertNotIn('deprecated', result['stdout'].lower())
@@ -390,18 +473,53 @@ class TestScriptSimulate(DefaultSiteTestCase, PwbTestCase):
 
     user = True
 
+    site = Site()
+
     _expected_failures = {
-        'catall',          # stdout user interaction
-        'upload',          # raises custom ValueError
+#        'catall',          # stdout user interaction
+#        'disambredir',  # T223048: missing [q] option
+#        'upload',          # raises custom ValueError
     }.union(failed_dep_script_set)
 
+    if PY2:
+        _expected_failures.update({
+            'imageharvest',  # T167726: fails with AttributeError
+        })
+
+    if site.code not in ('en', 'test') or site.family.name != 'wikipedia':
+        _expected_failures.update({
+            'cfd',  # T223211: fails with KeyError
+        })
+
+    if site.is_data_repository():
+        _expected_failures.update({
+            'clean_sandbox'  # T74305: fails with NotImplementedError
+        })
+
+    if site.sitename == 'wikipedia:en':
+        _expected_failures.update({
+            'nowcommons'  # T223487: fails with ValueError
+        })
+
     _allowed_failures = [
-        'disambredir',
-        'imageharvest',  # T167726
-        'misspelling',   # T94681
-        'watchlist',     # T77965
-        'lonelypages',   # T94680: uses exit code 1
+        'blockpageschecker',  # missing l10n
+        'checkimages',  # missing l10n
+        'followlive',  # missing l10n
+        'lonelypages',  # T94680, missing l10n
+        'misspelling',  # T94681, missing l10n
+        'unusedfiles', # missing l10n
+#        'watchlist'     # T77965
     ]
+
+    if not site.has_image_repository:
+        _allowed_failures += [
+            'nowcommons'  # needs file repository
+        ]
+
+    if not site.has_data_repository:
+        _allowed_failures += [
+            'disambredir'  # needs wikidata repository
+        ]
 
     _arguments = '-simulate'
     _results = no_args_expected_results
