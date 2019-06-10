@@ -95,8 +95,6 @@ install:
   - pip install virtualenv
   - virtualenv env
   - env\Scripts\activate.bat
-  - pip install -r dev-requirements.txt
-  - pip install -e .[security]
 
 build: off
 

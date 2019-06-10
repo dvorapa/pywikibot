@@ -25,17 +25,15 @@ scripts_path = join_root_path('scripts')
 # Here, it doesn't matter which pypi package was requested and installed.
 # Here, the name given to the module which will be imported is required.
 script_deps = {
+    'data_ingestion': ['unicodecsv; python_version < "3"'],
     'flickrripper': ['flickrapi', 'Pillow'],
     'imageharvest': ['bs4'],
     'isbn': ['python-stdnum'],
     'match_images': ['PIL.ImageTk'],
     'states_redirect': ['pycountry'],
-    'patrol': ['mwparserfromhell>=0.3.3'],
-    'weblinkchecker': ['memento_client>=0.5.1,!=0.6.0'],
+    'patrol': ['mwparserfromhell >= 0.3.3'],
+    'weblinkchecker': ['memento_client >= 0.5.1, != 0.6.0']
 }
-
-if PY2:
-    script_deps['data_ingestion'] = ['unicodecsv']
 
 
 def check_script_deps(script_name):
