@@ -39,7 +39,7 @@ extra_deps = {
     'pytest': ['pytest', 'pytest-runner', 'pytest-timeout', 'pytest-cov'],
     'extras': ['bz2file', 'beautifulsoup4', 'fake_useragent', 'mwoauth']
 }
-script_deps = {
+scripts_deps = {
     'interwiki_graph': ['pydot'],
     'patrol': ['mwparserfromhell'],
     'weblinkchecker': ['memento_client']
