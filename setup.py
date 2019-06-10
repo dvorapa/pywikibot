@@ -36,10 +36,11 @@ if not python_is_supported():
 
 extra_deps = {
     'requests': ['requests'],
-    'pytest': ['pytest', 'pytest-runner', 'pytest-timeout', 'pytest-cov'],
-    'extras': ['bz2file', 'beautifulsoup4', 'fake_useragent', 'mwoauth']
+    'pytest': ['pytest', 'pytest-runner', 'pytest-timeout', 'pytest-cov', 'pytest-attrib'],
+    'extras': ['bz2file', 'beautifulsoup4', 'fake_useragent', 'mwoauth', 'ipaddress; python_version < "3"']
 }
 scripts_deps = {
+    'data_ingestion': ['unicodecsv; python_version < "3"'],
     'interwiki_graph': ['pydot'],
     'patrol': ['mwparserfromhell'],
     'weblinkchecker': ['memento_client']
