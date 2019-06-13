@@ -33,10 +33,35 @@ def python_is_supported():
 if not python_is_supported():
     raise RuntimeError(versions_required_message.format(version=sys.version))
 
+# ============
+# Dependencies
+# ============
+# It is good practise to install packages using the system
+# package manager if it has a packaged version. If you are unsure,
+# please use pip.
+#
+# To get a list of potential matches, on some Linux distributions
+# you can use:
+#
+# $ awk -F '[#>=]' '{print $1}' setup.py | xargs yum search
+#     or
+# $ awk -F '[#>=]' '{print $1}' setup.py | xargs apt-cache search
+#
+# Some dependencies can be found also in tox.ini.
 test_deps = ['bz2file', 'mock']
 
+# Mandatory dependencies
+# ======================
+# requests is mandatory; see README.conversion.txt
 dependencies = ['requests>=2.20.0']
 
+
+# Extra dependencies
+# ==================
+# Core library dependencies.
+#
+# Extra dependencies can be installed using
+# $ pip install .[extras]
 pydocstyle = 'pydocstyle<=3.0.0' if PY2 else 'pydocstyle>=2.5.0'
 if PY2:
     pillow = 'Pillow<7.0.0'
@@ -47,16 +72,6 @@ else:
 
 extra_deps = {
     # Core library dependencies
-    'eventstreams': ['sseclient>=0.0.18,!=0.0.23,!=0.0.24'],
-    'isbn': ['python-stdnum'],
-    'Graphviz': ['pydot>=1.2'],
-    'Google': ['google>=1.7'],
-    'mwparserfromhell': ['mwparserfromhell>=0.3.3'],
-    'Tkinter': [pillow],
-    'security': ['requests[security]', 'pycparser!=2.14'],
-    'mwoauth': ['mwoauth>=0.2.4,!=0.3.1'],
-    'html': ['BeautifulSoup4'],
-    'http': ['fake_useragent'],
     'flake8': [  # Due to incompatibilities between packages the order matters.
         'flake8>=3.7.5',
         pydocstyle,
@@ -73,20 +88,47 @@ extra_deps = {
         'flake8-no-u-prefixed-strings>=0.2',
         'pep8-naming>=0.7',
         'pyflakes>=2.1.0',
-    ]
+    ],
+    # pagegenerators.py
+    'eventstreams': ['sseclient>=0.0.18,!=0.0.23,!=0.0.24'],
+    'Google': ['google>=1.7'],
+    # interwiki_graph.py
+    'Graphviz': ['pydot>=1.2'],
+    # core HTML comparison parser in diff module
+    'html': ['BeautifulSoup4'],
+    # comms/http.py
+    'http': ['fake_useragent'],
+    # cosmetic_changes.py
+    'isbn': ['python-stdnum'],
+    # OAuth support
+    # mwoauth 0.2.4 is needed because it supports getting identity
+    # information about the user
+    'mwoauth': ['mwoauth>=0.2.4,!=0.3.1'],
+    # textlib.py
+    'mwparserfromhell': ['mwparserfromhell>=0.3.3'],
+    # The mysql generator in pagegenerators.py depends on
+    # either PyMySQL or MySQLdb. Pywikibot prefers
+    # PyMySQL over MySQLdb (Python 2 only).
+    'mysql': ['PyMySQL'],
+    # requests security extra
+    'security': ['requests[security]', 'pycparser!=2.14'],
+    # GUI
+    'Tkinter': [pillow]
 }
 
 if PY2:
-    # Additional core library dependencies which are only available on Python 2
+    # Additional wikistats.py dependency which is only available
+    # on Python 2
     extra_deps.update({
-        'csv': ['unicodecsv'],
+        'csv': ['unicodecsv']
     })
 
 script_deps = {
     'flickrripper.py': ['flickrapi', pillow],
-    'states_redirect.py': ['pycountry'],
-    'weblinkchecker.py': ['memento_client>=0.5.1,!=0.6.0'],
+    'isbn.py': ['python-stdnum'],
     'patrol.py': ['mwparserfromhell>=0.3.3'],
+    'states_redirect.py': ['pycountry'],
+    'weblinkchecker.py': ['memento_client>=0.5.1,!=0.6.0']
 }
 
 
@@ -117,6 +159,9 @@ if PY2:
 
     script_deps['data_ingestion.py'] = extra_deps['csv']
 
+# tools/__init__.py
+# Pywikibot prefers using the inbuilt bz2 module if Python was compiled
+# with bz2 support. But if it wasn't, bz2file is used instead.
 try:
     import bz2
 except ImportError:
@@ -154,6 +199,9 @@ if 'PYSETUP_TEST_EXTRAS' in os.environ:
         # Bug T105767 on Python 2.7 release 9+
         if PY2 and PYTHON_VERSION[2] >= 9:
             test_deps.remove('requests[security]')
+
+# Extras category containing all extras
+extra_deps.update({'extras': [i for k, v in extra_deps.items() for i in v]})
 
 # These extra dependencies are needed other unittest fails to load tests.
 if PY2:

@@ -31,8 +31,6 @@ The contents of the package
     | README-conversion.txt     | Guide to converting bot scripts from version 1       |
     |                           | of the Pywikibot framework to version 3              |
     +---------------------------+------------------------------------------------------+
-    | requirements.txt          | General PIP requirements file                        |
-    +---------------------------+------------------------------------------------------+
     | setup.py                  | Installer script for Pywikibot 3.0 framework         |
     +---------------------------+------------------------------------------------------+
     | tox.ini                   | Tests config file                                    |

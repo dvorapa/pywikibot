@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Script to create user-config.py."""
 #
-# (C) Pywikibot team, 2010-2018
+# (C) Pywikibot team, 2010-2019
 #
 # Distributed under the terms of the MIT license.
 #
@@ -371,6 +371,11 @@ def create_user_config(main_family, main_code, main_username, force=False):
             os.remove(_fnc)
         raise
 
+    save_botpasswords(botpasswords, _fncpass)
+
+
+def save_botpasswords(botpasswords, _fncpass):
+    """Write botpasswords to file."""
     if botpasswords:
         # Save user-password.py if necessary
         # user-config.py is already created at this point
@@ -440,8 +445,10 @@ def main(*args):
 
     local_args = pywikibot.handle_args(args)
     if local_args:
-        pywikibot.output('Unknown arguments: %s' % ' '.join(local_args))
-        return False
+        pywikibot.output('Unknown argument{}: {}'
+                         .format('s' if len(local_args) > 1 else '',
+                                 ', '.join(local_args)))
+        return
 
     pywikibot.output('You can abort at any time by pressing ctrl-c')
     if config.mylang is not None:

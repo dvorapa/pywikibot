@@ -21,12 +21,6 @@ addons:
       - djvulibre-bin
 
 before_install:
-  # When PYSETUP_TEST_EXTRAS is not enabled, do not allow the
-  # default 'install' step to install all dependencies listed in
-  # requirements.txt to verify that a minimal install works as expected.
-  # Instead install requests in the before_script step below.
-  - if [[ "$PYSETUP_TEST_EXTRAS" != '1' ]]; then rm requirements.txt ; fi
-
   # When the env variable USE_NOSE or USE_PYTEST is set, the appropriate
   # tool is used, else PYTEST is taken as the default
   - if [[ "$PYSETUP_TEST_EXTRAS" != '1' && "$USE_NOSE" != '1' && "$USE_PYTEST" != '1' ]]; then
@@ -50,9 +44,15 @@ before_script:
   - pip install -r dev-requirements.txt
 
 script:
-  # Install security packages for requests to support HTTPS in site_detect
+  # When PYSETUP_TEST_EXTRAS is not enabled, do not allow the
+  # default 'install' step to install all dependencies listed in
+  # .[extras] to verify that a minimal install works as expected.
+  # Instead install requests and security packages for requests
+  # to support HTTPS in site_detect.
   - if [[ "$PYSETUP_TEST_EXTRAS" != '1' ]]; then
       pip install -e .[mwoauth,security];
+    else
+      pip install -e .[extras];
     fi
 
   - mkdir ~/.pywikibot

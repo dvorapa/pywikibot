@@ -4,6 +4,7 @@ Release history
 Current release
 ---------------
 
+* Deprecate requirements.txt (T193476)
 * Add support for badges on Wikibase item sitelinks (T128202)
 * Refactor Link and introduce BaseLink (T66457)
 * Deprecation warning: support for Python 2 will be dropped (T213287)
