@@ -66,6 +66,7 @@ from pywikibot.exceptions import (
     UnknownExtension,
     UnknownSite,
     UserBlocked,
+    UserRightsError,
 )
 from pywikibot.throttle import Throttle
 from pywikibot.tools import (
@@ -1307,10 +1308,11 @@ def must_be(group=None, right=None):
     """
     def decorator(fn):
         def callee(self, *args, **kwargs):
-            if self.obsolete:
-                raise UnknownSite('Language %s in family %s is obsolete'
-                                  % (self.code, self.family.name))
             grp = kwargs.pop('as_group', group)
+            if self.obsolete and not self.has_group('steward'):
+                raise UserRightsError('Site {} has been closed. Only steward '
+                                      'can perform requested action.'
+                                      .format(self.sitename))
             if grp == 'user':
                 self.login(False)
             elif grp == 'sysop':
@@ -3411,6 +3413,7 @@ class APISite(BaseSite):
                 priority, page = heapq.heappop(prio_queue)
                 yield page
 
+    @must_be('user')
     def validate_tokens(self, types):
         """Validate if requested tokens are acceptable.
 
@@ -3447,6 +3450,7 @@ class APISite(BaseSite):
                     valid_types.append('csrf')
         return valid_types
 
+    @must_be('user')
     def get_tokens(self, types, all=False):
         """Preload one or multiple tokens.
 
@@ -3562,6 +3566,7 @@ class APISite(BaseSite):
         return user_tokens
 
     @deprecated("the 'tokens' property", since='20140613')
+    @must_be('user')
     def token(self, page, tokentype):
         """Return token retrieved from wiki to allow changing page content.
 
@@ -3572,6 +3577,7 @@ class APISite(BaseSite):
         return self.tokens[tokentype]
 
     @deprecated("the 'tokens' property", since='20150218')
+    @must_be('user')
     def getToken(self, getalways=True, getagain=False, sysop=False):
         """DEPRECATED: Get edit token."""
         if self.username(sysop) != self.user():
@@ -3588,6 +3594,7 @@ class APISite(BaseSite):
         return self.tokens[token]
 
     @deprecated("the 'tokens' property", since='20150218')
+    @must_be('user')
     def getPatrolToken(self, sysop=False):
         """DEPRECATED: Get patrol token."""
         if self.username(sysop) != self.user():
@@ -6158,6 +6165,7 @@ class APISite(BaseSite):
         return req.submit()['query']['stashimageinfo'][0]
 
     @deprecate_arg('imagepage', 'filepage')
+    @must_be('user')
     def upload(self, filepage, source_filename=None, source_url=None,
                comment=None, text=None, watch=False, ignore_warnings=False,
                chunk_size=0, _file_key=None, _offset=0, _verify_stash=None,
@@ -7033,6 +7041,7 @@ class APISite(BaseSite):
 
     # Thanks API calls
     @need_extension('Thanks')
+    @must_be('user')
     def thank_revision(self, revid, source=None):
         """Corresponding method to the 'action=thank' API action.
 
@@ -7053,6 +7062,7 @@ class APISite(BaseSite):
 
     @need_extension('Flow')
     @need_extension('Thanks')
+    @must_be('user')
     def thank_post(self, post):
         """Corresponding method to the 'action=flowthank' API action.
 
@@ -7454,6 +7464,63 @@ class APISite(BaseSite):
                               class_name='APISite', since='20141218')
     isAllowed = redirect_func(has_right, old_name='isAllowed',
                               class_name='APISite', since='20141218')
+
+
+class ClosedSite(APISite):
+    """Site closed to read-only mode."""
+
+    def __init__(self, code, fam, user=None, sysop=None):
+        """Initializer."""
+        super(ClosedSite, self).__init__(code, fam, user, sysop)
+
+    def _closed_error(self, notice=''):
+        """An error instead of pointless API call."""
+        pywikibot.error('Site {} has been closed. {}'.format(self.sitename,
+                                                             notice))
+
+    def page_restrictions(self, page):
+        """Return a dictionary reflecting page protections."""
+        if not self.page_exists(page):
+            raise NoPage(page)
+        if not hasattr(page, '_protection'):
+            page._protection = {'edit': ('steward', 'infinity'),
+                                'move': ('steward', 'infinity'),
+                                'delete': ('steward', 'infinity'),
+                                'upload': ('steward', 'infinity'),
+                                'create': ('steward', 'infinity')}
+        return page._protection
+
+    def page_can_be_edited(self, page):
+        """Determine if the page can be edited."""
+        rest = self.page_restrictions(page)
+        sysop_protected = 'edit' in rest and rest['edit'][0] == 'steward'
+        try:
+            api.LoginManager(site=self, sysop=sysop_protected)
+        except NoUsername:
+            return False
+        return True
+
+    def recentchanges(self, **kwargs):
+        """An error instead of pointless API call."""
+        self._closed_error('No recent changes can be returned.')
+
+    def is_uploaddisabled(self):
+        """Return True if upload is disabled on site."""
+        if not hasattr(self, '_uploaddisabled'):
+            self._uploaddisabled = True
+        return self._uploaddisabled
+
+    def newpages(self, **kwargs):
+        """An error instead of pointless API call."""
+        self._closed_error('No new pages can be returned.')
+
+    def newfiles(self, **kwargs):
+        """An error instead of pointless API call."""
+        self._closed_error('No new files can be returned.')
+
+    def newimages(self, *args, **kwargs):
+        """An error instead of pointless API call."""
+        self._closed_error('No new images can be returned.')
 
 
 class DataSite(APISite):

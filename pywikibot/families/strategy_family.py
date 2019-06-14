@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Family module for Wikimedia Strategy Wiki."""
 #
-# (C) Pywikibot team, 2009-2018
+# (C) Pywikibot team, 2009-2019
 #
 # Distributed under the terms of the MIT license.
 #
@@ -16,6 +16,8 @@ class Family(family.WikimediaOrgFamily):
     """Family class for Wikimedia Strategy Wiki."""
 
     name = 'strategy'
+
+    closed_wikis = ['strategy']
 
     interwiki_forward = 'wikipedia'
 
