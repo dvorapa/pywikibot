@@ -149,6 +149,7 @@ class BasicBot(
             parametry = re.sub(r'(?m)^((?!\{\{\{).)*$', r'', parametry)
             parametry = re.sub(r'[<|}][^\n]*', r'', parametry)
             parametry = parametry.replace('{{{', '')
+            parametry = re.sub(r'(?m)^\s*|\s*$', r'', parametry)
             parametry = set(filter(None, parametry.split('\n')))
             if '!' in parametry:
                 parametry.remove('!')
@@ -172,15 +173,13 @@ class BasicBot(
             target = [None]
             for part in pageParts:
                 match = re.match(r'\{\{\s*((?:[Ii]nfobox[ _]|[Tt]axobox)[^\|\}]*)', part)
-                if match:
+                if match and not re.match(r'\{\{\s*[Ii]nfobox[ _](?:Ročník[ _]fotbalového[ _]turnaje\/Fb-rt|-[ _](?:videohra|hudební[ _]vydavatelství))', part):
                     inBlockTemplate.append(True)
                     tpage.append(pywikibot.Page(self.site, 'Template:' + match.group(1).strip()))
                     if tpage[-1].isRedirectPage():
                         target.append(tpage[-1].getRedirectTarget().title(as_link=True))
                     else:
                         target.append(tpage[-1].title(as_link=True))
-                    if target[-1] in ('[[Šablona:Infobox - videohra]]', '[[Šablona:Infobox - hudební vydavatelství]]'):
-                        return False
                 elif part[:2] == '{{':
                     inInlineTemplate.append(True)
                 elif part[:1] == '[':
