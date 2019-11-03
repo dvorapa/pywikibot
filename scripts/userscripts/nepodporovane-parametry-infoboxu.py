@@ -145,11 +145,11 @@ class BasicBot(
         plink = self.current_page.title(as_link=True)
 
         if self.step == 1:
-            parametry = text.replace('{{{', '\n{{{')
+            parametry = re.sub(r'\{\{\{\s*', r'\n{{{', text)
             parametry = re.sub(r'(?m)^((?!\{\{\{).)*$', r'', parametry)
             parametry = re.sub(r'[<|}][^\n]*', r'', parametry)
             parametry = parametry.replace('{{{', '')
-            parametry = re.sub(r'(?m)^\s*|\s*$', r'', parametry)
+            parametry = re.sub(r'(?m)\s*$', r'', parametry)
             parametry = set(filter(None, parametry.split('\n')))
             if '!' in parametry:
                 parametry.remove('!')
