@@ -31,6 +31,7 @@ try:
 except ImportError:  # Python 2.7
     from collections import Iterable, Container, Mapping
 from collections import namedtuple
+from enum import IntEnum
 from warnings import warn
 
 import pywikibot
@@ -101,18 +102,22 @@ class PageInUse(pywikibot.Error):
     """Page cannot be reserved for writing due to existing lock."""
 
 
-class LoginStatus(object):
+class LoginStatus(IntEnum):
 
     """
     Enum for Login statuses.
 
     >>> LoginStatus.NOT_ATTEMPTED
-    -3
-    >>> LoginStatus.AS_USER
+    LoginStatus(-3)
+    >>> LoginStatus.IN_PROGRESS.value
+    -2
+    >>> LoginStatus.NOT_LOGGED_IN.name
+    NOT_LOGGED_IN
+    >>> int(LoginStatus.AS_USER)
     0
-    >>> LoginStatus.name(-3)
+    >>> LoginStatus(-3).name
     'NOT_ATTEMPTED'
-    >>> LoginStatus.name(0)
+    >>> LoginStatus(0).name
     'AS_USER'
     """
 
@@ -122,22 +127,9 @@ class LoginStatus(object):
     AS_USER = 0
     AS_SYSOP = 1
 
-    @classmethod
-    def name(cls, search_value):
-        """Return the name of a LoginStatus by it's value."""
-        for key, value in cls.__dict__.items():
-            if key == key.upper() and value == search_value:
-                return key
-        raise KeyError('Value %r could not be found in this enum'
-                       % search_value)
-
-    def __init__(self, state):
-        """Initializer."""
-        self.state = state
-
     def __repr__(self):
         """Return internal representation."""
-        return 'LoginStatus(%s)' % (LoginStatus.name(self.state))
+        return 'LoginStatus({})'.format(self)
 
 
 Family = redirect_func(pywikibot.family.Family.load,
@@ -789,7 +781,7 @@ class BaseSite(ComparableMixin):
 
         # following are for use with lock_page and unlock_page methods
         self._pagemutex = threading.Lock()
-        self._locked_pages = []
+        self._locked_pages = set()
 
     @deprecated(since='20141225')
     def has_api(self):
@@ -1085,7 +1077,7 @@ class BaseSite(ComparableMixin):
                 time.sleep(.25)
                 self._pagemutex.acquire()
 
-            self._locked_pages.append(title)
+            self._locked_pages.add(title)
         finally:
             # time.sleep may raise an exception from signal handler (eg:
             # KeyboardInterrupt) while the lock is released, and there is no
@@ -1107,7 +1099,7 @@ class BaseSite(ComparableMixin):
         """
         self._pagemutex.acquire()
         try:
-            self._locked_pages.remove(page.title(with_section=False))
+            self._locked_pages.discard(page.title(with_section=False))
         finally:
             self._pagemutex.release()
 
