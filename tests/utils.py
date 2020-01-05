@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Test utilities."""
 #
-# (C) Pywikibot team, 2013-2019
+# (C) Pywikibot team, 2013-2020
 #
 # Distributed under the terms of the MIT license.
 #
@@ -654,8 +654,8 @@ def execute(command, data_in=None, timeout=None, error=None):
     @param command: executable to run and arguments to use
     @type command: list of unicode
     """
-    if PY2:
-        command.insert(1, '-W ignore::FutureWarning:pywikibot:125')
+    if PY2 or PYTHON_VERSION < (3, 5, 0):
+        command.insert(1, '-W ignore::FutureWarning:pywikibot:127')
     if cryptography_version and cryptography_version < [1, 3, 4]:
         command.insert(1, '-W ignore:Old version of cryptography:Warning')
     # Any environment variables added on Windows must be of type

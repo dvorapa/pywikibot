@@ -54,7 +54,7 @@ L{CurrentPageBot} and automatically defines the summary when C{put_current} is
 used.
 """
 #
-# (C) Pywikibot team, 2008-2019
+# (C) Pywikibot team, 2008-2020
 #
 # Distributed under the terms of the MIT license.
 #
@@ -134,6 +134,8 @@ from pywikibot.tools._logging import (
 )
 from pywikibot.tools.formatter import color_format
 
+if PY2:
+    from future_builtins import zip
 
 # Note: all output goes through python std library "logging" module
 _logger = 'bot'
@@ -513,6 +515,30 @@ def input_choice(question, answers, default=None, return_shortcut=True,
                            automatic_quit=automatic_quit, force=force)
 
 
+@deprecated('input_choice', since='20140825')
+def inputChoice(question, answers, hotkeys, default=None):
+    """Ask the user a question with several options, return the user's choice.
+
+    DEPRECATED: Use L{input_choice} instead!
+
+    The user's input will be case-insensitive, so the hotkeys should be
+    distinctive case-insensitively.
+
+    @param question: a string that will be shown to the user. Don't add a
+        space after the question mark/colon, this method will do this for you.
+    @type question: basestring
+    @param answers: a list of strings that represent the options.
+    @type answers: list of basestring
+    @param hotkeys: a list of one-letter strings, one for each answer.
+    @param default: an element of hotkeys, or None. The default choice that
+        will be returned when the user just presses Enter.
+    @return: a one-letter string in lowercase.
+    @rtype: str
+    """
+    return input_choice(question, zip(answers, hotkeys), default=default,
+                        automatic_quit=False)
+
+
 def input_yn(question, default=None, automatic_quit=True, force=False):
     """
     Ask the user a yes/no question and return the answer as a bool.
@@ -542,35 +568,6 @@ def input_yn(question, default=None, automatic_quit=True, force=False):
 
     return input_choice(question, [('Yes', 'y'), ('No', 'n')], default,
                         automatic_quit=automatic_quit, force=force) == 'y'
-
-
-@deprecated('input_choice', since='20140825')
-def inputChoice(question, answers, hotkeys, default=None):
-    """Ask the user a question with several options, return the user's choice.
-
-    DEPRECATED: Use L{input_choice} instead!
-
-    The user's input will be case-insensitive, so the hotkeys should be
-    distinctive case-insensitively.
-
-    @param question: a string that will be shown to the user. Don't add a
-        space after the question mark/colon, this method will do this for you.
-    @type question: basestring
-    @param answers: a list of strings that represent the options.
-    @type answers: list of basestring
-    @param hotkeys: a list of one-letter strings, one for each answer.
-    @param default: an element of hotkeys, or None. The default choice that
-        will be returned when the user just presses Enter.
-    @return: a one-letter string in lowercase.
-    @rtype: str
-    """
-    # make sure logging system has been initialized
-    if not _handlers_initialized:
-        init_handlers()
-
-    return ui.input_choice(question=question, options=zip(answers, hotkeys),
-                           default=default, return_shortcut=True,
-                           automatic_quit=False)
 
 
 def input_list_choice(question, answers, default=None, force=False):
@@ -1081,6 +1078,8 @@ def suggest_help(missing_parameters=[], missing_generator=False,
     @param missing_dependencies: A list of dependencies which can not
         be imported.
     @type missing_dependencies: list of str
+    @return: True if an error message was printed, False otherwise
+    @rtype: bool
     """
     messages = []
     if exception:
@@ -1108,6 +1107,8 @@ def suggest_help(missing_parameters=[], missing_generator=False,
     if messages:
         messages.append('Use -help for further information.')
         error('\n'.join(messages))
+        return True
+    return False
 
 
 def writeToCommandLogFile():
