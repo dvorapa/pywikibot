@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Installer script for Pywikibot 3.0 framework."""
 #
-# (C) Pywikibot team, 2009-2019
+# (C) Pywikibot team, 2009-2020
 #
 # Distributed under the terms of the MIT license.
 #
@@ -94,7 +94,9 @@ script_deps['data_ingestion.py'] = extra_deps['csv']
 extra_deps.update(script_deps)
 
 # ------- setup install_requires ------- #
-dependencies = ['requests>=2.20.0', 'enum34>=1.1.6; python_version < "3"']
+dependencies = ['requests>=2.20.1,<2.22.0; python_version == "3.4"',
+                'requests>=2.20.1; python_version != "3.4"',
+                'enum34>=1.1.6; python_version < "3"']
 # tools.ip does not have a hard dependency on an IP address module,
 # as it falls back to using regexes if one is not available.
 # The functional backport of py3 ipaddress is acceptable:
@@ -162,7 +164,7 @@ test_deps += extra_deps['eventstreams']
 test_deps += ['six;python_version>="3"']
 
 
-def get_version():
+def get_version(name):
     """Get a valid pywikibot module version string."""
     version = '3.0'
     try:
@@ -175,7 +177,12 @@ def get_version():
             version += '.dev0'
     except Exception as e:
         print(e)
-        version += '.dev0'
+        from pkg_resources import get_distribution, DistributionNotFound
+        try:
+            version = get_distribution(name).version
+        except DistributionNotFound as e:
+            print(e)
+            version += '.dev0'
     return version
 
 
@@ -203,7 +210,7 @@ def read_desc(filename):
 name = 'pywikibot'
 setup(
     name=name,
-    version=get_version(),
+    version=get_version(name),
     description='Python MediaWiki Bot Framework',
     long_description=read_desc('README.rst'),
     keywords=['API', 'bot', 'framework', 'mediawiki', 'pwb', 'python',

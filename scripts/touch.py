@@ -3,20 +3,17 @@
 """
 This bot goes over multiple pages of a wiki, and edits them without changes.
 
-This is for example used to get category links in templates
-working.
+This is for example used to get category links in templates working.
 
-This script understands various command-line arguments:
+Command-line arguments:
 
--purge                    Do not touch but purge the page
+-purge                    Purge the page instead of touching it
 
-&params;
-
-Touch arguments:
+Touch mode (default):
 
 -botflag                  Force botflag in case of edits with changes.
 
-Purge arguments:
+Purge mode:
 
 -converttitles            Convert titles to other variants if necessary
 -forcelinkupdate          Update the links tables
@@ -24,9 +21,10 @@ Purge arguments:
                           for any page that uses this page as a template
 -redirects                Automatically resolve redirects
 
+&params;
 """
 #
-# (C) Pywikibot team, 2009-2019
+# (C) Pywikibot team, 2009-2020
 #
 # Distributed under the terms of the MIT license.
 #
@@ -124,10 +122,8 @@ def main(*args):
         bot = bot_class(generator=gen, **options)
         pywikibot.Site().login()
         bot.run()
-        return True
     else:
         pywikibot.bot.suggest_help(missing_generator=True)
-        return False
 
 
 if __name__ == '__main__':
