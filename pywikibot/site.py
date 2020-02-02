@@ -58,6 +58,7 @@ from pywikibot.exceptions import (
     NoCreateError,
     NoPage,
     NoUsername,
+    NoWikibaseEntity,
     PageCreatedConflict,
     PageDeletedConflict,
     PageRelatedError,
@@ -125,7 +126,6 @@ class LoginStatus(IntEnum):
     IN_PROGRESS = -2
     NOT_LOGGED_IN = -1
     AS_USER = 0
-    AS_SYSOP = 1
 
     def __repr__(self):
         """Return internal representation."""
@@ -719,7 +719,8 @@ class BaseSite(ComparableMixin):
 
     """Site methods that are independent of the communication interface."""
 
-    def __init__(self, code, fam=None, user=None, sysop=None):
+    @remove_last_args(['sysop'])
+    def __init__(self, code, fam=None, user=None):
         """
         Initializer.
 
@@ -729,8 +730,6 @@ class BaseSite(ComparableMixin):
         @type fam: str or pywikibot.family.Family
         @param user: bot user name (optional)
         @type user: str
-        @param sysop: sysop account user name (optional)
-        @type sysop: str
         """
         if code.lower() != code:
             # Note the Site function in __init__ also emits a UserWarning
@@ -774,7 +773,7 @@ class BaseSite(ComparableMixin):
                 raise UnknownSite("Language '%s' does not exist in family %s"
                                   % (self.__code, self.__family.name))
 
-        self._username = [normalize_username(user), normalize_username(sysop)]
+        self._username = normalize_username(user)
 
         self.use_hard_category_redirects = (
             self.code in self.family.use_hard_category_redirects)
@@ -783,7 +782,7 @@ class BaseSite(ComparableMixin):
         self._pagemutex = threading.Condition()
         self._locked_pages = set()
 
-    @deprecated(since='20141225')
+    @deprecated(since='20141225', future_warning=True)
     def has_api(self):
         """Return whether this site has an API."""
         return False
@@ -884,14 +883,15 @@ class BaseSite(ComparableMixin):
 
     def user(self):
         """Return the currently-logged in bot username, or None."""
-        if self.logged_in(True):
-            return self._username[True]
-        elif self.logged_in(False):
-            return self._username[False]
+        if self.logged_in():
+            return self.username()
+        else:
+            return None
 
-    def username(self, sysop=False):
-        """Return the username/sysopname used for the site."""
-        return self._username[sysop]
+    @remove_last_args(['sysop'])
+    def username(self):
+        """Return the username used for the site."""
+        return self._username
 
     def __getattr__(self, attr):
         """Delegate undefined methods calls to the Family object."""
@@ -1255,17 +1255,14 @@ class BaseSite(ComparableMixin):
     @deprecated('pywikibot.data.api.Request or pywikibot.comms.http.request',
                 since='20141225')
     @deprecated_args(compress=None, no_hostname=None, cookies_only=None,
-                     refer=None, back_response=None)
-    def getUrl(self, path, retry=None, sysop=None, data=None):
+                     refer=None, back_response=None, retry=None, sysop=None)
+    def getUrl(self, path, data=None):
         """DEPRECATED.
 
         Retained for compatibility only. All arguments except path and data
         are ignored.
 
         """
-        if retry is not None or sysop is not None:
-            warn('APISite.getUrl parameters retry and sysop are not supported',
-                 UserWarning)
         from pywikibot.comms import http
         if data:
             if not isinstance(data, UnicodeType):
@@ -1813,9 +1810,10 @@ class RemovedSite(BaseSite):
 
     """Site removed from a family."""
 
-    def __init__(self, code, fam, user=None, sysop=None):
+    @remove_last_args(['sysop'])
+    def __init__(self, code, fam, user=None):
         """Initializer."""
-        super(RemovedSite, self).__init__(code, fam, user, sysop)
+        super(RemovedSite, self).__init__(code, fam, user)
 
 
 class APISite(BaseSite):
@@ -1826,9 +1824,10 @@ class APISite(BaseSite):
     Do not instantiate directly; use pywikibot.Site function.
     """
 
-    def __init__(self, code, fam=None, user=None, sysop=None):
+    @remove_last_args(['sysop'])
+    def __init__(self, code, fam=None, user=None):
         """Initializer."""
-        BaseSite.__init__(self, code, fam, user, sysop)
+        BaseSite.__init__(self, code, fam, user)
         self._msgcache = {}
         self._loginstatus = LoginStatus.NOT_ATTEMPTED
         self._siteinfo = Siteinfo(self)
@@ -1883,7 +1882,7 @@ class APISite(BaseSite):
                         return pywikibot.Site(url=site['url'] + '/w/index.php')
         raise ValueError('Cannot parse a site out of %s.' % dbname)
 
-    @deprecated(since='20141225')
+    @deprecated(since='20141225', future_warning=True)
     def has_api(self):
         """Return whether this site has an API."""
         return True
@@ -1956,34 +1955,29 @@ class APISite(BaseSite):
         return self._request_class({'parameters': kwargs}).create_simple(
             site=self, **kwargs)
 
-    def logged_in(self, sysop=False):
+    @remove_last_args(['sysop'])
+    def logged_in(self):
         """Verify the bot is logged into the site as the expected user.
 
         The expected usernames are those provided as either the user or sysop
         parameter at instantiation.
-
-        @param sysop: if True, test if user is logged in as the sysop user
-                     instead of the normal user.
-        @type sysop: bool
 
         @rtype: bool
         """
         if not hasattr(self, '_userinfo'):
             return False
 
-        if sysop and 'sysop' not in self.userinfo['groups']:
-            return False
-
         if 'name' not in self.userinfo or not self.userinfo['name']:
             return False
 
-        if self.userinfo['name'] != self._username[sysop]:
+        if self.userinfo['name'] != self.username():
             return False
 
         return True
 
     @deprecated('Site.user()', since='20090307')
-    def loggedInAs(self, sysop=False):
+    @remove_last_args(['sysop'])
+    def loggedInAs(self):
         """Return the current username if logged in, otherwise return None.
 
         DEPRECATED (use .user() method instead)
@@ -1994,7 +1988,7 @@ class APISite(BaseSite):
 
         @rtype: bool
         """
-        return self.logged_in(sysop) and self.user()
+        return self.logged_in() and self.user()
 
     def is_oauth_token_available(self):
         """
@@ -2005,12 +1999,10 @@ class APISite(BaseSite):
         auth_token = get_authentication(self.base_url(''))
         return auth_token is not None and len(auth_token) == 4
 
-    def login(self, sysop=False, autocreate=False):
+    @deprecated_args(sysop=None)
+    def login(self, sysop=None, autocreate=False):
         """
         Log the user in if not already logged in.
-
-        @param sysop: if true, log in with the sysop account.
-        @type sysop: bool
 
         @param autocreate: if true, allow auto-creation of the account
                            using unified login
@@ -2029,24 +2021,21 @@ class APISite(BaseSite):
         #       of issues are resolved.
         if self._loginstatus == LoginStatus.IN_PROGRESS:
             pywikibot.log(
-                '%r.login(%r) called when a previous login was in progress.'
-                % (self, sysop)
-            )
+                '{!r}.login() called when a previous login was in progress.'
+                .format(self))
         # There are several ways that the site may already be
         # logged in, and we do not need to hit the server again.
         # logged_in() is False if _userinfo exists, which means this
         # will have no effect for the invocation from api.py
-        if self.logged_in(sysop):
-            self._loginstatus = (LoginStatus.AS_SYSOP
-                                 if sysop else LoginStatus.AS_USER)
+        if self.logged_in():
+            self._loginstatus = LoginStatus.AS_USER
             return
         # check whether a login cookie already exists for this user
         # or check user identity when OAuth enabled
         self._loginstatus = LoginStatus.IN_PROGRESS
         try:
             self.getuserinfo(force=True)
-            if self.userinfo['name'] == self._username[sysop] and \
-               self.logged_in(sysop):
+            if self.userinfo['name'] == self.user():
                 return
         # May occur if you are not logged in (no API read permissions).
         except api.APIError:
@@ -2056,10 +2045,8 @@ class APISite(BaseSite):
                 raise e
 
         if self.is_oauth_token_available():
-            if sysop:
-                raise NoUsername('No sysop is permitted with OAuth')
-            elif self.userinfo['name'] != self._username[sysop]:
-                if self._username == [None, None]:
+            if self.userinfo['name'] != self.username():
+                if self.username() is None:
                     raise NoUsername('No username has been defined in your '
                                      'user-config.py: you have to add in this '
                                      'file the following line:\n'
@@ -2073,15 +2060,14 @@ class APISite(BaseSite):
                                      '{wrong}, but expect as {right}'
                                      .format(site=self,
                                              wrong=self.userinfo['name'],
-                                             right=self._username[sysop]))
+                                             right=self.username()))
             else:
                 raise NoUsername('Logging in on %s via OAuth failed' % self)
-        login_manager = api.LoginManager(site=self, user=self._username[sysop])
+        login_manager = api.LoginManager(site=self, user=self.username())
         if login_manager.login(retry=True, autocreate=autocreate):
-            self._username[sysop] = login_manager.username
+            self._username = login_manager.username
             self.getuserinfo(force=True)
-            self._loginstatus = (LoginStatus.AS_SYSOP
-                                 if sysop else LoginStatus.AS_USER)
+            self._loginstatus = LoginStatus.AS_USER
         else:
             self._loginstatus = LoginStatus.NOT_LOGGED_IN  # failure
 
@@ -2186,7 +2172,8 @@ class APISite(BaseSite):
 
     globaluserinfo = property(fget=getglobaluserinfo, doc=getuserinfo.__doc__)
 
-    def is_blocked(self, sysop=False):
+    @remove_last_args(['sysop'])
+    def is_blocked(self):
         """
         Return True when logged in user is blocked.
 
@@ -2194,26 +2181,20 @@ class APISite(BaseSite):
         the method has_right should be used.
         U{https://www.mediawiki.org/wiki/API:Userinfo}
 
-        @param sysop: If true, log in to sysop account (if available)
-        @type sysop: bool
         @rtype: bool
         """
-        if not self.logged_in(sysop):
-            self.login(sysop)
         return 'blockinfo' in self._userinfo
 
     @deprecated('has_right() or is_blocked()', since='20141218')
-    def checkBlocks(self, sysop=False):
+    @remove_last_args(['sysop'])
+    def checkBlocks(self):
         """
         Raise an exception when the user is blocked. DEPRECATED.
 
-        @param sysop: If true, log in to sysop account (if available)
-        @type sysop: bool
-        @raises pywikibot.exceptions.UserBlocked: The logged in user/sysop
-            account is blocked.
+        @raises pywikibot.exceptions.UserBlocked: The logged in user account
+            is blocked.
         """
-        if self.is_blocked(sysop):
-            # User blocked
+        if self.is_blocked():
             raise UserBlocked('User is blocked in site %s' % self)
 
     def get_searched_namespaces(self, force=False):
@@ -2286,7 +2267,8 @@ class APISite(BaseSite):
                                            start=start, end=end,
                                            reverse=reverse, is_ts=is_ts))
 
-    def has_right(self, right, sysop=False):
+    @remove_last_args(['sysop'])
+    def has_right(self, right):
         """Return true if and only if the user has a specific right.
 
         Possible values of 'right' may vary depending on wiki settings,
@@ -2297,26 +2279,21 @@ class APISite(BaseSite):
 
         U{https://www.mediawiki.org/wiki/API:Userinfo}
         """
-        if not self.logged_in(sysop):
-            self.login(sysop)
         return right.lower() in self._userinfo['rights']
 
-    def has_group(self, group, sysop=False):
+    @remove_last_args(['sysop'])
+    def has_group(self, group):
         """Return true if and only if the user is a member of specified group.
 
         Possible values of 'group' may vary depending on wiki settings,
         but will usually include bot.
         U{https://www.mediawiki.org/wiki/API:Userinfo}
-
         """
-        if not self.logged_in(sysop):
-            self.login(sysop)
         return group.lower() in self._userinfo['groups']
 
-    def messages(self, sysop=False):
+    @remove_last_args(['sysop'])
+    def messages(self):
         """Return true if the user has new messages, and false otherwise."""
-        if not self.logged_in(sysop):
-            self.login(sysop)
         return 'messages' in self._userinfo
 
     @need_extension('Echo')
@@ -2647,8 +2624,7 @@ class APISite(BaseSite):
                 custom_name = nsdata.pop('*')
                 canonical_name = nsdata.pop('canonical')
 
-            if 'content' not in nsdata:  # mw < 1.16
-                nsdata['content'] = ns == 0
+            nsdata.setdefault('content', ns == 0)  # mw < 1.16
 
             default_case = Namespace.default_case(ns)
             if 'case' not in nsdata:
@@ -3591,12 +3567,13 @@ class APISite(BaseSite):
         return self.tokens[tokentype]
 
     @deprecated("the 'tokens' property", since='20150218')
-    def getToken(self, getalways=True, getagain=False, sysop=False):
+    @remove_last_args(['sysop'])
+    def getToken(self, getalways=True, getagain=False):
         """DEPRECATED: Get edit token."""
-        if self.username(sysop) != self.user():
+        if self.username() != self.user():
             raise ValueError('The token for {0} was requested but only the '
                              'token for {1} can be retrieved.'.format(
-                                 self.username(sysop), self.user()))
+                                 self.username(), self.user()))
         if not getalways:
             raise ValueError('In pywikibot/core getToken does not support the '
                              'getalways parameter.')
@@ -3607,12 +3584,13 @@ class APISite(BaseSite):
         return self.tokens[token]
 
     @deprecated("the 'tokens' property", since='20150218')
-    def getPatrolToken(self, sysop=False):
+    @remove_last_args(['sysop'])
+    def getPatrolToken(self):
         """DEPRECATED: Get patrol token."""
-        if self.username(sysop) != self.user():
+        if self.username() != self.user():
             raise ValueError('The token for {0} was requested but only the '
                              'token for {1} can be retrieved.'.format(
-                                 self.username(sysop), self.user()))
+                                 self.username(), self.user()))
         return self.tokens['patrol']
 
     # following group of methods map more-or-less directly to API queries
@@ -4016,12 +3994,11 @@ class APISite(BaseSite):
         return self._generator(api.PageGenerator, namespaces=namespaces,
                                total=total, g_content=content, **cmargs)
 
-    @deprecated_args(getText='content')
+    @deprecated_args(getText='content', sysop=None)
     def loadrevisions(self, page, content=False, revids=None,
                       startid=None, endid=None, starttime=None,
                       endtime=None, rvdir=None, user=None, excludeuser=None,
-                      section=None, sysop=False, step=None, total=None,
-                      rollback=False):
+                      section=None, step=None, total=None, rollback=False):
         """Retrieve revision information and store it in page object.
 
         By default, retrieves the last (current) revision of the page,
@@ -4056,8 +4033,6 @@ class APISite(BaseSite):
             if true, retrieve earliest first
         @param user: retrieve only revisions authored by this user
         @param excludeuser: retrieve all revisions not authored by this user
-        @param sysop: if True, switch to sysop account (if available) to
-            retrieve this page
         @raises ValueError: invalid startid/endid or starttime/endtime values
         @raises pywikibot.Error: revids belonging to a different page
         """
@@ -4104,7 +4079,6 @@ class APISite(BaseSite):
             if section is not None:
                 rvargs['rvsection'] = UnicodeType(section)
         if rollback:
-            self.login(sysop=sysop)
             rvargs['rvtoken'] = 'rollback'
         if revids is None:
             rvtitle = page.title(with_section=False).encode(self.encoding())
@@ -4132,7 +4106,6 @@ class APISite(BaseSite):
             rvargs['rvuser'] = user
         elif excludeuser:
             rvargs['rvexcludeuser'] = excludeuser
-        # TODO if sysop: something
 
         # assemble API request
         rvgen = self._generator(api.PropertyGenerator, total=total, **rvargs)
@@ -6587,8 +6560,7 @@ class APISite(BaseSite):
                                 else:
                                     return False
                             result = data
-                            if 'offset' not in result:
-                                result['offset'] = 0
+                            result.setdefault('offset', 0)
                             break
                         throttle = False
                         if 'offset' in data:
@@ -6652,8 +6624,7 @@ class APISite(BaseSite):
                 _file_key = None
                 pywikibot.warning('No filekey defined.')
             if not report_success:
-                if 'offset' not in result:
-                    result['offset'] = True
+                result.setdefault('offset', True)
                 if ignore_warnings(create_warnings_list(result)):
                     return self.upload(
                         filepage, source_filename, source_url, comment, text,
@@ -7539,15 +7510,13 @@ class APISite(BaseSite):
         """
         return self.moderate_post(post, 'restore', reason)
 
-    @deprecated_args(step=None)
-    def watched_pages(self, sysop=False, force=False, total=None):
+    @deprecated_args(step=None, sysop=None)
+    def watched_pages(self, force=False, total=None):
         """
         Return watchlist.
 
         @see: U{https://www.mediawiki.org/wiki/API:Watchlistraw}
 
-        @param sysop: Returns watchlist of sysop user if true
-        @type sysop: bool
         @param force_reload: Reload watchlist
         @type force_reload: bool
         @param total: if not None, limit the generator to yielding this many
@@ -7556,7 +7525,6 @@ class APISite(BaseSite):
         @return: list of pages in watchlist
         @rtype: list of pywikibot.Page objects
         """
-        self.login(sysop=sysop)
         expiry = None if force else pywikibot.config.API_config_expiry
         gen = api.PageGenerator(site=self, generator='watchlistraw',
                                 expiry=expiry)
@@ -7590,9 +7558,10 @@ class APISite(BaseSite):
 class ClosedSite(APISite):
     """Site closed to read-only mode."""
 
-    def __init__(self, code, fam, user=None, sysop=None):
+    @remove_last_args(['sysop'])
+    def __init__(self, code, fam, user=None):
         """Initializer."""
-        super(ClosedSite, self).__init__(code, fam, user, sysop)
+        super(ClosedSite, self).__init__(code, fam, user)
 
     def _closed_error(self, notice=''):
         """An error instead of pointless API call."""
@@ -7660,18 +7629,31 @@ class DataSite(APISite):
 
     def _cache_entity_namespaces(self):
         """Find namespaces for each known wikibase entity type."""
-        self._item_namespace = False
-        self._property_namespace = False
+        self._entity_namespaces = {}
+        for entity_type in self._type_to_class.keys():
+            for namespace in self.namespaces.values():
+                if not hasattr(namespace, 'defaultcontentmodel'):
+                    continue
 
-        for namespace in self.namespaces.values():
-            if not hasattr(namespace, 'defaultcontentmodel'):
-                continue
+                content_model = namespace.defaultcontentmodel
+                if content_model == ('wikibase-' + entity_type):
+                    self._entity_namespaces[entity_type] = namespace
+                    break
 
-            content_model = namespace.defaultcontentmodel
-            if content_model == 'wikibase-item':
-                self._item_namespace = namespace
-            elif content_model == 'wikibase-property':
-                self._property_namespace = namespace
+    def get_namespace_for_entity_type(self, entity_type):
+        """
+        Return namespace for given entity type.
+
+        @return: corresponding namespace
+        @rtype: Namespace
+        """
+        if not hasattr(self, '_entity_namespaces'):
+            self._cache_entity_namespaces()
+        if entity_type in self._entity_namespaces:
+            return self._entity_namespaces[entity_type]
+        raise EntityTypeUnknownException(
+            '{0!r} does not support entity type "{1}"'
+            .format(self, entity_type))
 
     @property
     def item_namespace(self):
@@ -7682,14 +7664,8 @@ class DataSite(APISite):
         @rtype: Namespace
         """
         if self._item_namespace is None:
-            self._cache_entity_namespaces()
-
-        if isinstance(self._item_namespace, Namespace):
-            return self._item_namespace
-        else:
-            raise EntityTypeUnknownException(
-                '%r does not support entity type "item"'
-                % self)
+            self._item_namespace = self.get_namespace_for_entity_type('item')
+        return self._item_namespace
 
     @property
     def property_namespace(self):
@@ -7700,14 +7676,24 @@ class DataSite(APISite):
         @rtype: Namespace
         """
         if self._property_namespace is None:
-            self._cache_entity_namespaces()
+            self._property_namespace = self.get_namespace_for_entity_type(
+                'property')
+        return self._property_namespace
 
-        if isinstance(self._property_namespace, Namespace):
-            return self._property_namespace
-        else:
-            raise EntityTypeUnknownException(
-                '%r does not support entity type "property"'
-                % self)
+    def get_entity_for_entity_id(self, entity_id):
+        """
+        Return a new instance for given entity id.
+
+        @raises pywikibot.exceptions.NoWikibaseEntity: there is no entity
+            with the id
+        @return: a WikibaseEntity subclass
+        @rtype: WikibaseEntity
+        """
+        for cls in self._type_to_class.values():
+            if cls.is_valid_id(entity_id):
+                return cls(self, entity_id)
+
+        raise NoWikibaseEntity(pywikibot.page.WikibaseEntity(self, entity_id))
 
     @property
     @need_version('1.28-wmf.3')
@@ -7907,6 +7893,8 @@ class DataSite(APISite):
         @param groupsize: how many pages to query at a time
         @type groupsize: int
         """
+        if not hasattr(self, '_entity_namespaces'):
+            self._cache_entity_namespaces()
         for sublist in itergroup(pagelist, groupsize):
             req = {'ids': [], 'titles': [], 'sites': []}
             for p in sublist:
@@ -7916,7 +7904,7 @@ class DataSite(APISite):
                         req[key].append(ident[key])
                 else:
                     if p.site == self and p.namespace() in (
-                            self.item_namespace, self.property_namespace):
+                            self._entity_namespaces.values()):
                         req['ids'].append(p.title(with_ns=False))
                     else:
                         assert p.site.has_data_repository, \

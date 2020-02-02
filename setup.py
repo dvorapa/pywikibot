@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Installer script for Pywikibot 3.0 framework."""
+"""Installer script for Pywikibot framework."""
 #
 # (C) Pywikibot team, 2009-2020
 #
@@ -37,14 +37,14 @@ if not python_is_supported():
 extra_deps = {
     # Core library dependencies
     'eventstreams': ['sseclient!=0.0.23,!=0.0.24,>=0.0.18'],
-    'isbn': ['python-stdnum'],
+    'isbn': ['python-stdnum>=1.13'],
     'Graphviz': ['pydot>=1.2'],
     'Google': ['google>=1.7'],
     'mwparserfromhell': ['mwparserfromhell>=0.3.3'],
     'Tkinter': [
-        'Pillow<7.0.0;python_version<"3"',
-        'Pillow<6.0.0;python_version=="3.4"',
-        'Pillow;python_version>="3.5"',
+        'Pillow<7.0.0,>=6.2.0;python_version<"3"',
+        'Pillow<6.0.0;python_version=="3.4"',  # vulnerability found
+        'Pillow>=6.2.1;python_version>="3.5"',  # 6.2.1 required for PY 3.8
     ],
     'security': [
         'requests[security]'
@@ -60,7 +60,10 @@ extra_deps = {
         'pydocstyle>=4.0.0;python_version>="3.4"',
         'hacking',
         'flake8-coding',
-        'flake8-comprehensions',
+        'flake8-comprehensions>=3.1.4;python_version>="3.8"',
+        'flake8-comprehensions>=2.2.0;python_version>="3.5"',
+        'flake8-comprehensions>=2.0.0,<2.2.0;python_version=="3.4"',
+        'flake8-comprehensions<2.0.0;python_version<"3"',
         'flake8-docstrings>=1.3.1',
         'flake8-future-import',
         'flake8-mock>=0.3',
@@ -165,13 +168,20 @@ test_deps += ['six;python_version>="3"']
 
 
 def get_version(name):
-    """Get a valid pywikibot module version string."""
+    """Get a valid pywikibot module version string.
+
+    Either create a timebased version number for the package
+    or read the version number from the package.
+
+    @return: pywikibot module version string
+    @rtype: str
+    """
     version = '3.0'
     try:
         import subprocess
         date = subprocess.check_output(
             ['git', 'log', '-1', '--format=%ci']).strip()
-        date = date.decode().split(' ')[0].replace('-', '')
+        date = date.decode().split(' ', 1)[0].replace('-', '')
         version += '.' + date
         if 'sdist' not in sys.argv:
             version += '.dev0'

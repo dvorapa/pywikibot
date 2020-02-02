@@ -2976,12 +2976,11 @@ def WikidataSPARQLPageGenerator(query, site=None,
     data = query_object.get_items(query,
                                   item_name=item_name,
                                   result_type=result_type)
-    items_pages = (pywikibot.ItemPage(repo, item) for item in data
-                   if pywikibot.ItemPage.is_valid_id(item))
+    entities = (repo.get_entity_for_entity_id(entity) for entity in data)
     if isinstance(site, pywikibot.site.DataSite):
-        return items_pages
+        return entities
 
-    return WikidataPageFromItemGenerator(items_pages, site)
+    return WikidataPageFromItemGenerator(entities, site)
 
 
 def WikibaseSearchItemPageGenerator(
@@ -3063,7 +3062,8 @@ class PetScanPageGenerator(object):
         }
 
         # test wikipedia
-        if self.site.code == 'test' and self.site.family == 'test':
+        if (self.site.code == 'test'
+                and self.site.family in ['test', 'wikipedia']):
             query['language'] = 'test'
             query['project'] = 'wikipedia'
 

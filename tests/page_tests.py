@@ -451,16 +451,17 @@ class TestPageObject(DefaultSiteTestCase):
         # we only check that the returned objects are of correct type.
         self.assertIsInstance(mainpage.get(), unicode)
         with suppress_warnings(
-                'pywikibot.page.BasePage.latestRevision is deprecated; '
-                'use latest_revision_id instead.'):
+                r'pywikibot\.page\.BasePage\.latestRevision '
+                r'is deprecated[\s\w]+; '
+                r'use latest_revision_id instead\.'):
             self.assertIsInstance(mainpage.latestRevision(), int)
         self.assertIsInstance(mainpage.userName(), unicode)
         self.assertIsInstance(mainpage.isIpEdit(), bool)
         self.assertIsInstance(mainpage.exists(), bool)
         self.assertIsInstance(mainpage.isRedirectPage(), bool)
         with suppress_warnings(
-                'pywikibot.page.BasePage.isEmpty is deprecated; '
-                'use interwiki.page_empty_check(page) instead.'):
+                r'pywikibot\.page\.BasePage\.isEmpty is deprecated[\s\w]+; '
+                r'use interwiki\.page_empty_check\(page\) instead\.'):
             self.assertIsInstance(mainpage.isEmpty(), bool)
         self.assertIsInstance(mainpage.isDisambig(), bool)
         self.assertIsInstance(mainpage.canBeEdited(), bool)
@@ -996,7 +997,7 @@ class TestPageDelete(TestCase):
 
     """Test page delete / undelete actions."""
 
-    family = 'test'
+    family = 'wikipedia'
     code = 'test'
 
     write = True
@@ -1033,7 +1034,7 @@ class TestApplicablePageProtections(TestCase):
 
     """Test applicable restriction types."""
 
-    family = 'test'
+    family = 'wikipedia'
     code = 'test'
 
     def test_applicable_protections(self):
@@ -1065,7 +1066,7 @@ class TestPageProtect(TestCase):
 
     """Test page protect / unprotect actions."""
 
-    family = 'test'
+    family = 'wikipedia'
     code = 'test'
 
     write = True
@@ -1156,7 +1157,7 @@ class HtmlEntity(TestCase):
 class TestPermalink(DefaultSiteTestCase):
     """Test that permalink links are correct."""
 
-    family = 'test'
+    family = 'wikipedia'
     code = 'test'
 
     def test_permalink(self):
@@ -1180,7 +1181,7 @@ class TestPermalink(DefaultSiteTestCase):
 class TestShortLink(DefaultSiteTestCase):
     """Test that short link management is correct."""
 
-    family = 'test'
+    family = 'wikipedia'
     code = 'test'
 
     def test_create_short_link(self):

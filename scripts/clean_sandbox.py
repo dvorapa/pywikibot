@@ -48,6 +48,8 @@ from pywikibot.bot import Bot, ConfigParserBot
 
 content = {
     'commons': '{{Sandbox}}\n<!-- Please edit only below this line. -->',
+    'meta': '{{Meta:Sandbox/Please do not edit this line}}'
+            '<!--Please edit below this line.-->',
     'test': '<noinclude>{{Sandbox}}</noinclude>\n'
             '== Please start your testing below this line ==',
     'wikidata': '{{Please leave this line alone (sandbox heading)}}',
@@ -114,8 +116,11 @@ content = {
     'simple': '{{subst:/Text}}',
     'sco': '{{subst:Saundbox}}',
     'shn': '{{subst:Sandbox reset}}',
-    'sr': '{{песак}}\n'
-          '<!-- Молимо, увежбавајте уређивање испод ове линије. Хвала. -->',
+    'sr': '{{песак}}<!--\n'
+          '*               Добро дошли на песак!               *\n'
+          '*             Молимо вас да испробавате             *\n'
+          '*             испод црне линије. Хвала!             *\n'
+          '■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■-->',
     'sv': '{{subst:Sandlådan}}',
     'th': '{{กระบะทราย}}\n<!-- กรุณาอย่าแก้ไขบรรทัดนี้ ขอบคุณครับ/ค่ะ -- '
           'Please leave this line as they are. Thank you! -->',

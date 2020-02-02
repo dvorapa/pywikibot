@@ -4,6 +4,22 @@ Release history
 Current release
 ---------------
 
+* stdnum package is required for ISBN scripts and cosmetic_changes (T132919, T144288, T241141)
+* preload urllib.quote() with Python 2 (T243710, T222623)
+* Drop isbn_hyphenate package due to outdated data (T243157)
+* Fix UnboundLocalError in ProofreadPage._ocr_callback (T243644)
+* Deprecate/remove sysop parameter in several methods and functions
+* Refactor Wikibase entity namespace handling (T160395)
+* Site.has_api method will be removed in next release
+* Category.copyTo and Category.copyAndKeep will be removed in the next release
+* weblib module has been removed (T85001)
+* botirc module has been removed (T212632)
+* Bugfixes and improvements
+* Localisation updates
+
+3.0.20200111
+------------
+
 * Fix broken get_version() in setup.py (T198374)
 * Rewrite site.log_page/site.unlock_page implementation
 * Require requests 2.20.1 (T241934)

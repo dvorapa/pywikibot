@@ -20,7 +20,7 @@ The following parameters are supported:
 """
 #
 # (C) Multichill, 2009
-# (C) Pywikibot team, 2009-2019
+# (C) Pywikibot team, 2009-2020
 #
 # Distributed under the terms of the MIT license.
 #
@@ -438,9 +438,6 @@ def main(*args):
     # Set the Flickr reviewer
     if config.flickr['reviewer']:
         reviewer = config.flickr['reviewer']
-    elif 'commons' in config.sysopnames['commons']:
-        pywikibot.output(config.sysopnames['commons'])
-        reviewer = config.sysopnames['commons']['commons']
     elif 'commons' in config.usernames['commons']:
         reviewer = config.usernames['commons']['commons']
     else:
@@ -511,11 +508,11 @@ def main(*args):
         pywikibot.bot.suggest_help(missing_dependencies=('flickrapi',))
 
     elif not config.flickr['api_key']:
-        additional_message = (
+        additional_text = (
             'Flickr api key not found! Get yourself an api key\n'
             'Any flickr user can get a key at\n'
             'https://www.flickr.com/services/api/keys/apply/')
-        pywikibot.bot.suggest_help(additional_message=additional_message)
+        pywikibot.bot.suggest_help(additional_text=additional_text)
 
     elif user_id or group_id or photoset_id:
         if 'api_secret' in config.flickr and config.flickr['api_secret']:

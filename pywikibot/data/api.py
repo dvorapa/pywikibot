@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Interface to Mediawiki's api.php."""
 #
-# (C) Pywikibot team, 2007-2019
+# (C) Pywikibot team, 2007-2020
 #
 # Distributed under the terms of the MIT license.
 #
@@ -88,6 +88,12 @@ if not PY2:
 else:
     from urllib import urlencode, unquote
     from email.mime.multipart import MIMEMultipart
+
+    # Bug: T243710 (Python 2)
+    # see https://github.com/jxtech/wechatpy/issues/375
+    from urllib import quote
+    quote(b'non-empty-string', safe=b'')
+
 
 _logger = 'data.api'
 
@@ -1350,8 +1356,7 @@ class Request(MutableMapping):
             cls._warn_kwargs()
         else:
             kwargs = dict(kwargs)
-            if 'parameters' not in kwargs:
-                kwargs['parameters'] = {}
+            kwargs.setdefault('parameters', {})
         return kwargs
 
     def _format_value(self, value):
@@ -1503,17 +1508,15 @@ class Request(MutableMapping):
             # version number is at least 1.25wmf5 we add a dummy rawcontinue
             # parameter. Querying siteinfo is save as it adds 'continue'.
             if ('continue' not in self._params
-                and 'rawcontinue' not in self._params
                     and self.site.mw_version >= '1.25wmf5'):
-                self._params['rawcontinue'] = ['']
+                self._params.setdefault('rawcontinue', [''])
         elif self.action == 'help' and self.site.mw_version > '1.24':
             self._params['wrap'] = ['']
 
-        if 'maxlag' not in self._params and config.maxlag:
-            self._params['maxlag'] = [str(config.maxlag)]
-        if 'format' not in self._params:
-            self._params['format'] = ['json']
-        elif self._params['format'] != ['json']:
+        if config.maxlag:
+            self._params.setdefault('maxlag', str(config.maxlag))
+        self._params.setdefault('format', ['json'])
+        if self._params['format'] != ['json']:
             raise TypeError("Query format '%s' cannot be parsed."
                             % self._params['format'])
 
@@ -1966,7 +1969,7 @@ class Request(MutableMapping):
         """
         self._add_defaults()
         use_get = self._use_get()
-
+        retries = 0
         while True:
             paramstring = self._http_param_string()
 
@@ -2018,11 +2021,13 @@ class Request(MutableMapping):
                 continue
 
             if code == 'maxlag':
-                lag = lagpattern.search(info)
+                retries += 1
+                if retries > max(5, pywikibot.config.max_retries):
+                    break
                 pywikibot.log('Pausing due to database lag: ' + info)
-                if lag:
-                    lag = lag.group('lag')
-                self.site.throttle.lag(int(lag or 0))
+                lag = lagpattern.search(info)
+                lag = int(lag.group('lag')) if lag else 0
+                self.site.throttle.lag(lag * retries)
                 continue
 
             elif code == 'help' and self.action == 'help':
@@ -2080,6 +2085,9 @@ class Request(MutableMapping):
                 raise APIError(**result['error'])
             except TypeError:
                 raise RuntimeError(result)
+
+        raise TimeoutError(
+            'Maximum retries attempted due to maxlag without success.')
 
     def wait(self):
         """Determine how long to wait after a failed request."""
