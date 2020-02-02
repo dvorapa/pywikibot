@@ -172,8 +172,8 @@ class BasicBot(
             tpage = [None]
             target = [None]
             for part in pageParts:
-                match = re.match(r'\{\{\s*((?:[Ii]nfobox[ _]|[Tt]axobox)[^\|\}]*)', part)
-                if match and not re.match(r'\{\{\s*[Ii]nfobox[ _]-[ _]hudební[ _]vydavatelství', part):
+                match = re.match(r'\{\{\s*((?:[Ii]nfobox[ _]|[Tt]axobox|[Ll]okomotiva[ _]|[Cc]ycling[ _]race\/infobox)[^\|\}]*)', part)
+                if match:
                     inBlockTemplate.append(True)
                     tpage.append(pywikibot.Page(self.site, 'Template:' + match.group(1).strip()))
                     if tpage[-1].isRedirectPage():
