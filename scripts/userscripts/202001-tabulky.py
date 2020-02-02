@@ -35,8 +35,8 @@ The following generators and filters are supported:
 #
 from __future__ import absolute_import, division, unicode_literals
 
-import pywikibot
-from pywikibot import pagegenerators
+import pywikibot, re
+from pywikibot import pagegenerators, textlib
 
 from pywikibot.bot import (
     SingleSiteBot, ExistingPageBot, NoRedirectPageBot, AutomaticTWSummaryBot)
@@ -100,7 +100,7 @@ class BasicBot(
         #                           shrnutí                            #
         ################################################################
 
-        shrnuti = ''
+        shrnuti = '-substituovaný infobox'
 
         ################################################################
 
@@ -121,7 +121,69 @@ class BasicBot(
         # self.current_page.title()
         # with open('soubor.txt', 'a') as soubor:
         #     soubor.write('# ' + self.current_page.title(asLink=True) + '\n')
-        # text = textlib.replaceExcept(text, r'', r'', self.vyjimky)
+        text, sep, post = text.partition('|}')
+        text = text + sep
+        uvod = '''{{substovaný infobox}}
+{\| class="infobox"(?:
+\|-|)
+! colspan="2"(?: bgcolor=#63B8FF|) *\| \'*'''
+        podnadpis = '''
+\|-
+! colspan="2" \| '''
+        parametr = r'''(?:\|+\s+|)(?:
+\|- *
+\| *|)
+\|- *
+\| \'''([^\']+)\''' *\|\| *'''
+        parametr2 = r'''(?:\|+\s+|)(?:
+\|- *
+\| *|)
+\|- *
+ *\| *bgcolor *= *"[^\"]+" *\| \'''([^\']+)\''' *\n?\|\|? *'''
+        parametr3 = r'''(?:\|+\s+|)(?:
+\|- *
+\| *|)
+\|- *
+\| *\|\| *'''
+        obrazek = r'''
+\|-
+! colspan="2" \| *\[\[(?:File|Soubor):([^\|\]]+)\|250px\]\]'''
+        zaver = '''(?:
+\|-|)
+\|}'''
+        text = textlib.replaceExcept(text, uvod, r'{{Infobox - MS v hokeji\n | ročník = ', self.vyjimky)
+        text = textlib.replaceExcept(text, podnadpis, r'\n| ročník ME = ', self.vyjimky)
+        text = textlib.replaceExcept(text, parametr, r'\n| \1 = ', self.vyjimky)
+        text = textlib.replaceExcept(text, parametr2, r'\n| \1 = ', self.vyjimky)
+        text = textlib.replaceExcept(text, parametr3, r'<br>\n', self.vyjimky)
+        text = textlib.replaceExcept(text, obrazek, r'\n| logo = \1', self.vyjimky)
+        text = textlib.replaceExcept(text, zaver, r'\n}}', self.vyjimky, count=1)
+        text = textlib.replaceExcept(text, r'\| Zlato =', r'| zlato =', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Stříbro =', r'| stříbro =', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Bronz =', r'| bronz =', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Měst[oa] =', r'| města =', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Země =[^\|]*\|([^\}]*)[^\n]*', r'| země = \1', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Datum =\s*(.*?\[\[)(\d{4})(\]\])', r'| datum = \1\2\3\n | rok = \2', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Stadion =', r'| arény =', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Pořadí =', r'| ročník =', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Postup =', r'| postupující =', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Sestup =', r'| sestupující =', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Počet týmů =', r'| týmy =', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Počet zápasů =', r'| zápasy =', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Počet gólů =', r'| góly =', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Nejužitečnější hráč =', r'| nejhráč =', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Nejlepší střelec =', r'| nejstřelec =', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Nejlepší nahrávač =', r'| nejnahrávač =', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Nejproduktivnější =', r'| nejproduktivnější =', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Nejlepší brankář =', r'| nejbrankář =', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Kvalifikace =', r'| postupující =', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| Návštěvnost =', r'| návštěvnost =', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\s*\|\|\s*(\| |\}\})', r'\n \1', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\s*\|\|<br>', r'<br>', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\s*\'\'\'\s*\| ', r'\n | ', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| ročník( ME|) =\s*(\d+)[^\n]*', r'| ročník\1 = \2', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\| sestupující =\s*[Nn]ikdo\s*', r'', self.vyjimky)
+        text = text + post
 
         ################################################################
 

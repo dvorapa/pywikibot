@@ -101,11 +101,12 @@ class BasicBot(
         #                           shrnutí                            #
         ################################################################
 
-        shrnuti = ''
+        shrnuti = 'počeštění šablony Více obrázků'
+        self.shrnuti = self.getOption('summary') or 'Robot: ' + shrnuti
 
         ################################################################
-
-        self.shrnuti = self.getOption('summary') or 'Robot: ' + shrnuti
+        #                           infobox                            #
+        ################################################################
 
         infobox = self.getOption('ref')
         if re.match(r'[Šš]ablona:', infobox):
@@ -113,6 +114,8 @@ class BasicBot(
         infobox = re.escape(infobox)
         infobox = infobox.replace(r'\ ', r'[ _]')
         self.infobox = r'\{\{\s*[' + infobox[0].upper() + infobox[0].lower() + r']' + infobox[1:]
+
+        ################################################################
 
         # assign the generator to the bot
         self.generator = generator
@@ -141,7 +144,7 @@ class BasicBot(
         for part in pageParts:
             if re.match(self.infobox, part):
                 inBlockTemplate.append(True)
-                # part = textlib.replaceExcept(part, self.infobox, r'', self.vyjimky)
+                #part = textlib.replaceExcept(part, self.infobox, r'{{Více obrázků', self.vyjimky)
             elif part[:2] == '{{':
                 inInlineTemplate.append(True)
             elif part[:1] == '[':
@@ -153,7 +156,7 @@ class BasicBot(
 
             if inBlockTemplate[-1] and not inInlineTemplate[-1] and not inLink[-1] and not inTable[-1] and not inTag[-1]:
                 # part = textlib.replaceExcept(part, r'\|\s*[A-ZŽŠČŘĎŤŇÁÉÍÓÚŮÝĚ]', lambda x: x.group(0).lower(), self.vyjimky)
-                # part = textlib.replaceExcept(part, r'\|[^\|\=]+?=', lambda x: x.group(0).replace('_',' '), self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|[^\|\=]+?=', lambda x: x.group(0).replace('_',' '), self.vyjimky)
                 ################################################################
                 #                            změny                             #
                 ################################################################
@@ -162,7 +165,37 @@ class BasicBot(
                 # self.current_page.title()
                 # with open('soubor.txt', 'a') as soubor:
                 #     soubor.write('# ' + self.current_page.title(asLink=True) + '\n')
-                # part = textlib.replaceExcept(part, r'', r'', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*[^\=]*\s*=\s*(?=\||\})', r'', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*(?:(?:header|footer|caption) |)align\s*=\s*left\/right\/center\s*', r'', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*direction\s*=\s*horizontal\/vertical\s*', r'', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*image(\d)\s*=', r'| obrázek\1 =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*caption(\d)\s*=', r'| popisek\1 =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*width(\d)\s*=', r'| velikost obrázku\1 =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*align\s*=', r'| zarovnání =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*direction\s*=', r'| orientace =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*width\s*=', r'| velikost obrázků =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*header\s*=', r'| hlavička =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*footer\s*=', r'| patička =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*header align\s*=', r'| zarovnání hlavičky =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*footer align\s*=', r'| zarovnání patičky =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*caption align\s*=', r'| zarovnání popisků =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*header background\s*=', r'| pozadí hlavičky =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*footer background\s*=', r'| pozadí patičky =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*background color\s*=', r'| pozadí =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*image border\s*=', r'| rámeček obrázků =', self.vyjimky)
+
+                part = textlib.replaceExcept(part, r'\|\s*(velikost obrázku\d|velikost obrázků)\s*=\s*(\d+)(?= *[^\dp ])', r'| \1 = \2px', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*rámeček obrázků\s*=\s*(?:[^\sn]|n[^eo])[^\|\}]*', r'', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*rámeček obrázků\s*=\s*no', r'| rámeček obrázků = ne', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*orientace\s*=\s*(?:[^\svs]|s[^v]|sv[^i]|svi[^s]|svis[^l]|svisl[^e]|v[^e]|ve[^r]|ver[^t]|vert[^i]|verti[^c]|vertic[^a]|vertica[^l])[^\|\}]*', r'', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*orientace\s*=\s*vertical', r'| orientace = svisle', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*(zarovnání(?: (?:hlavičky|patičky|popisků)|))\s*=\s*left', r'| \1 = vlevo', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*(zarovnání(?: (?:hlavičky|patičky|popisků)|))\s*=\s*right', r'| \1 = vpravo', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*(zarovnání(?: (?:hlavičky|patičky|popisků)|))\s*=\s*center', r'| \1 = střed', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*zarovnání\s*=\s*vpravo\s*', r'', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*zarovnání hlavičky\s*=\s*střed\s*', r'', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*zarovnání patičkys\s*=\s*vlevo\s*', r'', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*zarovnání popisků\s*=\s*vlevo\s*', r'', self.vyjimky)
 
                 ################################################################
             newPageParts.append(part)

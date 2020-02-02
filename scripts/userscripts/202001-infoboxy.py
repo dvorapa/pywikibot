@@ -101,7 +101,7 @@ class BasicBot(
         #                           shrnutí                            #
         ################################################################
 
-        shrnuti = ''
+        shrnuti = 'oprava parametru infoboxu'
 
         ################################################################
 
@@ -151,7 +151,7 @@ class BasicBot(
             elif part[:1] == '<':
                 inTag.append(True)
 
-            if inBlockTemplate[-1] and not inInlineTemplate[-1] and not inLink[-1] and not inTable[-1] and not inTag[-1]:
+            if inBlockTemplate[-1] and not inInlineTemplate[-1] and inLink[-1] and not inTable[-1] and not inTag[-1]:
                 # part = textlib.replaceExcept(part, r'\|\s*[A-ZŽŠČŘĎŤŇÁÉÍÓÚŮÝĚ]', lambda x: x.group(0).lower(), self.vyjimky)
                 # part = textlib.replaceExcept(part, r'\|[^\|\=]+?=', lambda x: x.group(0).replace('_',' '), self.vyjimky)
                 ################################################################
@@ -160,11 +160,37 @@ class BasicBot(
 
                 # self.getOption('parametr')
                 # self.current_page.title()
-                # with open('soubor.txt', 'a') as soubor:
-                #     soubor.write('# ' + self.current_page.title(asLink=True) + '\n')
-                # part = textlib.replaceExcept(part, r'', r'', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Aiga ticketpurchase inv.svg|20px|okraj|Vnitrostátní a mezinárodní pokladní přepážka]]').replace('\ ', '[ _]'), 'mp, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Aiga ticketpurchase inv.svg|20px|okraj|Vnitrostátní pokladní přepážka]]').replace('\ ', '[ _]'), 'vp, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Suitcase icon.JPG|23px|okraj|Úschovna zavazadel]]').replace('\ ', '[ _]'), 'uz, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Suitcase icon.JPG|20px|okraj|Úschovna zavazadel]]').replace('\ ', '[ _]'), 'uz, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Aiga baggagelockers inverse.svg|20px|okraj|Samoobslužné úschovní skřiňky]]').replace('\ ', '[ _]'), 'us, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:RWBA WC.svg|20px|okraj|Bezbariérové WC]]').replace('\ ', '[ _]'), 'wc, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Aiga waitingroom inv.svg|20px|okraj|Čekárna pro cestující]]').replace('\ ', '[ _]'), 'ce, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:RWB-RWBA Gasthaus.svg|20px|okraj|Restaurace]]').replace('\ ', '[ _]'), 're, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:RWB-RWBA Gasthaus.svg|20px|okraj|Rychlé občerstvení]]').replace('\ ', '[ _]'), 'ro, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:RWBA WC.svg|20px|okraj|Bariérové WC]]').replace('\ ', '[ _]'), 'bw, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Aiga coffeeshop inv.svg|20px|okraj|Kavárna]]').replace('\ ', '[ _]'), 'ka, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Aiga bar inv.svg|20px|okraj|Bufet nebo rychlé občerstvení]]').replace('\ ', '[ _]'), 'ro, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Money atm2.svg|20px|okraj|Bankomat]]').replace('\ ', '[ _]'), 'ba, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Euro symbol.svg|20px|okraj|Platba v Eurech]]').replace('\ ', '[ _]'), 'eu, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Euro symbol.svg|20px|border|Platba v Eurech]]').replace('\ ', '[ _]'), 'eu, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Euro symbol.svg|20px|okraj|Platba v&nbsp;Eurech]]').replace('\ ', '[ _]'), 'eu, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:03 currencyexchange inv.svg|20px|okraj|Směnárna]]').replace('\ ', '[ _]'), 'sm, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:RWB-RWBA Parkplatz.svg|20px|okraj|Veřejné parkoviště]]').replace('\ ', '[ _]'), 'pa, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Aiga shops inv.svg|20px|okraj|Obchody').replace('\ ', '[ _]') + r'[^\]]*]]', 'ob, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Aiga shops inv.svg|20px|okraj|Další obchody a služby]]').replace('\ ', '[ _]'), 'ob, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Aiga escalator inv.svg|20px|okraj|Eskalátory]]').replace('\ ', '[ _]'), 'es, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:10a stairs inv.svg|20px|okraj|Schodiště]]').replace('\ ', '[ _]'), 'sc, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Aiga elevator inv.svg|20px|okraj|Výtahy]]').replace('\ ', '[ _]'), 'vy, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:RWB-RWBA Information.svg|20px|okraj|ČD centrum]]').replace('\ ', '[ _]'), 'cd, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Aiga taxi inv.svg|20px|okraj|TAXI]]').replace('\ ', '[ _]'), 'ta, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Aiga mail inverted.svg|20px|okraj|Pošta]]').replace('\ ', '[ _]'), 'po, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:Aiga waitingroom inv.svg|20px|okraj|Prostory pro cestující]]').replace('\ ', '[ _]'), 'pc, ', self.vyjimky)
+                part = textlib.replaceExcept(part, re.escape('[[Soubor:RWB-RWBA Information.svg|20px|okraj|Turistické Informace]]').replace('\ ', '[ _]'), 'ti, ', self.vyjimky)
 
                 ################################################################
+  
             newPageParts.append(part)
 
             if part[-2:] == '}}' and (inBlockTemplate[-1] or inInlineTemplate[-1]):
