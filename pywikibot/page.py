@@ -373,9 +373,12 @@ class BasePage(UnicodeMixin, ComparableMixin):
             title = quote_from_bytes(encoded_title, safe=str(''))
         if as_filename:
             # Replace characters that are not possible in file names on some
-            # systems.
+            # systems, but still are valid in MediaWiki titles:
+            # Unix: /
+            # MediaWiki: /:\
+            # Windows: /:\"?*
             # Spaces are possible on most systems, but are bad for URLs.
-            for forbidden in ':*?/\\ ':
+            for forbidden in ':*?/\\" ':
                 title = title.replace(forbidden, '_')
         return title
 
@@ -1914,7 +1917,7 @@ class BasePage(UnicodeMixin, ComparableMixin):
             reason = pywikibot.input('Please enter a reason for the deletion:')
 
         # If user has 'delete' right, delete the page
-        if 'delete' in self.site.userinfo['rights']:
+        if self.site.has_right('delete'):
             answer = 'y'
             if prompt and not hasattr(self.site, '_noDeletePrompt'):
                 answer = pywikibot.input_choice(
