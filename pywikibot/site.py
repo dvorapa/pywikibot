@@ -1304,7 +1304,7 @@ def must_be(group=None, right=None):
                                       'can perform requested action.'
                                       .format(self.sitename))
             if right is not None:
-                if right in self.userinfo['rights']:
+                if self.has_right(right):
                     return fn(self, *args, **kwargs)
             if grp == 'user':
                 self.login(False)
@@ -1959,15 +1959,17 @@ class APISite(BaseSite):
     def logged_in(self):
         """Verify the bot is logged into the site as the expected user.
 
-        The expected usernames are those provided as either the user or sysop
-        parameter at instantiation.
+        The expected usernames are those provided as the user parameter
+        at instantiation.
 
         @rtype: bool
         """
         if not hasattr(self, '_userinfo'):
             return False
+        if 'anon' in self.userinfo or not self.userinfo.get('id'):
+            return False
 
-        if 'name' not in self.userinfo or not self.userinfo['name']:
+        if not self.userinfo.get('name'):
             return False
 
         if self.userinfo['name'] != self.username():
@@ -2137,6 +2139,9 @@ class APISite(BaseSite):
             assert 'userinfo' in uidata['query'], \
                    "API userinfo response lacks 'userinfo' key"
             self._userinfo = uidata['query']['userinfo']
+            if 'anon' in self._userinfo or not self._userinfo.get('id'):
+                pywikibot.warning('No user is logged in on site {}'
+                                  .format(self))
         return self._userinfo
 
     userinfo = property(fget=getuserinfo, doc=getuserinfo.__doc__)
@@ -2183,7 +2188,7 @@ class APISite(BaseSite):
 
         @rtype: bool
         """
-        return 'blockinfo' in self._userinfo
+        return 'blockinfo' in self.userinfo
 
     @deprecated('has_right() or is_blocked()', since='20141218')
     @remove_last_args(['sysop'])
@@ -2279,7 +2284,7 @@ class APISite(BaseSite):
 
         U{https://www.mediawiki.org/wiki/API:Userinfo}
         """
-        return right.lower() in self._userinfo['rights']
+        return right.lower() in self.userinfo['rights']
 
     @remove_last_args(['sysop'])
     def has_group(self, group):
@@ -2289,12 +2294,12 @@ class APISite(BaseSite):
         but will usually include bot.
         U{https://www.mediawiki.org/wiki/API:Userinfo}
         """
-        return group.lower() in self._userinfo['groups']
+        return group.lower() in self.userinfo['groups']
 
     @remove_last_args(['sysop'])
     def messages(self):
         """Return true if the user has new messages, and false otherwise."""
-        return 'messages' in self._userinfo
+        return 'messages' in self.userinfo
 
     @need_extension('Echo')
     def notifications(self, **kwargs):
@@ -5034,10 +5039,10 @@ class APISite(BaseSite):
 
         err = ('deletedrevs: User:{} not authorized to '
                .format(self.user()))
-        if 'deletedhistory' not in self.userinfo['rights']:
+        if not self.has_right('deletedhistory'):
             raise Error(err + 'access deleted revisions.')
         if content:
-            if 'undelete' not in self.userinfo['rights']:
+            if not self.has_right('undelete'):
                 raise Error(err + 'view deleted content.')
 
         revids = kwargs.pop('revids', None)
@@ -5291,7 +5296,7 @@ class APISite(BaseSite):
 
         token = self.tokens['edit']
         if bot is None:
-            bot = ('bot' in self.userinfo['rights'])
+            bot = self.has_right('bot')
         params = dict(action='edit', title=page,
                       text=text, token=token, summary=summary, bot=bot,
                       recreate=recreate, createonly=createonly,
@@ -5612,7 +5617,7 @@ class APISite(BaseSite):
                         if newpage.exists():
                             for prot in self.page_restrictions(
                                     newpage).values():
-                                if prot[0] not in self._userinfo['groups']:
+                                if not self.has_group(prot[0]):
                                     failed_page = newpage
                                     break
                     else:
@@ -6354,7 +6359,7 @@ class APISite(BaseSite):
         # An offset != 0 doesn't make sense without a file key
         assert(_offset == 0 or _file_key is not None)
         # check for required user right
-        if 'upload' not in self.userinfo['rights']:
+        if not self.has_right('upload'):
             raise Error(
                 "User '%s' does not have upload rights on site %s."
                 % (self.user(), self))
@@ -6592,7 +6597,7 @@ class APISite(BaseSite):
                         }
         else:
             # upload by URL
-            if 'upload_by_url' not in self.userinfo['rights']:
+            if not self.has_right('upload_by_url'):
                 raise Error(
                     "User '%s' is not authorized to upload by URL on site %s."
                     % (self.user(), self))
