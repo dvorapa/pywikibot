@@ -14,7 +14,7 @@ These parameters are supported to specify which pages titles to print:
 &params;
 """
 #
-# (C) Pywikibot team, 2008-2019
+# (C) Pywikibot team, 2008-2020
 #
 # Distributed under the terms of the MIT license.
 #
@@ -48,7 +48,7 @@ from pywikibot.tools import (
 )
 
 from pywikibot import date, config, i18n, xmlreader
-from pywikibot.bot import ListOption
+from pywikibot.bot import ShowingListOption
 from pywikibot.comms import http
 from pywikibot.exceptions import (
     ArgumentDeprecationWarning,
@@ -804,12 +804,8 @@ class GeneratorFactory(object):
             pnames = self.site.get_property_names()
             # also use the default by <enter> key
             if value in '?' or value not in pnames:
-                for i, item in enumerate(pnames, start=1):
-                    pywikibot.output(
-                        '{0:{1}}: {2}'.format(i, len(str(len(pnames))),
-                                              item))
                 prefix, value = pywikibot.input_choice(
-                    question, ListOption(self.site.get_property_names()))
+                    question, ShowingListOption(pnames))
         return page_with_property_generator(value, site=self.site)
 
     def _handle_usercontribs(self, value):
@@ -2912,12 +2908,13 @@ def DayPageGenerator(start_month=1, end_month=12, site=None, year=2000):
     """
     if site is None:
         site = pywikibot.Site()
-    fd = date.FormatDate(site)
-    firstPage = pywikibot.Page(site, fd(start_month, 1))
+    lang = site.lang
+    firstPage = pywikibot.Page(site, date.format_date(start_month, 1, lang))
     pywikibot.output('Starting with %s' % firstPage.title(as_link=True))
     for month in range(start_month, end_month + 1):
         for day in range(1, calendar.monthrange(year, month)[1] + 1):
-            yield pywikibot.Page(pywikibot.Link(fd(month, day), site))
+            yield pywikibot.Page(
+                pywikibot.Link(date.format_date(month, day, lang), site))
 
 
 def WikidataPageFromItemGenerator(gen, site):
