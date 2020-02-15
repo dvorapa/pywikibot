@@ -38,7 +38,7 @@ from pywikibot.exceptions import (
     Error, TimeoutError, InvalidTitle, UnsupportedPage
 )
 from pywikibot.tools import (
-    deprecated, itergroup, is_IP, PY2, PYTHON_VERSION,
+    deprecated, itergroup, PY2, PYTHON_VERSION,
     getargspec, UnicodeType, remove_last_args
 )
 from pywikibot.tools.formatter import color_format
@@ -1253,7 +1253,7 @@ class Request(MutableMapping):
                 raise Error('API write action attempted without userinfo')
             assert('name' in self.site._userinfo)
 
-            if is_IP(self.site._userinfo['name']):
+            if 'anon' in self.site._userinfo:
                 raise Error('API write action attempted as IP %r'
                             % self.site._userinfo['name'])
 
@@ -1514,7 +1514,7 @@ class Request(MutableMapping):
             self._params['wrap'] = ['']
 
         if config.maxlag:
-            self._params.setdefault('maxlag', str(config.maxlag))
+            self._params.setdefault('maxlag', [str(config.maxlag)])
         self._params.setdefault('format', ['json'])
         if self._params['format'] != ['json']:
             raise TypeError("Query format '%s' cannot be parsed."
@@ -3301,7 +3301,7 @@ def _update_coordinates(page, coordinates):
                                      name=co.get('name', ''),
                                      dim=int(co.get('dim', 0)) or None,
                                      globe=co['globe'],  # See [[gerrit:67886]]
-                                     primary=True if 'primary' in co else False
+                                     primary='primary' in co
                                      )
         coords.append(coord)
     page._coords = coords
