@@ -50,7 +50,8 @@ from pywikibot.tools import (
     first_upper, redirect_func, remove_last_args, UnicodeType,
     StringTypes
 )
-from pywikibot.tools.ip import is_IP, ip_regexp
+from pywikibot.tools.ip import ip_regexp  # deprecated
+from pywikibot.tools import is_IP
 
 if not PY2:
     from html import entities as htmlentitydefs
@@ -1141,17 +1142,24 @@ class BasePage(UnicodeMixin, ComparableMixin):
                 p_types.remove('upload')
             return p_types
 
-    def canBeEdited(self):
-        """
-        Determine whether the page may be edited.
+    def has_permission(self, action='edit'):
+        """Determine whetherthe page can be modified.
 
-        This returns True if and only if:
-          - page is unprotected, and bot has an account for this site, or
-          - page is protected, and bot has a sysop account for this site.
+        Return True if the bot has the permission of needed restriction level
+        for the given action type.
 
+        @param action: a valid restriction type like 'edit', 'move'
+        @type action: str
         @rtype: bool
+
+        @raises ValueError: invalid action parameter
         """
-        return self.site.page_can_be_edited(self)
+        return self.site.page_can_be_edited(self, action)
+
+    @deprecated("Page.has_permission('edit')", since='20200208')
+    def canBeEdited(self):
+        """DEPRECATED. Determine whether the page may be edited."""
+        return self.has_permission()
 
     def botMayEdit(self):
         """
@@ -1658,16 +1666,19 @@ class BasePage(UnicodeMixin, ComparableMixin):
         Uses the MediaWiki extension GeoData.
 
         @param primary_only: Only return the coordinate indicated to be primary
-        @return: A list of Coordinate objects
-        @rtype: list
+        @return: A list of Coordinate objects or a single Coordinate if
+            primary_only is True
+        @rtype: list of Coordinate or Coordinate or None
         """
         if not hasattr(self, '_coords'):
             self._coords = []
             self.site.loadcoordinfo(self)
         if primary_only:
-            return self._coords[0] if len(self._coords) > 0 else None
-        else:
-            return self._coords
+            for coord in self._coords:
+                if coord.primary:
+                    return coord
+            return None
+        return list(self._coords)
 
     @need_version('1.20')
     def page_image(self):
@@ -2163,7 +2174,7 @@ class BasePage(UnicodeMixin, ComparableMixin):
             if cat not in cats:
                 cats.append(cat)
 
-        if not self.canBeEdited():
+        if not self.has_permission():
             pywikibot.output("Can't edit %s, skipping it..."
                              % self.title(as_link=True))
             return False

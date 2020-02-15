@@ -137,7 +137,7 @@ the top of the help.
 """
 #
 # (C) Daniel Herding, 2004-2012
-# (C) Pywikibot team, 2004-2019
+# (C) Pywikibot team, 2004-2020
 #
 # Distributed under the terms of the MIT license.
 #
@@ -532,7 +532,7 @@ class ReplaceRobot(Bot):
     @param allowoverlap: when matches overlap, all of them are replaced.
     @type allowoverlap: bool
     @param recursive: Recurse replacement as long as possible.
-    @type recursice: bool
+    @type recursive: bool
     @warning: Be careful, this might lead to an infinite loop.
     @param addedCat: category to be added to every page touched
     @type addedCat: pywikibot.Category or str or None
@@ -728,7 +728,7 @@ class ReplaceRobot(Bot):
             try:
                 # Load the page's text from the wiki
                 original_text = page.get(get_redirect=True)
-                if not page.canBeEdited():
+                if not page.has_permission():
                     pywikibot.output("You can't edit page "
                                      + page.title(as_link=True))
                     continue

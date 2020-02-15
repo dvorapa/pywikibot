@@ -30,7 +30,7 @@ try:
     from collections.abc import Iterable, Container, Mapping
 except ImportError:  # Python 2.7
     from collections import Iterable, Container, Mapping
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from enum import IntEnum
 from warnings import warn
 
@@ -49,7 +49,6 @@ from pywikibot.exceptions import (
     EntityTypeUnknownException,
     Error,
     FamilyMaintenanceWarning,
-    FatalServerError,
     InconsistentTitleReceived,
     InterwikiRedirectPage,
     IsNotRedirectPage,
@@ -83,7 +82,7 @@ from pywikibot.tools import (
     filter_unique,
     UnicodeType
 )
-from pywikibot.tools.ip import is_IP
+from pywikibot.tools import is_IP
 
 if not PY2:
     from itertools import zip_longest
@@ -1285,33 +1284,31 @@ class BaseSite(ComparableMixin):
         return self.getUrl(address, data=data)
 
 
-def must_be(group=None, right=None):
+@deprecated_args(right=None)
+def must_be(group=None):
     """Decorator to require a certain user status when method is called.
 
-    @param group: The group the logged in user should belong to
-                  this parameter can be overridden by
+    @param group: The group the logged in user should belong to.
+                  This parameter can be overridden by
                   keyword argument 'as_group'.
-    @type group: str ('user' or 'sysop')
-    @param right: The rights the logged in user should have.
-
+    @type group: str
     @return: method decorator
+    @raises UserRightsError: user is not part of the required user group.
     """
     def decorator(fn):
         def callee(self, *args, **kwargs):
             grp = kwargs.pop('as_group', group)
-            if self.obsolete and not self.has_group('steward'):
-                raise UserRightsError('Site {} has been closed. Only steward '
-                                      'can perform requested action.'
-                                      .format(self.sitename))
-            if right is not None:
-                if self.has_right(right):
-                    return fn(self, *args, **kwargs)
-            if grp == 'user':
-                self.login(False)
-            elif grp == 'sysop':
-                self.login(True)
-            else:
-                raise Exception('Not implemented')
+            if self.obsolete:
+                if not self.has_group('steward'):
+                    raise UserRightsError(
+                        'Site {} has been closed. Only steward '
+                        'can perform requested action.'
+                        .format(self.sitename))
+
+            elif not self.has_group(grp):
+                raise UserRightsError('User "{}" is not part of the required '
+                                      'user group "{}"'
+                                      .format(self.user(), grp))
 
             return fn(self, *args, **kwargs)
 
@@ -1319,7 +1316,38 @@ def must_be(group=None, right=None):
             return fn
 
         manage_wrapping(callee, fn)
+        return callee
 
+    return decorator
+
+
+def need_right(right=None):
+    """Decorator to require a certain user right when method is called.
+
+    @param right: The right the logged in user should have.
+    @type right: str
+    @return: method decorator
+    @raises UserRightsError: user has insufficient rights.
+    """
+    def decorator(fn):
+        def callee(self, *args, **kwargs):
+            if self.obsolete:
+                if not self.has_group('steward'):
+                    raise UserRightsError(
+                        'Site {} has been closed. Only steward '
+                        'can perform requested action.'
+                        .format(self.sitename))
+
+            elif right is not None and not self.has_right(right):
+                raise UserRightsError('User "{}" does not have required '
+                                      'user right "{}"'
+                                      .format(self.user, right))
+            return fn(self, *args, **kwargs)
+
+        if not __debug__:
+            return fn
+
+        manage_wrapping(callee, fn)
         return callee
 
     return decorator
@@ -1816,6 +1844,9 @@ class RemovedSite(BaseSite):
         super(RemovedSite, self).__init__(code, fam, user)
 
 
+_mw_msg_cache = defaultdict(dict)
+
+
 class APISite(BaseSite):
 
     """
@@ -2276,13 +2307,11 @@ class APISite(BaseSite):
     def has_right(self, right):
         """Return true if and only if the user has a specific right.
 
-        Possible values of 'right' may vary depending on wiki settings,
-        but will usually include:
-
-        * Actions: edit, move, delete, protect, upload
-        * User levels: autoconfirmed, sysop, bot
-
+        Possible values of 'right' may vary depending on wiki settings.
         U{https://www.mediawiki.org/wiki/API:Userinfo}
+
+        @param right: a specific right to be validated
+        @type right: str
         """
         return right.lower() in self.userinfo['rights']
 
@@ -2349,81 +2378,86 @@ class APISite(BaseSite):
         except KeyError:
             return False
 
-    def mediawiki_messages(self, keys):
+    def mediawiki_messages(self, keys, lang=None):
         """Fetch the text of a set of MediaWiki messages.
-
-        If keys is '*' or ['*'], all messages will be fetched. (deprecated)
 
         The returned dict uses each key to store the associated message.
 
         @see: U{https://www.mediawiki.org/wiki/API:Allmessages}
 
         @param keys: MediaWiki messages to fetch
-        @type keys: set of str, '*' or ['*']
+        @type keys: iterable of str
+        @param lang: a language code, default is self.lang
+        @type lang: str or None
 
         @rtype dict
         """
-        if keys == '*' or keys == ['*']:
-            issue_deprecation_warning('mediawiki_messages("*")',
-                                      'specific messages', since='20150905')
-
-        if not all(_key in self._msgcache for _key in keys):
+        amlang = lang or self.lang
+        if not all(amlang in _mw_msg_cache
+                   and _key in _mw_msg_cache[amlang] for _key in keys):
             parameters = {'meta': 'allmessages',
                           'ammessages': keys,
-                          'amlang': self.lang,
+                          'amlang': amlang,
                           }
             msg_query = api.QueryGenerator(site=self, parameters=parameters)
 
             for msg in msg_query:
                 if 'missing' not in msg:
-                    self._msgcache[msg['name']] = msg['*']
+                    _mw_msg_cache[amlang][msg['name']] = msg['*']
 
-            # Return all messages
-            if keys == '*' or keys == ['*']:
-                return self._msgcache
+            # Check requested keys
+            result = {}
+            for key in keys:
+                try:
+                    result[key] = _mw_msg_cache[amlang][key]
+                except KeyError:
+                    raise KeyError("No message '{}' found for lang '{}'"
+                                   .format(key, amlang))
             else:
-                # Check requested keys
-                for key in keys:
-                    if key not in self._msgcache:
-                        raise KeyError("Site %s has no message '%s'"
-                                       % (self, key))
+                return result
 
-        return {_key: self._msgcache[_key] for _key in keys}
+        return {_key: _mw_msg_cache[amlang][_key] for _key in keys}
 
     @deprecated_args(forceReload=None)
-    def mediawiki_message(self, key):
+    def mediawiki_message(self, key, lang=None):
         """Fetch the text for a MediaWiki message.
 
         @param key: name of MediaWiki message
         @type key: str
+        @param lang: a language code, default is self.lang
+        @type lang: str or None
 
         @rtype unicode
         """
-        return self.mediawiki_messages([key])[key]
+        return self.mediawiki_messages([key], lang=lang)[key]
 
-    def has_mediawiki_message(self, key):
+    def has_mediawiki_message(self, key, lang=None):
         """Determine if the site defines a MediaWiki message.
 
         @param key: name of MediaWiki message
         @type key: str
+        @param lang: a language code, default is self.lang
+        @type lang: str or None
 
         @rtype: bool
         """
-        return self.has_all_mediawiki_messages([key])
+        return self.has_all_mediawiki_messages([key], lang=lang)
 
-    def has_all_mediawiki_messages(self, keys):
+    def has_all_mediawiki_messages(self, keys, lang=None):
         """Confirm that the site defines a set of MediaWiki messages.
 
         @param keys: names of MediaWiki messages
-        @type keys: set of str
+        @type keys: iterable of str
+        @param lang: a language code, default is self.lang
+        @type lang: str or None
 
         @rtype: bool
         """
         try:
-            self.mediawiki_messages(keys)
-            return True
+            self.mediawiki_messages(keys, lang=lang)
         except KeyError:
             return False
+        return True
 
     @property
     def months_names(self):
@@ -3120,23 +3154,35 @@ class APISite(BaseSite):
             self.loadpageinfo(page)
         return page._protection
 
-    def page_can_be_edited(self, page):
-        """
-        Determine if the page can be edited.
+    def page_can_be_edited(self, page, action='edit'):
+        """Determine if the page can be modified.
 
-        Return True if and only if:
-          - page is unprotected, and bot has an account for this site, or
-          - page is protected, and bot has a sysop account for this site.
+        Return True if the bot has the permission of needed restriction level
+        for the given action type.
 
+        @param page: a pywikibot.Page object
+        @type param: pywikibot.Page
+        @param action: a valid restriction type like 'edit', 'move'
+        @type action: str
         @rtype: bool
+
+        @raises ValueError: invalid action parameter
         """
-        rest = self.page_restrictions(page)
-        sysop_protected = 'edit' in rest and rest['edit'][0] == 'sysop'
-        try:
-            api.LoginManager(site=self, sysop=sysop_protected)
-        except NoUsername:
-            return False
-        return True
+        if action not in self.siteinfo['restrictions']['types']:
+            raise ValueError('{}.page_can_be_edited(): Invalid value "{}" for '
+                             '"action" parameter'
+                             .format(self.__class__.__name__, action))
+        prot_rights = {
+            '': action,
+            'autoconfirmed': 'editsemiprotected',
+            'sysop': 'editprotected',
+            'steward': 'editprotected'
+        }
+        restriction = self.page_restrictions(page).get(action, ('', None))[0]
+        user_rights = self.userinfo['rights']
+        if prot_rights.get(restriction, restriction) in user_rights:
+            return True
+        return False
 
     def page_isredirect(self, page):
         """Return True if and only if page is a redirect."""
@@ -5215,7 +5261,7 @@ class APISite(BaseSite):
     }
     _ep_text_overrides = {'appendtext', 'prependtext', 'undo'}
 
-    @must_be(group='user')
+    @need_right('edit')
     def editpage(self, page, summary=None, minor=True, notminor=False,
                  bot=True, recreate=True, createonly=False, nocreate=False,
                  watch=None, **kwargs):
@@ -5435,7 +5481,8 @@ class APISite(BaseSite):
             'destination revisions of {dest}'
     }
 
-    @must_be(group='sysop', right='mergehistory')
+    @need_right('mergehistory')
+    @need_version('1.27.0-wmf.13')
     def merge_history(self, source, dest, timestamp=None, reason=None):
         """Merge revisions from one page into another.
 
@@ -5457,12 +5504,6 @@ class APISite(BaseSite):
         @param reason: Optional reason for the history merge
         @type reason: str
         """
-        # Check wiki version to see if action=mergehistory is supported
-        if self.mw_version < '1.27.0-wmf.13':
-            raise FatalServerError(str(self) + ' version must be '
-                                   '1.27.0-wmf.13 or newer to support the '
-                                   'history merge API.')
-
         # Data for error messages
         errdata = {
             'site': self,
@@ -5554,7 +5595,7 @@ class APISite(BaseSite):
             '[[%(oldtitle)s]]',
     }
 
-    @must_be(group='user')
+    @need_right('move')
     def movepage(self, page, newtitle, summary, movetalk=True,
                  noredirect=False):
         """Move a Page to a new title.
@@ -5657,7 +5698,7 @@ class APISite(BaseSite):
             'Page [[%(title)s]] already rolled back; action aborted.',
     }  # other errors shouldn't arise because we check for those errors
 
-    @must_be('user')
+    @need_right('rollback')
     def rollbackpage(self, page, **kwargs):
         """Roll back page to version before last user's edits.
 
@@ -5722,7 +5763,7 @@ class APISite(BaseSite):
                         'Revision may not exist or was already undeleted.'
     }  # other errors shouldn't occur because of pre-submission checks
 
-    @must_be(group='sysop', right='delete')
+    @need_right('delete')
     @deprecate_arg('summary', 'reason')
     def deletepage(self, page, reason):
         """Delete page from the wiki. Requires appropriate privilege level.
@@ -5760,7 +5801,7 @@ class APISite(BaseSite):
         finally:
             self.unlock_page(page)
 
-    @must_be(group='sysop', right='undelete')
+    @need_right('undelete')
     @deprecate_arg('summary', 'reason')
     def undelete_page(self, page, reason, revisions=None):
         """Undelete page from the wiki. Requires appropriate privilege level.
@@ -5833,7 +5874,7 @@ class APISite(BaseSite):
         # implemented in b73b5883d486db0e9278ef16733551f28d9e096d
         return set(self.siteinfo.get('restrictions')['levels'])
 
-    @must_be(group='sysop', right='protect')
+    @need_right('protect')
     @deprecate_arg('summary', 'reason')
     def protect(self, page, protections, reason, expiry=None, **kwargs):
         """(Un)protect a wiki page. Requires administrator status.
@@ -5902,7 +5943,7 @@ class APISite(BaseSite):
             "The revision %(revid)s can't be patrolled as it's too old."
     }
 
-    @must_be(group='user')
+    @need_right('patrol')
     @deprecated_args(token=None)
     def patrol(self, rcid=None, revid=None, revision=None):
         """Return a generator of patrolled pages.
@@ -5991,7 +6032,7 @@ class APISite(BaseSite):
 
             yield result['patrol']
 
-    @must_be(group='sysop', right='block')
+    @need_right('block')
     def blockuser(self, user, expiry, reason, anononly=True, nocreate=True,
                   autoblock=True, noemail=False, reblock=False,
                   allowusertalk=False):
@@ -6049,7 +6090,7 @@ class APISite(BaseSite):
         data = req.submit()
         return data
 
-    @must_be(group='sysop', right='block')
+    @need_right('unblock')
     def unblockuser(self, user, reason=None):
         """
         Remove the block for the user.
@@ -6069,7 +6110,7 @@ class APISite(BaseSite):
         data = req.submit()
         return data
 
-    @must_be(group='user')
+    @need_right('editmywatchlist')
     def watch(self, pages, unwatch=False):
         """Add or remove pages from watchlist.
 
@@ -6082,6 +6123,7 @@ class APISite(BaseSite):
             if False add them (default).
         @return: True if API returned expected response; False otherwise
         @rtype: bool
+        @raises KeyError: 'watch' isn't in API response
 
         """
         parameters = {'action': 'watch',
@@ -6109,7 +6151,7 @@ class APISite(BaseSite):
                 return False
         return True
 
-    @must_be(group='user')
+    @need_right('editmywatchlist')
     @deprecated('Site().watch', since='20160102')
     def watchpage(self, page, unwatch=False):
         """
@@ -6125,18 +6167,14 @@ class APISite(BaseSite):
         @rtype: bool
 
         """
-        parameters = {'action': 'watch',
-                      'title': page,
-                      'token': self.tokens['watch'],
-                      'unwatch': unwatch}
-        req = self._simple_request(**parameters)
-        result = req.submit()
-        if 'watch' not in result:
-            pywikibot.error('watchpage: Unexpected API response:\n%s' % result)
-            return False
-        return ('unwatched' if unwatch else 'watched') in result['watch']
+        try:
+            result = self.watch(page, unwatch)
+        except KeyError:
+            pywikibot.error('watchpage: Unexpected API response')
+            result = False
+        return result
 
-    @must_be(group='user')
+    @need_right('purge')
     def purgepages(
         self, pages, forcelinkupdate=False, forcerecursivelinkupdate=False,
         converttitles=False, redirects=False
@@ -6216,7 +6254,7 @@ class APISite(BaseSite):
         """
         return self._get_titles_with_hash(hash_found)
 
-    @must_be(group='user')
+    @need_right('edit')
     def is_uploaddisabled(self):
         """Return True if upload is disabled on site.
 
@@ -6227,30 +6265,33 @@ class APISite(BaseSite):
         """
         if self.mw_version >= '1.27wmf9':
             return not self._siteinfo.get('general')['uploadsenabled']
+
         if hasattr(self, '_uploaddisabled'):
             return self._uploaddisabled
-        else:
-            # attempt a fake upload; on enabled sites will fail for:
-            # missingparam: One of the parameters
-            #    filekey, file, url, statuskey is required
-            # TODO: is there another way?
-            try:
-                req = self._request(throttle=False,
-                                    parameters={'action': 'upload',
-                                                'token': self.tokens['edit']})
-                req.submit()
-            except api.APIError as error:
-                if error.code == 'uploaddisabled':
-                    self._uploaddisabled = True
-                elif error.code == 'missingparam':
-                    # If the upload module is enabled, the above dummy request
-                    # does not have sufficient parameters and will cause a
-                    # 'missingparam' error.
-                    self._uploaddisabled = False
-                else:
-                    # Unexpected error
-                    raise
-                return self._uploaddisabled
+
+        # attempt a fake upload; on enabled sites will fail for:
+        # missingparam: One of the parameters
+        #    filekey, file, url, statuskey is required
+        # TODO: is there another way?
+        try:
+            req = self._request(throttle=False,
+                                parameters={'action': 'upload',
+                                            'token': self.tokens['edit']})
+            req.submit()
+        except api.APIError as error:
+            if error.code == 'uploaddisabled':
+                self._uploaddisabled = True
+            elif error.code == 'missingparam':
+                # If the upload module is enabled, the above dummy request
+                # does not have sufficient parameters and will cause a
+                # 'missingparam' error.
+                self._uploaddisabled = False
+            else:
+                # Unexpected error
+                raise
+            return self._uploaddisabled
+        raise RuntimeError(
+            'Unexpected success of upload action without parameters.')
 
     def stash_info(self, file_key, props=False):
         """Get the stash info for a given file key.
@@ -7274,7 +7315,7 @@ class APISite(BaseSite):
         data = req.submit()
         return data['flow']['view-post']['result']['topic']
 
-    @must_be('user')
+    @need_right('edit')
     @need_extension('Flow')
     def create_new_topic(self, page, title, content, format):
         """
@@ -7299,7 +7340,7 @@ class APISite(BaseSite):
         data = req.submit()
         return data['flow']['new-topic']['committed']['topiclist']
 
-    @must_be('user')
+    @need_right('edit')
     @need_extension('Flow')
     def reply_to_post(self, page, reply_to_uuid, content, format):
         """Reply to a post on a Flow topic.
@@ -7323,7 +7364,7 @@ class APISite(BaseSite):
         data = req.submit()
         return data['flow']['reply']['committed']['topic']
 
-    @must_be('user', 'flow-lock')
+    @need_right('flow-lock')
     @need_extension('Flow')
     def lock_topic(self, page, lock, reason):
         """
@@ -7347,7 +7388,7 @@ class APISite(BaseSite):
         data = req.submit()
         return data['flow']['lock-topic']['committed']['topic']
 
-    @must_be('user')
+    @need_right('edit')
     @need_extension('Flow')
     def moderate_topic(self, page, state, reason):
         """
@@ -7370,7 +7411,7 @@ class APISite(BaseSite):
         data = req.submit()
         return data['flow']['moderate-topic']['committed']['topic']
 
-    @must_be('user', 'flow-delete')
+    @need_right('flow-delete')
     @need_extension('Flow')
     def delete_topic(self, page, reason):
         """
@@ -7385,7 +7426,7 @@ class APISite(BaseSite):
         """
         return self.moderate_topic(page, 'delete', reason)
 
-    @must_be('user', 'flow-hide')
+    @need_right('flow-hide')
     @need_extension('Flow')
     def hide_topic(self, page, reason):
         """
@@ -7400,7 +7441,7 @@ class APISite(BaseSite):
         """
         return self.moderate_topic(page, 'hide', reason)
 
-    @must_be('user', 'flow-suppress')
+    @need_right('flow-suppress')
     @need_extension('Flow')
     def suppress_topic(self, page, reason):
         """
@@ -7415,7 +7456,7 @@ class APISite(BaseSite):
         """
         return self.moderate_topic(page, 'suppress', reason)
 
-    @must_be('user')
+    @need_right('edit')
     @need_extension('Flow')
     def restore_topic(self, page, reason):
         """
@@ -7430,7 +7471,7 @@ class APISite(BaseSite):
         """
         return self.moderate_topic(page, 'restore', reason)
 
-    @must_be('user')
+    @need_right('edit')
     @need_extension('Flow')
     def moderate_post(self, post, state, reason):
         """
@@ -7455,7 +7496,7 @@ class APISite(BaseSite):
         data = req.submit()
         return data['flow']['moderate-post']['committed']['topic']
 
-    @must_be('user', 'flow-delete')
+    @need_right('flow-delete')
     @need_extension('Flow')
     def delete_post(self, post, reason):
         """
@@ -7470,7 +7511,7 @@ class APISite(BaseSite):
         """
         return self.moderate_post(post, 'delete', reason)
 
-    @must_be('user', 'flow-hide')
+    @need_right('flow-hide')
     @need_extension('Flow')
     def hide_post(self, post, reason):
         """
@@ -7485,7 +7526,7 @@ class APISite(BaseSite):
         """
         return self.moderate_post(post, 'hide', reason)
 
-    @must_be('user', 'flow-suppress')
+    @need_right('flow-suppress')
     @need_extension('Flow')
     def suppress_post(self, post, reason):
         """
@@ -7500,7 +7541,7 @@ class APISite(BaseSite):
         """
         return self.moderate_post(post, 'suppress', reason)
 
-    @must_be('user')
+    @need_right('edit')
     @need_extension('Flow')
     def restore_post(self, post, reason):
         """
@@ -7584,16 +7625,6 @@ class ClosedSite(APISite):
                                 'upload': ('steward', 'infinity'),
                                 'create': ('steward', 'infinity')}
         return page._protection
-
-    def page_can_be_edited(self, page):
-        """Determine if the page can be edited."""
-        rest = self.page_restrictions(page)
-        sysop_protected = 'edit' in rest and rest['edit'][0] == 'steward'
-        try:
-            api.LoginManager(site=self, sysop=sysop_protected)
-        except NoUsername:
-            return False
-        return True
 
     def recentchanges(self, **kwargs):
         """An error instead of pointless API call."""
@@ -7961,7 +7992,7 @@ class DataSite(APISite):
         return dtype
 
     @deprecated_args(identification='entity')
-    @must_be(group='user')
+    @need_right('edit')
     def editEntity(self, entity, data, bot=True, **kwargs):
         """
         Edit entity.
@@ -8015,7 +8046,7 @@ class DataSite(APISite):
         data = req.submit()
         return data
 
-    @must_be(group='user')
+    @need_right('edit')
     def addClaim(self, entity, claim, bot=True, summary=None):
         """
         Add a claim.
@@ -8046,7 +8077,7 @@ class DataSite(APISite):
             entity.claims[claim.getID()] = [claim]
         entity.latest_revision_id = data['pageinfo']['lastrevid']
 
-    @must_be(group='user')
+    @need_right('edit')
     def changeClaimTarget(self, claim, snaktype='value',
                           bot=True, summary=None):
         """
@@ -8078,7 +8109,7 @@ class DataSite(APISite):
         data = req.submit()
         return data
 
-    @must_be(group='user')
+    @need_right('edit')
     def save_claim(self, claim, summary=None, bot=True):
         """
         Save the whole claim to the wikibase site.
@@ -8108,7 +8139,7 @@ class DataSite(APISite):
         claim.on_item.latest_revision_id = data['pageinfo']['lastrevid']
         return data
 
-    @must_be(group='user')
+    @need_right('edit')
     def editSource(self, claim, source, new=False,
                    bot=True, summary=None, baserevid=None):
         """
@@ -8163,7 +8194,7 @@ class DataSite(APISite):
         data = req.submit()
         return data
 
-    @must_be(group='user')
+    @need_right('edit')
     def editQualifier(self, claim, qualifier, new=False, bot=True,
                       summary=None, baserevid=None):
         """
@@ -8201,7 +8232,7 @@ class DataSite(APISite):
         data = req.submit()
         return data
 
-    @must_be(group='user')
+    @need_right('edit')
     def removeClaims(self, claims, bot=True, summary=None, baserevid=None):
         """
         Remove claims.
@@ -8235,7 +8266,7 @@ class DataSite(APISite):
         data = req.submit()
         return data
 
-    @must_be(group='user')
+    @need_right('edit')
     def removeSources(self, claim, sources,
                       bot=True, summary=None, baserevid=None):
         """
@@ -8266,7 +8297,7 @@ class DataSite(APISite):
         data = req.submit()
         return data
 
-    @must_be(group='user')
+    @need_right('edit')
     def remove_qualifiers(self, claim, qualifiers,
                           bot=True, summary=None, baserevid=None):
         """
@@ -8298,7 +8329,7 @@ class DataSite(APISite):
         data = req.submit()
         return data
 
-    @must_be(group='user')
+    @need_right('edit')
     def linkTitles(self, page1, page2, bot=True):
         """
         Link two pages together.
@@ -8326,7 +8357,7 @@ class DataSite(APISite):
         data = req.submit()
         return data
 
-    @must_be(group='user')
+    @need_right('item-merge')
     @deprecated_args(ignoreconflicts='ignore_conflicts', fromItem='from_item',
                      toItem='to_item')
     def mergeItems(self, from_item, to_item, ignore_conflicts=None,
@@ -8363,7 +8394,7 @@ class DataSite(APISite):
         data = req.submit()
         return data
 
-    @must_be(group='user')
+    @need_right('item-redirect')
     def set_redirect_target(self, from_item, to_item, bot=True):
         """
         Make a redirect to another item.
@@ -8386,7 +8417,7 @@ class DataSite(APISite):
         data = req.submit()
         return data
 
-    @must_be(group='user')
+    @need_right('edit')
     def createNewItemFromPage(self, page, bot=True, **kwargs):
         """
         Create a new Wikibase item for a provided page.
@@ -8437,7 +8468,7 @@ class DataSite(APISite):
         @type language: str
         @param total: Maximum number of pages to retrieve in total, or None in
             case of no limit.
-        @type limit: int or None
+        @type total: int or None
         @return: 'search' list from API output.
         @rtype: api.APIGenerator
         """

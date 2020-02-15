@@ -38,7 +38,7 @@ from pywikibot.exceptions import (
     Error, TimeoutError, InvalidTitle, UnsupportedPage
 )
 from pywikibot.tools import (
-    deprecated, itergroup, ip, PY2, PYTHON_VERSION,
+    deprecated, itergroup, PY2, PYTHON_VERSION,
     getargspec, UnicodeType, remove_last_args
 )
 from pywikibot.tools.formatter import color_format
@@ -120,11 +120,11 @@ class APIError(Error):
     def __str__(self):
         """Return a string representation."""
         if self.other:
-            return '{0}: {1} [{2}]'.format(
+            return '{0}: {1}\n[{2}]'.format(
                 self.code,
                 self.info,
-                '; '.join(
-                    '{0}:{1}'.format(key, val)
+                ';\n '.join(
+                    '{0}: {1}'.format(key, val)
                     for key, val in self.other.items()))
 
         return '{0}: {1}'.format(self.code, self.info)
@@ -695,11 +695,12 @@ class ParamInfo(Container):
         except KeyError:
             raise ValueError("paraminfo for '%s' not loaded" % module)
 
-        if 'parameters' not in module:
-            pywikibot.warning("module '%s' has no parameters" % module)
-            return
+        try:
+            params = module['parameters']
+        except KeyError:
+            pywikibot.warning("module '{}' has no parameters".format(module))
+            return None
 
-        params = module['parameters']
         param_data = [param for param in params
                       if param['name'] == param_name]
 
@@ -707,11 +708,7 @@ class ParamInfo(Container):
             return None
 
         assert(len(param_data) == 1)
-        param_data = param_data[0]
-        # pre 1.14 doesn't provide limit attribute on parameters
-        if 'multi' in param_data and 'limit' not in param_data:
-            param_data['limit'] = self._limit
-        return param_data
+        return param_data[0]
 
     @property
     @deprecated('submodules() or module_paths', since='20150715')
@@ -1253,7 +1250,7 @@ class Request(MutableMapping):
                 raise Error('API write action attempted without userinfo')
             assert('name' in self.site._userinfo)
 
-            if ip.is_IP(self.site._userinfo['name']):
+            if 'anon' in self.site._userinfo:
                 raise Error('API write action attempted as IP %r'
                             % self.site._userinfo['name'])
 
@@ -1514,7 +1511,7 @@ class Request(MutableMapping):
             self._params['wrap'] = ['']
 
         if config.maxlag:
-            self._params.setdefault('maxlag', str(config.maxlag))
+            self._params.setdefault('maxlag', [str(config.maxlag)])
         self._params.setdefault('format', ['json'])
         if self._params['format'] != ['json']:
             raise TypeError("Query format '%s' cannot be parsed."
@@ -2068,6 +2065,15 @@ class Request(MutableMapping):
             if code == 'cirrussearch-too-busy-error':  # T170647
                 self.wait()
                 continue
+
+            if code == 'urlshortener-blocked':  # T244062
+                # add additional informations to result['error']
+                result['error']['current site'] = self.site
+                if self.site.user():
+                    result['error']['current user'] = self.site.user()
+                else:  # not logged in; show the IP
+                    uinfo = self.site.userinfo
+                    result['error']['current user'] = uinfo['name']
 
             # raise error
             try:
@@ -3292,6 +3298,7 @@ def _update_coordinates(page, coordinates):
                                      name=co.get('name', ''),
                                      dim=int(co.get('dim', 0)) or None,
                                      globe=co['globe'],  # See [[gerrit:67886]]
+                                     primary='primary' in co
                                      )
         coords.append(coord)
     page._coords = coords

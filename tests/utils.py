@@ -7,6 +7,7 @@
 #
 from __future__ import absolute_import, division, unicode_literals
 
+from contextlib import contextmanager
 import inspect
 import json
 import os
@@ -601,7 +602,7 @@ def execute(command, data_in=None, timeout=None, error=None):
     @type command: list of unicode
     """
     if PY2 or PYTHON_VERSION < (3, 5, 0):
-        command.insert(1, '-W ignore::FutureWarning:pywikibot:127')
+        command.insert(1, '-W ignore::FutureWarning:pywikibot:128')
     if cryptography_version and cryptography_version < [1, 3, 4]:
         command.insert(1, '-W ignore:Old version of cryptography:Warning')
     # Any environment variables added on Windows must be of type
@@ -697,3 +698,11 @@ def execute_pwb(args, data_in=None, timeout=None, error=None, overrides=None):
 
     return execute(command=command + args,
                    data_in=data_in, timeout=timeout, error=error)
+
+
+@contextmanager
+def empty_sites():
+    """Empty pywikibot._sites and pywikibot._url_cache cache on entry point."""
+    pywikibot._sites = {}
+    pywikibot._url_cache = {}
+    yield

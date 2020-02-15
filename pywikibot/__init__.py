@@ -62,6 +62,7 @@ from pywikibot.tools import (
     classproperty,
     deprecated as __deprecated,
     deprecate_arg as _deprecate_arg,
+    issue_deprecation_warning,
     normalize_username,
     MediaWikiVersion as _MediaWikiVersion,
     redirect_func,
@@ -253,18 +254,14 @@ class Timestamp(datetime.datetime):
 
 class Coordinate(_WbRepresentation):
 
-    """
-    Class for handling and storing Coordinates.
-
-    For now its just being used for DataSite, but
-    in the future we can use it for the GeoData extension.
-    """
+    """Class for handling and storing Coordinates."""
 
     _items = ('lat', 'lon', 'entity')
 
     @_deprecate_arg('entity', 'globe_item')
     def __init__(self, lat, lon, alt=None, precision=None, globe=None,
-                 typ='', name='', dim=None, site=None, globe_item=None):
+                 typ='', name='', dim=None, site=None, globe_item=None,
+                 primary=False):
         """
         Represent a geo coordinate.
 
@@ -289,6 +286,8 @@ class Coordinate(_WbRepresentation):
                            of this Wikibase item. Takes precedence over 'globe'
                            if present.
         @type globe_item: pywikibot.ItemPage or str
+        @param primary: True for a primary set of coordinates
+        @type primary: bool
         """
         self.lat = lat
         self.lon = lon
@@ -299,6 +298,7 @@ class Coordinate(_WbRepresentation):
         self.name = name
         self._dim = dim
         self.site = site or Site().data_repository()
+        self.primary = primary
 
         if globe:
             globe = globe.lower()
@@ -1222,6 +1222,10 @@ def Site(code=None, fam=None, user=None, sysop=None, interface=None, url=None):
     """
     _logger = 'wiki'
 
+    if sysop is not None:
+        issue_deprecation_warning('positional argument of "sysop"', depth=3,
+                                  warning_class=DeprecationWarning,
+                                  since='20190907')
     if url:
         # Either code and fam or only url
         if code or fam:

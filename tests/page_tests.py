@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for the page module."""
 #
-# (C) Pywikibot team, 2008-2019
+# (C) Pywikibot team, 2008-2020
 #
 # Distributed under the terms of the MIT license.
 #
@@ -464,7 +464,7 @@ class TestPageObject(DefaultSiteTestCase):
                 r'use interwiki\.page_empty_check\(page\) instead\.'):
             self.assertIsInstance(mainpage.isEmpty(), bool)
         self.assertIsInstance(mainpage.isDisambig(), bool)
-        self.assertIsInstance(mainpage.canBeEdited(), bool)
+        self.assertIsInstance(mainpage.has_permission(), bool)
         self.assertIsInstance(mainpage.botMayEdit(), bool)
         self.assertIsInstance(mainpage.editTime(), pywikibot.Timestamp)
         self.assertIsInstance(mainpage.permalink(), basestring)
@@ -610,6 +610,31 @@ class TestPageObject(DefaultSiteTestCase):
                                    'Method "loadpageimage" is not implemented '
                                    'without the extension PageImages',
                                    mainpage.page_image)
+
+
+class TestPageCoordinates(TestCase):
+
+    """Test Page Object using German Wikipedia."""
+
+    family = 'wikipedia'
+    code = 'de'
+
+    cached = True
+
+    def test_coordinates(self):
+        """Test C{Page.coodinates} method."""
+        page = pywikibot.Page(self.site, 'Berlin')
+        with self.subTest(primary_only=False):
+            coords = page.coordinates()
+            self.assertIsInstance(coords, list)
+            for coord in coords:
+                self.assertIsInstance(coord, pywikibot.Coordinate)
+                self.assertIsInstance(coord.primary, bool)
+
+        with self.subTest(primary_only=True):
+            coord = page.coordinates(primary_only=True)
+            self.assertIsInstance(coord, pywikibot.Coordinate)
+            self.assertTrue(coord.primary)
 
 
 class TestPageDeprecation(DefaultSiteTestCase, DeprecationTestCase):
@@ -1180,6 +1205,8 @@ class TestPermalink(DefaultSiteTestCase):
 
 class TestShortLink(DefaultSiteTestCase):
     """Test that short link management is correct."""
+
+    user = True
 
     family = 'wikipedia'
     code = 'test'
