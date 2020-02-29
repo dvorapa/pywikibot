@@ -77,9 +77,9 @@ def getPhoto(flickr, photo_id):
     """
     while True:
         try:
-            photoInfo = flickr.photos_getInfo(photo_id=photo_id)
+            photoInfo = flickr.photos.getInfo(photo_id=photo_id)
             # xml.etree.ElementTree.dump(photoInfo)
-            photoSizes = flickr.photos_getSizes(photo_id=photo_id)
+            photoSizes = flickr.photos.getSizes(photo_id=photo_id)
             # xml.etree.ElementTree.dump(photoSizes)
             return photoInfo, photoSizes
         except flickrapi.exceptions.FlickrError:
@@ -189,8 +189,8 @@ def getFilename(photoInfo, site=None, project='Flickr'):
                 description = description[:items]
             title = cleanUpTitle(description)
         else:
-            title = ''
-            # Should probably have the id of the photo as last resort.
+            # Use the id of the photo as last resort.
+            title = photoInfo.find('photo').attrib['id']
 
     if pywikibot.Page(site, 'File:{} - {} - {}.jpg'
                       .format(title, project, username)).exists():
