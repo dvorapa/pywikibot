@@ -141,12 +141,16 @@ def findDuplicateImages(photo, site=None):
     return site.getFilesFromAnHash(base64.b16encode(hashObject.digest()))
 
 
-def getTags(photoInfo):
+def getTags(photoInfo, raw=False):
     """Get all the tags on a photo."""
     result = []
     for tag in photoInfo.find('photo').find('tags').findall('tag'):
-        result.append(tag.text.lower())
-
+        if raw:
+            # use original tag name
+            # see https://www.flickr.com/services/api/misc.tags.html
+            result.append(tag.attrib['raw'].lower())
+        else:
+            result.append(tag.text.lower())
     return result
 
 
@@ -171,6 +175,7 @@ def getFilename(photoInfo, site=None, project='Flickr'):
     if not site:
         site = pywikibot.Site('commons', 'commons')
     username = photoInfo.find('photo').find('owner').attrib['username']
+    username = cleanUpTitle(username)
     title = photoInfo.find('photo').find('title').text
     if title:
         title = cleanUpTitle(title)
@@ -191,6 +196,7 @@ def getFilename(photoInfo, site=None, project='Flickr'):
         else:
             # Use the id of the photo as last resort.
             title = photoInfo.find('photo').attrib['id']
+
     fileformat = photoInfo.find('photo').attrib['originalformat']
     if pywikibot.Page(site, 'File:{} - {} - {}.{}'
                       .format(title, project, username, fileformat)).exists():
@@ -226,7 +232,7 @@ def cleanUpTitle(title):
     title = re.sub('[;]', ',', title)
     title = re.sub(r'[/+\\:]', '-', title)
     title = re.sub('--+', '-', title)
-    title = re.sub(',,+', ',', title)
+    title = re.sub('[,|]+', ',', title)
     title = re.sub('[-,^]([.]|$)', r'\1', title)
     title = title.replace(' ', '_')
     title = title.strip('_')
