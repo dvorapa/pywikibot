@@ -35,7 +35,7 @@ from pywikibot import config, login
 from pywikibot.comms import http
 from pywikibot.exceptions import (
     Server504Error, Server414Error, FatalServerError, NoUsername,
-    Error, TimeoutError, InvalidTitle, UnsupportedPage
+    Error, TimeoutError, MaxlagTimeoutError, InvalidTitle, UnsupportedPage
 )
 from pywikibot.tools import (
     deprecated, itergroup, PY2, PYTHON_VERSION,
@@ -2097,8 +2097,12 @@ class Request(MutableMapping):
             except TypeError:
                 raise RuntimeError(result)
 
-        raise TimeoutError(
-            'Maximum retries attempted due to maxlag without success.')
+        msg = 'Maximum retries attempted due to maxlag without success.'
+        if os.environ.get('PYWIKIBOT_TESTS_RUNNING', '0') == '1':
+            import unittest
+            raise unittest.SkipTest(msg)
+
+        raise MaxlagTimeoutError(msg)
 
     def wait(self):
         """Determine how long to wait after a failed request."""
@@ -3254,8 +3258,6 @@ def _update_revisions(page, revisions):
     """Update page revisions."""
     # TODO: T102735: Use the page content model for <1.21
     for rev in revisions:
-        if 'slots' in rev and 'main' in rev['slots']:  # MW 1.32+
-            rev.update(rev['slots']['main'])
         revision = pywikibot.page.Revision(
             revid=rev['revid'],
             timestamp=pywikibot.Timestamp.fromISOformat(rev['timestamp']),
@@ -3263,10 +3265,11 @@ def _update_revisions(page, revisions):
             anon='anon' in rev,
             comment=rev.get('comment', ''),
             minor='minor' in rev,
-            text=rev.get('*'),
+            slots=rev.get('slots'),  # MW 1.32+
+            text=rev.get('*'),  # b/c
             rollbacktoken=rev.get('rollbacktoken'),
             parentid=rev.get('parentid'),
-            contentmodel=rev.get('contentmodel'),
+            contentmodel=rev.get('contentmodel'),  # b/c
             sha1=rev.get('sha1')
         )
         page._revisions[revision.revid] = revision

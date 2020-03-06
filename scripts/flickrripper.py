@@ -166,7 +166,7 @@ def getFlinfoDescription(photo_id):
         'http://wikipedia.ramselehof.de/flinfo.php?%s' % parameters).text
 
 
-def getFilename(photoInfo, site=None, project='Flickr'):
+def getFilename(photoInfo, site=None, project='Flickr', photo_url=None):
     """Build a good filename for the upload based on the username and title.
 
     Prevents naming collisions.
@@ -198,6 +198,9 @@ def getFilename(photoInfo, site=None, project='Flickr'):
             title = photoInfo.find('photo').attrib['id']
 
     fileformat = photoInfo.find('photo').attrib['originalformat']
+    if not fileformat and photo_url:
+        fileformat = photo_url.split('.')[-1]
+
     if pywikibot.Page(site, 'File:{} - {} - {}.{}'
                       .format(title, project, username, fileformat)).exists():
         i = 1
@@ -246,11 +249,17 @@ def buildDescription(flinfoDescription='', flickrreview=False, reviewer='',
     The description is based on the info from flickrinfo and improved.
 
     """
-    description = '== {{int:filedesc}} ==\n{}'.format(flinfoDescription)
+    description = flinfoDescription
+    # use template {{Taken on}}
+    datetaken = re.search(r'\|Date=(.*)\n', description).group(1)
+    if datetaken:
+        datetaken = '{{Taken on|%s}}' % (datetaken)
+        description = re.sub(r'\|Date=.*\n', '|Date={}\n'.format(datetaken),
+                             description)
     if removeCategories:
         description = textlib.removeCategoryLinks(description,
-                                                  pywikibot.Site(
-                                                      'commons', 'commons'))
+                                                  pywikibot.Site('commons',
+                                                                 'commons'))
     if override:
         description = description.replace('{{cc-by-sa-2.0}}\n', '')
         description = description.replace('{{cc-by-2.0}}\n', '')
@@ -268,9 +277,12 @@ def buildDescription(flinfoDescription='', flickrreview=False, reviewer='',
                 '{{flickrreview|%s|'
                 '{{subst:CURRENTYEAR}}-{{subst:CURRENTMONTH}}-'
                 '{{subst:CURRENTDAY2}}}}' % reviewer)
+    if '{{subst:unc}}' not in description:
+        # Request category check
+        description += '\n{{subst:chc}}\n'
     if addCategory:
         description = description.replace('{{subst:unc}}\n', '')
-        description = description + '\n[[Category:' + addCategory + ']]\n'
+        description += '\n[[Category:{}]]\n'.format(addCategory)
     description = description.replace('\r\n', '\n')
     return description
 
@@ -306,7 +318,7 @@ def processPhoto(flickr, photo_id='', flickrreview=False, reviewer='',
             pywikibot.output('Found duplicate image at {}'
                              .format(duplicates.pop()))
         else:
-            filename = getFilename(photoInfo)
+            filename = getFilename(photoInfo, photo_url=photoUrl)
             flinfoDescription = getFlinfoDescription(photo_id)
             photoDescription = buildDescription(flinfoDescription,
                                                 flickrreview, reviewer,
