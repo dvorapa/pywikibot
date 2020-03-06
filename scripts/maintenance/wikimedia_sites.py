@@ -36,7 +36,7 @@ families_list = [
 ]
 
 exceptions = {
-    'wikisource': ['-', 'mul', 'beta']
+    'wikiversity': ['beta']
 }
 
 
