@@ -186,7 +186,7 @@ class BasicBot(
                 dupes.append((template, twice))
         if dupes:
             with open('duplicity.txt', 'a') as seznam:
-                seznam.write('# ' + self.current_page.title(asLink=True) + '\t' + ', '.join([k + ':' + str(v) for k, v in dupes]) + '\n')
+                seznam.write('# ' + self.current_page.title(as_link=True) + '\t' + ', '.join([k + ':' + str(v) for k, v in dupes]) + '\n')
 
         # if summary option is None, it takes the default i18n summary from
         # i18n subdirectory with summary_key as summary key.

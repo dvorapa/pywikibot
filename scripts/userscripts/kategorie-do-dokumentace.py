@@ -147,7 +147,7 @@ class BasicBot(
         #if self.getOption('replace'):
         #self.current_page.title()
         #with open('soubor.txt', 'a') as soubor:
-        #    soubor.write('# ' + self.current_page.title(asLink=True) + '\n')
+        #    soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
         if not pywikibot.Page(self.current_page.site, self.current_page.title() + '/doc').exists():
             return
         kategorie = re.findall(r'<noinclude>.*?<\/noinclude>', text, flags=re.DOTALL)

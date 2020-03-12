@@ -147,7 +147,7 @@ class BasicBot(
         #if self.getOption('replace'):
         if not re.search(r'<noinclude>(?:\s*(?:\{\{ *(Dokumentace|Documentation|Dlouhodobě polozamčeno|Dlouhodobě zamčeno)[^\}]*\}\}|\[\[ *Kategorie:Wikipedie:Netisknout[^\]]*\]\]|<templatedata>.*?<\/templatedata>|<!--[^\n]*?-->|\|\}))*\s*<\/noinclude>', text, flags=re.I|re.DOTALL) and '/doc' not in self.current_page.title() and re.search(r'\{\{ *([Dd]okumentace|[Dd]ocumentation)[^\}]*\}\}', text):
             with open('dokumentace.txt', 'a') as dokumentace:
-                dokumentace.write('# ' + self.current_page.title(asLink=True) + '\n')
+                dokumentace.write('# ' + self.current_page.title(as_link=True) + '\n')
 
         ################################################################
 

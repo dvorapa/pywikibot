@@ -145,7 +145,7 @@ class BasicBot(
         # self.getOption('parametr')
         # self.current_page.title()
         # with open('soubor.txt', 'a') as soubor:
-        #     soubor.write('# ' + self.current_page.title(asLink=True) + '\n')
+        #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
         # text = textlib.replaceExcept(text, r'', r'', self.vyjimky)
         navbox = r'{{Pilotované lety na ISS}}'
         if re.search(r'\{\{ *(?:[Pp]ortály|[Aa]utoritní[ _]data|DEFAULTSORT)', text):

@@ -150,8 +150,7 @@ class BasicBot(
         text = textlib.replaceExcept(text, r'\>', r'>ßßß', self.vyjimky)
         pageParts = text.strip('ß').split('ßßß')
         #newPageParts = []
-        inBlockTemplate = [False]
-        inInlineTemplate = [False]
+        inTemplate = [0]
         inLink = [False]
         inTable = [False]
         inTag = [False]
@@ -163,10 +162,10 @@ class BasicBot(
             name = name.replace(r'\ ', r'[ _]')
             name = r'\{\{\s*[' + name[0].upper() + name[0].lower() + r']' + name[1:]
             if re.match(name, part):
-                inBlockTemplate.append(True)
+                inTemplate.append(2)
                 # part = textlib.replaceExcept(part, r'', r'', self.vyjimky)
             elif part[:2] == '{{':
-                inInlineTemplate.append(True)
+                inTemplate.append(1)
             elif part[:1] == '[':
                 inLink.append(True)
             elif part[:2] == '{|':
@@ -174,7 +173,7 @@ class BasicBot(
             elif part[:1] == '<':
                 inTag.append(True)
 
-            if inBlockTemplate[-1] and not inInlineTemplate[-1] and not inLink[-1] and not inTable[-1] and not inTag[-1]:
+            if inTemplate[-1] == 2 and not inLink[-1] and not inTable[-1] and not inTag[-1]:
                 #part = textlib.replaceExcept(part, r'\|\s*[A-ZŽŠČŘĎŤŇÁÉÍÓÚŮÝĚ]', lambda x: x.group(0).lower(), self.vyjimky)
                 #part = textlib.replaceExcept(part, r'\|[^\|\=]+?=', lambda x: x.group(0).replace('_',' '), self.vyjimky)
                 ################################################################
@@ -184,7 +183,7 @@ class BasicBot(
                 # self.getOption('parametr')
                 # self.current_page.title()
                 # with open('soubor.txt', 'a') as soubor:
-                #     soubor.write('# ' + self.current_page.title(asLink=True) + '\n')
+                #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
                 # part = textlib.replaceExcept(part, r'', r'', self.vyjimky)
                 params = re.findall(r'\|\s*([^\=\|\}]+)\s*=\s*([^\|\}]*)', part)
                 for param, val in params:
@@ -198,13 +197,8 @@ class BasicBot(
                 ################################################################
             #newPageParts.append(part)
 
-            if part[-2:] == '}}' and (inBlockTemplate[-1] or inInlineTemplate[-1]):
-                if inBlockTemplate[-1] and inInlineTemplate[-1]:
-                    inInlineTemplate.pop()
-                elif inInlineTemplate[-1] and not inBlockTemplate[-1]:
-                    inInlineTemplate.pop()
-                elif inBlockTemplate[-1] and not inInlineTemplate[-1]:
-                    inBlockTemplate.pop()
+            if part[-2:] == '}}' and inTemplate[-1] > 0:
+                inTemplate.pop()
             elif part[-1:] == ']' and inLink[-1]:
                 inLink.pop()
             elif part[-2:] == '|}' and inTable[-1]:

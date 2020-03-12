@@ -140,7 +140,7 @@ class BasicBot(
 
         # self.getOption('parametr')
         # with open('soubor.txt', 'a') as soubor:
-        #     soubor.write('# ' + self.current_page.title(asLink=True) + '\n')
+        #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
         # text = textlib.replaceExcept(text, r'', r'', exceptions)
         infobox = self.current_page.title(withNamespace=False)
         kategorie = re.findall(r'\[\[ *(?:' + r'|'.join(self.current_page.site.namespaces.CATEGORY) + r') *:[^\]]+\]\]', text, flags=re.I)
