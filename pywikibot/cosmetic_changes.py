@@ -705,8 +705,7 @@ class CosmeticChangesToolkit(object):
         text = textlib.replaceExcept(text, r'\>', r'>ßßß', exceptions)
         pageParts = text.strip('ß').split('ßßß')
 
-        inBlockTemplate = [False]
-        inInlineTemplate = [False]
+        inTemplate = [0]
         inLink = [False]
         inTable = [False]
         inTag = [False]
@@ -726,7 +725,7 @@ class CosmeticChangesToolkit(object):
         for part in pageParts:
             block = re.match(r'[^\n\|]+(\n+ *)\|', part)
             if ((match(block_templates, part) and not match(block_if_block, part)) or (block and match(block_if_block, part))) and not match(skip_templates, part):
-                inBlockTemplate.append(True)
+                inTemplate.append(2)
                 if match(no_line_after, part):
                     lines_after.append(r'')
                 elif match(one_line_after, part):
@@ -741,7 +740,7 @@ class CosmeticChangesToolkit(object):
                 else:
                     initial_spaces.append(initial_spaces[0])
             elif part[:2] == '{{':
-                inInlineTemplate.append(True)
+                inTemplate.append(1)
             elif part[:1] == '[':
                 inLink.append(True)
             elif part[:2] == '{|':
@@ -754,7 +753,7 @@ class CosmeticChangesToolkit(object):
                     part = textlib.replaceExcept(part, r'^\s*', lines_after[-1], exceptions)
                 lines_after.pop()
                 after_block_template = False
-            if inBlockTemplate[-1] and not inInlineTemplate[-1] and not inLink[-1] and not inTable[-1] and not inTag[-1]:
+            if inTemplate[-1] == 2 and not inLink[-1] and not inTable[-1] and not inTag[-1]:
                 part = textlib.replaceExcept(part, r'\|\s*(?=\||\})', r'', exceptions)
                 part = textlib.replaceExcept(part, r'\s*\|\s*', initial_spaces[-1] + r'| ', exceptions)
                 part = textlib.replaceExcept(part, r'\{\{\s*', r'{{', exceptions)
@@ -767,15 +766,11 @@ class CosmeticChangesToolkit(object):
                     part = textlib.replaceExcept(part, r'=\s*(\*|\#)', r'=\n\1', exceptions)
             newPageParts.append(part)
 
-            if part[-2:] == '}}' and (inBlockTemplate[-1] or inInlineTemplate[-1]):
-                if inBlockTemplate[-1] and inInlineTemplate[-1]:
-                    inInlineTemplate.pop()
-                elif inInlineTemplate[-1] and not inBlockTemplate[-1]:
-                    inInlineTemplate.pop()
-                elif inBlockTemplate[-1] and not inInlineTemplate[-1]:
-                    inBlockTemplate.pop()
+            if part[-2:] == '}}' and inTemplate[-1] > 0:
+                if inTemplate[-1] == 2:
                     initial_spaces.pop()
                     after_block_template = True
+                inTemplate.pop()
             elif part[-1:] == ']' and inLink[-1]:
                 inLink.pop()
             elif part[-2:] == '|}' and inTable[-1]:
