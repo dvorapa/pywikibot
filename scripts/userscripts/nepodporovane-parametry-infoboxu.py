@@ -164,8 +164,7 @@ class BasicBot(
             text = textlib.replaceExcept(text, r'\<', r'ßßß<', self.vyjimky)
             text = textlib.replaceExcept(text, r'\>', r'>ßßß', self.vyjimky)
             pageParts = text.strip('ß').split('ßßß')
-            inBlockTemplate = [False]
-            inInlineTemplate = [False]
+            inTemplate = [0]
             inLink = [False]
             inTable = [False]
             inTag = [False]
@@ -174,14 +173,14 @@ class BasicBot(
             for part in pageParts:
                 match = re.match(r'\{\{\s*((?:[Ii]nfobox[ _]|[Tt]axobox|[Ll]okomotiva[ _]|[Cc]ycling[ _]race\/infobox)[^\|\}]*)', part)
                 if match:
-                    inBlockTemplate.append(True)
+                    inTemplate.append(2)
                     tpage.append(pywikibot.Page(self.site, 'Template:' + match.group(1).strip()))
                     if tpage[-1].isRedirectPage():
                         target.append(tpage[-1].getRedirectTarget().title(as_link=True))
                     else:
                         target.append(tpage[-1].title(as_link=True))
                 elif part[:2] == '{{':
-                    inInlineTemplate.append(True)
+                    inTemplate.append(1)
                 elif part[:1] == '[':
                     inLink.append(True)
                 elif part[:2] == '{|':
@@ -189,7 +188,7 @@ class BasicBot(
                 elif part[:1] == '<':
                     inTag.append(True)
 
-                if inBlockTemplate[-1] and not inInlineTemplate[-1] and not inLink[-1] and not inTable[-1] and not inTag[-1]:
+                if inTemplate[-1] == 2 and not inLink[-1] and not inTable[-1] and not inTag[-1]:
                     ################################################################
                     #                            regexy                            #
                     ################################################################
@@ -218,15 +217,11 @@ class BasicBot(
 
                     ################################################################
 
-                if part[-2:] == '}}' and (inBlockTemplate[-1] or inInlineTemplate[-1]):
-                    if inBlockTemplate[-1] and inInlineTemplate[-1]:
-                        inInlineTemplate.pop()
-                    elif inInlineTemplate[-1] and not inBlockTemplate[-1]:
-                        inInlineTemplate.pop()
-                    elif inBlockTemplate[-1] and not inInlineTemplate[-1]:
-                        inBlockTemplate.pop()
+                if part[-2:] == '}}' and inTemplate[-1] > 0:
+                    if inTemplate[-1] == 2:
                         tpage.pop()
                         target.pop()
+                    inTemplate.pop()
                 elif part[-1:] == ']' and inLink[-1]:
                     inLink.pop()
                 elif part[-2:] == '|}' and inTable[-1]:

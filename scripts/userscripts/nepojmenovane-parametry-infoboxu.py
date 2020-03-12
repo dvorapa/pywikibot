@@ -161,19 +161,18 @@ class BasicBot(
             text = textlib.replaceExcept(text, r'\<', r'ßßß<', self.vyjimky)
             text = textlib.replaceExcept(text, r'\>', r'>ßßß', self.vyjimky)
             pageParts = text.strip('ß').split('ßßß')
-            inBlockTemplate = [False]
-            inInlineTemplate = [False]
+            inTemplate = [0]
             inLink = [False]
             inTable = [False]
             inTag = [False]
             noRemoveEmptyUnnamed = False
             for part in pageParts:
                 if re.match(r'\{\{ *(?:Infobox |NFPA 704|Studenti píší Wikipedii|Taxobox|Singly|Expedice-start a přistání|F1 Grand Prix|Kosmické těleso-(?:dceřiné těleso|teleskop)|Turnaj Grand Slamu)', part, flags=re.I) and not re.match(r'\{\{ *(?:Infobox (?:začátek|hlavička|obrázek|dvojitá|jednoduchá|konec|položka|chybí|Ročník fotbalového turnaje\/Fb|Eurovision\/Legenda|animanga\/Patička|- (?:železniční trať\/(?:legenda|hlavička)|číslo\/řada|politická strana\/mandáty|letiště\/(?:RWY|Konec)|budova\/kodbarvy|chemický prvek\/(?:Legenda|Barva|Text|Skupina|Izotopy)))|Taxobox\/(?:barva|cat|compare|Stupeň ohrožení|statusWD))', part, flags=re.I):
-                    inBlockTemplate.append(True)
+                    inTemplate.append(2)
                     if re.match(r'\{\{ *(?:Turnaj Grand Slamu|Infobox - t(?:urnaj Grand Slamu|enis(?: na LOH|ová soutěž)))', part, flags=re.I):
                         noRemoveEmptyUnnamed = True
                 elif part[:2] == '{{':
-                    inInlineTemplate.append(True)
+                    inTemplate.append(1)
                 elif part[:1] == '[':
                     inLink.append(True)
                 elif part[:2] == '{|':
@@ -181,21 +180,17 @@ class BasicBot(
                 elif part[:1] == '<':
                     inTag.append(True)
 
-                if inBlockTemplate[-1] and not inInlineTemplate[-1] and not inLink[-1] and not inTable[-1] and not inTag[-1] and not noRemoveEmptyUnnamed:
+                if inTemplate[-1] == 2 and not inLink[-1] and not inTable[-1] and not inTag[-1] and not noRemoveEmptyUnnamed:
                     if re.search(r'\|\s*[\|\}]', part):
                         self.gen2.add(self.current_page)
                         self.gen3.append(self.current_page)
                     elif re.search(r'\|(?:\s*=|\s*[0-9]+\s*=)?[^\|\}\=]*(?:\||\}|$)', part):
                         self.gen3.append(self.current_page)
 
-                if part[-2:] == '}}' and (inBlockTemplate[-1] or inInlineTemplate[-1]):
-                    if inBlockTemplate[-1] and inInlineTemplate[-1]:
-                        inInlineTemplate.pop()
-                    elif inInlineTemplate[-1] and not inBlockTemplate[-1]:
-                        inInlineTemplate.pop()
-                    elif inBlockTemplate[-1] and not inInlineTemplate[-1]:
-                        inBlockTemplate.pop()
+                if part[-2:] == '}}' and inTemplate[-1] > 0:
+                    if inTemplate[-1] == 2:
                         noRemoveEmptyUnnamed = False
+                    inTemplate.pop()
                 elif part[-1:] == ']' and inLink[-1]:
                     inLink.pop()
                 elif part[-2:] == '|}' and inTable[-1]:
@@ -213,8 +208,7 @@ class BasicBot(
             text = textlib.replaceExcept(text, r'\>', r'>ßßß', self.vyjimky)
             pageParts = text.strip('ß').split('ßßß')
             newPageParts = []
-            inBlockTemplate = [False]
-            inInlineTemplate = [False]
+            inTemplate = [0]
             inLink = [False]
             inTable = [False]
             inTag = [False]
@@ -223,13 +217,13 @@ class BasicBot(
             initialSpaces = 1
             for part in pageParts:
                 if re.match(r'\{\{ *(?:Infobox |NFPA 704|Studenti píší Wikipedii|Taxobox|Singly|Expedice-start a přistání|F1 Grand Prix|Kosmické těleso-(?:dceřiné těleso|teleskop)|Turnaj Grand Slamu)', part, flags=re.I) and not re.match(r'\{\{ *(?:Infobox (?:začátek|hlavička|obrázek|dvojitá|jednoduchá|konec|položka|chybí|Ročník fotbalového turnaje\/Fb|Eurovision\/Legenda|animanga\/Patička|- (?:železniční trať\/(?:legenda|hlavička)|číslo\/řada|politická strana\/mandáty|letiště\/(?:RWY|Konec)|budova\/kodbarvy|chemický prvek\/(?:Legenda|Barva|Text|Skupina|Izotopy)))|Taxobox\/(?:barva|cat|compare|Stupeň ohrožení|statusWD))', part, flags=re.I):
-                    inBlockTemplate.append(True)
+                    inTemplate.append(2)
                     if re.match(r'\{\{ *Infobox - chemický prvek\/(?:Nestabilní izotop|Stabilní izotop)', part, flags=re.I):
                         noNewLineAfterBlockTemplate = True
                     if re.match(r'[^\n]+\n+ *\|', part):
                         initialSpaces = len(re.match(r'[^\n]+\n+( *)\|', part).group(1))
                 elif part[:2] == '{{':
-                    inInlineTemplate.append(True)
+                    inTemplate.append(1)
                 elif part[:1] == '[':
                     inLink.append(True)
                 elif part[:2] == '{|':
@@ -240,7 +234,7 @@ class BasicBot(
                 if afterBlockTemplate:
                     part = textlib.replaceExcept(part, r'^\s*', r'\n', self.vyjimky)
                     afterBlockTemplate = False
-                if inBlockTemplate[-1] and not inInlineTemplate[-1] and not inLink[-1] and not inTable[-1] and not inTag[-1]:
+                if inTemplate[-1] == 2 and not inLink[-1] and not inTable[-1] and not inTag[-1]:
                     part = textlib.replaceExcept(part, r'\|\s*(?=\||\})', r'', self.vyjimky)
                     part = textlib.replaceExcept(part, r'\s*\|\s*', r'\n' + r' '*initialSpaces + r'| ', self.vyjimky)
                     part = textlib.replaceExcept(part, r'\{\{\s*', r'{{', self.vyjimky)
@@ -253,18 +247,14 @@ class BasicBot(
                         part = textlib.replaceExcept(part, r'=\s*(\*|\#)', r'=\n\1', self.vyjimky)
                 newPageParts.append(part)
 
-                if part[-2:] == '}}' and (inBlockTemplate[-1] or inInlineTemplate[-1]):
-                    if inBlockTemplate[-1] and inInlineTemplate[-1]:
-                        inInlineTemplate.pop()
-                    elif inInlineTemplate[-1] and not inBlockTemplate[-1]:
-                        inInlineTemplate.pop()
-                    elif inBlockTemplate[-1] and not inInlineTemplate[-1]:
-                        inBlockTemplate.pop()
+                if part[-2:] == '}}' and inTemplate[-1] > 0:
+                    if inTemplate[-1] == 2:
                         if not noNewLineAfterBlockTemplate:
                             afterBlockTemplate = True
                         else:
                             noNewLineAfterBlockTemplate = False
                         initialSpaces = 1
+                    inTemplate.pop()
                 elif part[-1:] == ']' and inLink[-1]:
                     inLink.pop()
                 elif part[-2:] == '|}' and inTable[-1]:
@@ -283,21 +273,20 @@ class BasicBot(
             text = textlib.replaceExcept(text, r'\<', r'ßßß<', self.vyjimky)
             text = textlib.replaceExcept(text, r'\>', r'>ßßß', self.vyjimky)
             pageParts = text.strip('ß').split('ßßß')
-            inBlockTemplate = [False]
+            inTemplate = [0]
             blockTemplate=['']
-            inInlineTemplate = [False]
             inLink = [False]
             inTable = [False]
             inTag = [False]
             noRemoveEmptyUnnamed = False
             for part in pageParts:
                 if re.match(r'\{\{ *(?:Infobox |NFPA 704|Studenti píší Wikipedii|Taxobox|Singly|Expedice-start a přistání|F1 Grand Prix|Kosmické těleso-(?:dceřiné těleso|teleskop)|Turnaj Grand Slamu)', part, flags=re.I) and not re.match(r'\{\{ *(?:Infobox (?:začátek|hlavička|obrázek|dvojitá|jednoduchá|konec|položka|chybí|Ročník fotbalového turnaje\/Fb|Eurovision\/Legenda|animanga\/Patička|- (?:železniční trať\/(?:legenda|hlavička)|číslo\/řada|politická strana\/mandáty|letiště\/(?:RWY|Konec)|budova\/kodbarvy|chemický prvek\/(?:Legenda|Barva|Text|Skupina|Izotopy)))|Taxobox\/(?:barva|cat|compare|Stupeň ohrožení|statusWD))', part, flags=re.I):
-                    inBlockTemplate.append(True)
+                    inTemplate.append(2)
                     blockTemplate.append(part.strip('{}').split('|')[0].strip())
                     if re.match(r'\{\{ *(?:Turnaj Grand Slamu|Infobox - t(?:urnaj Grand Slamu|enis(?: na LOH|ová soutěž)))', part, flags=re.I):
                         noRemoveEmptyUnnamed = True
                 elif part[:2] == '{{':
-                    inInlineTemplate.append(True)
+                    inTemplate.append(1)
                 elif part[:1] == '[':
                     inLink.append(True)
                 elif part[:2] == '{|':
@@ -305,7 +294,7 @@ class BasicBot(
                 elif part[:1] == '<':
                     inTag.append(True)
 
-                if inBlockTemplate[-1] and not inInlineTemplate[-1] and not inLink[-1] and not inTable[-1] and not inTag[-1] and not noRemoveEmptyUnnamed:
+                if inTemplate[-1] == 2 and not inLink[-1] and not inTable[-1] and not inTag[-1] and not noRemoveEmptyUnnamed:
                     if re.search(r'\|(?:\s*=|\s*[0-9]+\s*=)?[^\|\}\=]*(?:\||\}|$)', part):
                         nalezene = re.findall(r'\|((?:\s*=|\s*[0-9]+\s*=)?[^\|\}\=]*)$', part)
                         nalezene = [s + '/šablona, odkaz, tabulka nebo tag/' for s in nalezene]
@@ -313,15 +302,11 @@ class BasicBot(
                         nalezene = [s.strip().replace('\n', '↵') for s in nalezene]
                         self.seznam += '# ' + self.current_page.title(asLink=True) + '\t' + blockTemplate[-1] + '\t' + '; '.join(nalezene) + '\n'
 
-                if part[-2:] == '}}' and (inBlockTemplate[-1] or inInlineTemplate[-1]):
-                    if inBlockTemplate[-1] and inInlineTemplate[-1]:
-                        inInlineTemplate.pop()
-                    elif inInlineTemplate[-1] and not inBlockTemplate[-1]:
-                        inInlineTemplate.pop()
-                    elif inBlockTemplate[-1] and not inInlineTemplate[-1]:
-                        inBlockTemplate.pop()
+                if part[-2:] == '}}' and inTemplate[-1] > 0:
+                    if inTemplate[-1] == 2:
                         blockTemplate.pop()
                         noRemoveEmptyUnnamed = False
+                    inTemplate.pop()
                 elif part[-1:] == ']' and inLink[-1]:
                     inLink.pop()
                 elif part[-2:] == '|}' and inTable[-1]:
