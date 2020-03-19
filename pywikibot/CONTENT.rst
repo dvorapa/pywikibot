@@ -50,16 +50,12 @@ The contents of the package
     | login.py                   | Log in to an account on your "home" wiki. or check   |
     |                            | login status                                         |
     +----------------------------+------------------------------------------------------+
-    | page.py                    | Allows access to the site's bot user list.           |
-    +----------------------------+------------------------------------------------------+
     | pagegenerators.py          | Generator pages.                                     |
     +----------------------------+------------------------------------------------------+
     | plural.py                  | Module containing plural rules of various languages  |
     +----------------------------+------------------------------------------------------+
     | proofreadpage.py           | Objects representing objects used with ProofreadPage |
     |                            | Extension                                            |
-    +----------------------------+------------------------------------------------------+
-    | site.py                    | Objects representing MediaWiki sites (wikis)         |
     +----------------------------+------------------------------------------------------+
     | site_detect.py             | Classes for detecting a MediaWiki site               |
     +----------------------------+------------------------------------------------------+
@@ -113,6 +109,20 @@ The contents of the package
     | sparql.py                  | Objects representing SPARQL query API                |
     +----------------------------+------------------------------------------------------+
     | wikistats.py               | Objects representing WikiStats API                   |
+    +----------------------------+------------------------------------------------------+
+
+
+    +----------------------------+------------------------------------------------------+
+    | page                       | Module with classes for MediaWiki page content       |
+    +============================+======================================================+
+    | __init__.py                | Objects representing MediaWiki pages                 |
+    +----------------------------+------------------------------------------------------+
+
+
+    +----------------------------+------------------------------------------------------+
+    | site                       | Module with classes for MediaWiki sites              |
+    +============================+======================================================+
+    | __init__.py                | Objects representing MediaWiki sites (wikis)         |
     +----------------------------+------------------------------------------------------+
 
 
