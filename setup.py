@@ -49,7 +49,6 @@ extra_deps = {
     'security': [
         'requests[security]'
         ';python_full_version=="2.7.7" or python_full_version=="2.7.8"',
-        'pycparser!=2.14',
     ],
     'mwoauth': ['mwoauth!=0.3.1,>=0.2.4'],
     'html': ['BeautifulSoup4'],
@@ -82,21 +81,18 @@ extra_deps = {
 
 # ------- setup extra_requires for scripts ------- #
 script_deps = {
+    'data_ingestion.py': extra_deps['csv'],
     'flickrripper.py': [
         'flickrapi<3.0.0;python_version<"3.5"',
         'flickrapi>=2.2;python_version>="3.5"',
-        'Pillow<7.0.0;python_version<"3"',
-        'Pillow<6.0.0;python_version=="3.4"',
-        'Pillow;python_version>="3.5"',
-    ],
-    'patrol.py': ['mwparserfromhell>=0.3.3'],
+    ] + extra_deps['Tkinter'],
+    'imageharvest.py': extra_deps['html'],
+    'isbn.py': extra_deps['isbn'],
+    'match_images.py': extra_deps['Tkinter'],
+    'patrol.py': extra_deps['mwparserfromhell'],
     'states_redirect.py': ['pycountry'],
     'weblinkchecker.py': ['memento_client!=0.6.0,>=0.5.1'],
 }
-script_deps['data_ingestion.py'] = extra_deps['csv']
-script_deps['imageharvest.py'] = extra_deps['html']
-script_deps['isbn.py'] = extra_deps['isbn']
-script_deps['match_images.py'] = script_deps['flickrripper.py']
 
 extra_deps.update(script_deps)
 extra_deps.update({'scripts': [i for k, v in script_deps.items() for i in v]})
@@ -214,48 +210,54 @@ def read_desc(filename):
     return ''.join(desc)
 
 
-name = 'pywikibot'
-setup(
-    name=name,
-    version=get_version(name),
-    description='Python MediaWiki Bot Framework',
-    long_description=read_desc('README.rst'),
-    keywords=['API', 'bot', 'framework', 'mediawiki', 'pwb', 'python',
-              'pywikibot', 'pywikipedia', 'pywikipediabot', 'wiki',
-              'wikimedia', 'wikipedia'],
-    maintainer='The Pywikibot team',
-    maintainer_email='pywikibot@lists.wikimedia.org',
-    license='MIT License',
-    packages=[str(name)] + [package
-                            for package in find_packages()
-                            if package.startswith('pywikibot.')],
-    python_requires='>=2.7.4, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
-    install_requires=dependencies,
-    extras_require=extra_deps,
-    url='https://www.mediawiki.org/wiki/Manual:Pywikibot',
-    download_url='https://tools.wmflabs.org/pywikibot/',
-    test_suite='tests.collector',
-    tests_require=test_deps,
-    classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'Environment :: Console',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: MIT License',
-        'Natural Language :: English',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: Implementation :: CPython',
-        'Topic :: Internet :: WWW/HTTP :: Dynamic Content :: Wiki',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-        'Topic :: Utilities',
-    ],
-    use_2to3=False
-)
+def main():
+    """Setup entry point."""
+    name = 'pywikibot'
+    setup(
+        name=name,
+        version=get_version(name),
+        description='Python MediaWiki Bot Framework',
+        long_description=read_desc('README.rst'),
+        keywords=['API', 'bot', 'framework', 'mediawiki', 'pwb', 'python',
+                  'pywikibot', 'pywikipedia', 'pywikipediabot', 'wiki',
+                  'wikimedia', 'wikipedia'],
+        maintainer='The Pywikibot team',
+        maintainer_email='pywikibot@lists.wikimedia.org',
+        license='MIT License',
+        packages=[str(name)] + [package
+                                for package in find_packages()
+                                if package.startswith('pywikibot.')],
+        python_requires='>=2.7.4, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
+        install_requires=dependencies,
+        extras_require=extra_deps,
+        url='https://www.mediawiki.org/wiki/Manual:Pywikibot',
+        download_url='https://tools.wmflabs.org/pywikibot/',
+        test_suite='tests.collector',
+        tests_require=test_deps,
+        classifiers=[
+            'Development Status :: 5 - Production/Stable',
+            'Environment :: Console',
+            'Intended Audience :: Developers',
+            'License :: OSI Approved :: MIT License',
+            'Natural Language :: English',
+            'Operating System :: OS Independent',
+            'Programming Language :: Python',
+            'Programming Language :: Python :: 2',
+            'Programming Language :: Python :: 2.7',
+            'Programming Language :: Python :: 3',
+            'Programming Language :: Python :: 3.4',
+            'Programming Language :: Python :: 3.5',
+            'Programming Language :: Python :: 3.6',
+            'Programming Language :: Python :: 3.7',
+            'Programming Language :: Python :: 3.8',
+            'Programming Language :: Python :: Implementation :: CPython',
+            'Topic :: Internet :: WWW/HTTP :: Dynamic Content :: Wiki',
+            'Topic :: Software Development :: Libraries :: Python Modules',
+            'Topic :: Utilities',
+        ],
+        use_2to3=False
+    )
+
+
+if __name__ == '__main__':
+    main()

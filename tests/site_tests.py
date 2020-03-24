@@ -695,8 +695,6 @@ class TestSiteGenerators(DefaultSiteTestCase):
     def test_allpages_langlinks_enabled(self):
         """Test allpages with langlinks enabled."""
         mysite = self.get_site()
-        if mysite.family.name in ('wpbeta', 'wsbeta'):
-            self.skipTest('Test fails on betawikis; T199085')
         for page in mysite.allpages(
                 filterlanglinks=True, total=3, namespace=4):
             self.assertIsInstance(page, pywikibot.Page)
@@ -748,9 +746,6 @@ class TestSiteGenerators(DefaultSiteTestCase):
 
     def test_all_links(self):
         """Test the site.alllinks() method."""
-        if self.site.family.name == 'wsbeta':
-            self.skipTest('Test fails on betawiki; T69931')
-
         mysite = self.get_site()
         fwd = list(mysite.alllinks(total=10))
         self.assertLessEqual(len(fwd), 10)
@@ -1599,12 +1594,15 @@ class TestRecentChanges(DefaultSiteTestCase):
             self.assertIsInstance(change, dict)
         for change in mysite.recentchanges(anon=False, total=5):
             self.assertIsInstance(change, dict)
-        for change in mysite.recentchanges(redirect=True, total=5):
-            self.assertIsInstance(change, dict)
-            self.assertIn('redirect', change)
         for change in mysite.recentchanges(redirect=False, total=5):
             self.assertIsInstance(change, dict)
             self.assertNotIn('redirect', change)
+
+        # Subtest timeouts on Wikidata due to upstream issue, see T245989
+        if mysite.sitename != 'wikidata:wikidata':
+            for change in mysite.recentchanges(redirect=True, total=5):
+                self.assertIsInstance(change, dict)
+                self.assertIn('redirect', change)
 
     def test_tag_filter(self):
         """Test the site.recentchanges() with tag filter."""
@@ -1691,9 +1689,11 @@ class SearchTestCase(DefaultSiteTestCase):
                 self.assertEqual(hit.namespace(), 0)
         except pywikibot.data.api.APIError as e:
             if e.code == 'gsrsearch-error' and 'timed out' in e.info:
-                self.skipTest('gsrsearch returned timeout on site: {!r}'
-                              .format(e))
-            raise
+                self.skipTest('gsrsearch returned timeout on site{}:\n{!r}'
+                              .format(mysite, e))
+            if e.code == 'gsrsearch-text-disabled':
+                self.skipTest('gsrsearch is diabled on site {}:\n{!r}'
+                              .format(mysite, e))
 
     @suppress_warnings("where='title' is deprecated", DeprecationWarning)
     def test_search_where_title(self):
@@ -3854,7 +3854,8 @@ class TestLoginLogout(DefaultSiteTestCase):
                                               loginstatus.AS_USER))
             self.assertIn('_userinfo', site.__dict__.keys())
 
-        else:
+        # Fandom family wikis don't support API action=logout
+        elif 'fandom.com' not in site.hostname():
             site.logout()
             self.assertFalse(site.logged_in())
             self.assertEqual(site._loginstatus, loginstatus.NOT_LOGGED_IN)
