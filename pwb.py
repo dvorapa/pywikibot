@@ -182,10 +182,9 @@ def check_modules(script=None):
 # Either it is '.' if the user's current working directory is the same,
 # or it is the absolute path for the directory of pwb.py
 absolute_path = abspath(os.path.dirname(sys.argv[0]))
-rewrite_path = absolute_path
 
-if rewrite_path not in sys.path[:2]:
-    sys.path.insert(1, rewrite_path)
+if absolute_path not in sys.path[:2]:
+    sys.path.insert(1, absolute_path)
 
 if not check_modules():
     sys.exit()
@@ -288,10 +287,10 @@ def find_filename(filename):
                     'scripts.userscripts']
 
     if config.user_script_paths:
-        if isinstance(config.user_script_paths, (tuple, list)):
+        if isinstance(config.user_script_paths, list):
             script_paths = config.user_script_paths + script_paths
         else:
-            warn("'user_script_paths' must be a list or tuple,\n"
+            warn("'user_script_paths' must be a list,\n"
                  'found: {0}. Ignoring this setting.'
                  .format(type(config.user_script_paths)))
 
