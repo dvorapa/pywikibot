@@ -4,6 +4,18 @@ Release history
 Current release
 ---------------
 
+* Bugfixes and improvements
+* Localisation updates
+
+3.0.20200326
+------------
+* site.py and page.py files were moved to their own folders and will be split in the future
+* Refactor data attributes of Wikibase entities (T233406)
+* Functions dealing with stars list are desupported and may be removed
+* Use path's stem of script filename within pwb.py wrapper (T248372)
+* Disfunctional cgi_interface.py was removed (T248292, T248250, T193978)
+* Fix logout on MW < 1.24 (T214009)
+* Fixed TypeError in getFileVersionHistoryTable method (T248266)
 * Outdated secure connection overrides were removed (T247668)
 * Check for all modules which are needed by a script within pwb.py wrapper
 * Check for all modules which are mandatory within pwb.py wrapper script
