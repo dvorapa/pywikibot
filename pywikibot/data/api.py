@@ -1834,7 +1834,12 @@ class Request(MutableMapping):
         elif code == 'assertuserfailed':
             message = 'User assertion failed.'
 
-        # Lastly, the purge module require a POST if used as anonymous user,
+        # If incorrect login token was used, we are logged out too.
+        elif (self.site._loginstatus == pywikibot.site.LoginStatus.IN_PROGRESS
+              and code == 'badtoken'):
+            message = 'Received incorrect login token.'
+
+        # Lastly, the purge module requires a POST if used as anonymous user,
         # but we normally send a GET request. If the API tells us the request
         # has to be POSTed, we're probably logged out.
         elif code == 'mustbeposted' and self.action == 'purge':
@@ -3135,12 +3140,12 @@ class LoginManager(login.LoginManager):
         if self.site.family.ldapDomain:
             login_request[self.keyword('ldap')] = self.site.family.ldapDomain
 
-        # get token using meta=tokens if supported
-        if not below_mw_1_27:
-            login_request[self.keyword('token')] = self.get_login_token()
-
         self.site._loginstatus = -2  # IN_PROGRESS
         while True:
+            # get token using meta=tokens if supported
+            if not below_mw_1_27:
+                login_request[self.keyword('token')] = self.get_login_token()
+
             # try to login
             login_result = login_request.submit()
 
@@ -3158,10 +3163,18 @@ class LoginManager(login.LoginManager):
             fail_reason = response.get(self.keyword('reason'), '')
             if status == self.keyword('success'):
                 return ''
-            elif status == 'NeedToken':
-                # Kept for backwards compatibility
-                token = response['token']
-                login_request['lgtoken'] = token
+            elif status in ('NeedToken', 'WrongToken'):
+                token = response.get('token')
+                if token and below_mw_1_27:
+                    # fetched token using action=login
+                    login_request['lgtoken'] = token
+                    pywikibot.log('Received login token, '
+                                  'proceed with login.')
+                else:
+                    # if incorrect login token was used,
+                    # force relogin and generate fresh one
+                    pywikibot.error('Received incorrect login token. '
+                                    'Forcing re-login.')
                 continue
             elif (status == 'Throttled' or status == 'FAIL'
                   and response['messagecode'] == 'login-throttled'
