@@ -26,6 +26,7 @@ git pull
 # ta druhá
 for branch in dvorapa-test dvorapabot-remote dvorapabot-local; do
 	git checkout $branch
+	git pull update $branch
 	git merge master
 done
 
