@@ -1781,6 +1781,12 @@ class Request(MutableMapping):
         self.wait()
         return None
 
+    def _relogin(self, message=''):
+        """Force re-login and inform user."""
+        pywikibot.error('{}{}Forcing re-login.'.format(message,
+                                                       ' ' if message else ''))
+        self.site._relogin()
+
     def _userinfo_query(self, result):
         """Handle userinfo query."""
         if self.action == 'query' and 'userinfo' in result.get('query', ()):
@@ -1788,12 +1794,12 @@ class Request(MutableMapping):
             # that we are logged in as the correct user. If this is not the
             # case, force a re-login.
             username = result['query']['userinfo']['name']
-            if self.site.user() is not None and self.site.user() != username:
-                pywikibot.error(
-                    "Logged in as '{actual}' instead of '{expected}'.\n"
-                    'Forcing re-login.'.format(actual=username,
-                                               expected=self.site.user()))
-                self.site._relogin()
+            if (self.site.user() is not None and self.site.user() != username
+                    and self.site._loginstatus
+                    != pywikibot.site.LoginStatus.IN_PROGRESS):
+                message = ("Logged in as '{actual}' instead of '{expected}'."
+                           .format(actual=username, expected=self.site.user()))
+                self._relogin(message)
                 return True
         return False
 
@@ -1834,7 +1840,7 @@ class Request(MutableMapping):
         elif code == 'assertuserfailed':
             message = 'User assertion failed.'
 
-        # Lastly, the purge module require a POST if used as anonymous user,
+        # Lastly, the purge module requires a POST if used as anonymous user,
         # but we normally send a GET request. If the API tells us the request
         # has to be POSTed, we're probably logged out.
         elif code == 'mustbeposted' and self.action == 'purge':
@@ -1843,8 +1849,7 @@ class Request(MutableMapping):
         else:
             return True
 
-        pywikibot.error(message + ' Forcing re-login.')
-        self.site._relogin()
+        self._relogin(message)
         return False
 
     def _internal_api_error(self, code, error, result):
@@ -1893,7 +1898,8 @@ class Request(MutableMapping):
 
     def _bad_token(self, code):
         """Check for bad token."""
-        if code != 'badtoken':
+        if (code != 'badtoken' or self.site._loginstatus
+                == pywikibot.site.LoginStatus.IN_PROGRESS):
             return False
 
         user_tokens = self.site.tokens._tokens[self.site.user()]
@@ -3077,6 +3083,7 @@ class LoginManager(login.LoginManager):
         'token': ('lgtoken', 'logintoken'),
         'result': ('result', 'status'),
         'success': ('Success', 'PASS'),
+        'fail': ('Failed', 'FAIL'),
         'reason': ('reason', 'message')
     }
 
@@ -3135,14 +3142,17 @@ class LoginManager(login.LoginManager):
         if self.site.family.ldapDomain:
             login_request[self.keyword('ldap')] = self.site.family.ldapDomain
 
-        # get token using meta=tokens if supported
-        if not below_mw_1_27:
-            login_request[self.keyword('token')] = self.get_login_token()
-
         self.site._loginstatus = -2  # IN_PROGRESS
         while True:
+            # get token using meta=tokens if supported
+            if not below_mw_1_27:
+                login_request[self.keyword('token')] = self.get_login_token()
+
             # try to login
-            login_result = login_request.submit()
+            try:
+                login_result = login_request.submit()
+            except APIError as e:
+                login_result = {'error': e.__dict__}
 
             # clientlogin response can be clientlogin or error
             if self.action in login_result:
@@ -3158,14 +3168,22 @@ class LoginManager(login.LoginManager):
             fail_reason = response.get(self.keyword('reason'), '')
             if status == self.keyword('success'):
                 return ''
-            elif status == 'NeedToken':
-                # Kept for backwards compatibility
-                token = response['token']
-                login_request['lgtoken'] = token
+            elif status in ('NeedToken', 'WrongToken', 'badtoken'):
+                token = response.get('token')
+                if token and below_mw_1_27:
+                    # fetched token using action=login
+                    login_request['lgtoken'] = token
+                    pywikibot.log('Received login token, '
+                                  'proceed with login.')
+                else:
+                    # if incorrect login token was used,
+                    # force relogin and generate fresh one
+                    pywikibot.error('Received incorrect login token. '
+                                    'Forcing re-login.')
                 continue
-            elif (status == 'Throttled' or status == 'FAIL'
-                  and response['messagecode'] == 'login-throttled'
-                  or status == 'Failed' and 'wait' in fail_reason):
+            elif (status == 'Throttled' or status == self.keyword('fail')
+                  and (response['messagecode'] == 'login-throttled'
+                  or 'wait' in fail_reason)):
                 match = re.search(r'(\d+) (seconds|minutes)', fail_reason)
                 if match:
                     delta = datetime.timedelta(
