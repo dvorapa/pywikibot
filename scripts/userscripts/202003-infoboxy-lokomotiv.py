@@ -101,18 +101,18 @@ class BasicBot(
         #                           shrnutí                            #
         ################################################################
 
-        shrnuti = 'počeštění parametrů citační šablony'
+        shrnuti = 'nahrazení zastaralého infoboxu'
 
         ################################################################
 
         self.shrnuti = self.getOption('summary') or 'Robot: ' + shrnuti
 
-#        infobox = self.getOption('ref')
- #       if re.match(r'[Šš]ablona:', infobox):
-  #          infobox = infobox[8:]
-   #     infobox = re.escape(infobox)
-    #    infobox = infobox.replace(r'\ ', r'[ _]')
-     #   self.infobox = r'\{\{\s*[' + infobox[0].upper() + infobox[0].lower() + r']' + infobox[1:]
+        infobox = self.getOption('ref')
+        if re.match(r'[Šš]ablona:', infobox):
+            infobox = infobox[8:]
+        infobox = re.escape(infobox)
+        infobox = infobox.replace(r'\ ', r'[ _]')
+        self.infobox = r'\{\{\s*[' + infobox[0].upper() + infobox[0].lower() + r']' + infobox[1:]
 
         # assign the generator to the bot
         self.generator = generator
@@ -120,7 +120,6 @@ class BasicBot(
     def treat_page(self):
         """Load the given page, do some changes, and save it."""
         text = self.current_page.text
-        old_text = str(text)
 
         text = textlib.replaceExcept(text, r'\{\{', r'ßßß{{', self.vyjimky)
         text = textlib.replaceExcept(text, r'\}\}', r'}}ßßß', self.vyjimky)
@@ -137,12 +136,12 @@ class BasicBot(
         inTable = [False]
         inTag = [False]
         newPageParts = []
+        prezdivky = {}
 
         for part in pageParts:
-            if re.match('\{\{\s*[Cc]it(?:ace[ _](?:elektronické(?:ho|)[ _]|)(?:monografie|periodika)|[^aeáyu\/])', part):
+            if re.match(self.infobox, part):
                 inTemplate.append(2)
-                # part = textlib.replaceExcept(part, self.infobox, r'', self.vyjimky)
-                params = {'url_archivu':[],'datum_archivace':[],'nedostupne':[]}
+                part = textlib.replaceExcept(part, self.infobox, r'{{Infobox - železniční hnací vozidlo', self.vyjimky)
             elif part[:2] == '{{':
                 inTemplate.append(1)
             elif part[:1] == '[':
@@ -152,8 +151,8 @@ class BasicBot(
             elif part[:1] == '<':
                 inTag.append(True)
 
-            if inTemplate[-1] == 2 and not inLink[-1] and not inTag[-1]:
-                # part = textlib.replaceExcept(part, r'\|\s*[A-ZŽŠČŘĎŤŇÁÉÍÓÚŮÝĚ]', lambda x: x.group(0).lower(), self.vyjimky)
+            if inTemplate[-1] == 2 and not inLink[-1] and not inTable[-1] and not inTag[-1]:
+                part = textlib.replaceExcept(part, r'\|\s*[A-ZŽŠČŘĎŤŇÁÉÍÓÚŮÝĚ]', lambda x: x.group(0).lower(), self.vyjimky)
                 part = textlib.replaceExcept(part, r'\|[^\|\=]+?=', lambda x: x.group(0).replace('_',' '), self.vyjimky)
                 ################################################################
                 #                            změny                             #
@@ -163,32 +162,29 @@ class BasicBot(
                 # self.current_page.title()
                 # with open('soubor.txt', 'a') as soubor:
                 #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
-                part = textlib.replaceExcept(part, r'\|\s*URL\s*=', r'| url =', self.vyjimky)
-                params['url_archivu'] += re.findall(r'\|\s*(?:archive-?url|url archivu)\s*=\s*([^\|\}\n]*)', part, re.I)
-                params['datum_archivace'] += re.findall(r'\|\s*(?:archive-?date|datum archivace)\s*=\s*([^\|\}\n]*)', part, re.I)
-                params['nedostupne'] += re.findall(r'\|\s*(?:dead-?url|nedostupné)\s*=\s*([^\|\}\n]*)', part, re.I)
-                part = textlib.replaceExcept(part, r'\|\s*(?:archive-?url|url archivu)\s*=\s*([^\|\}\n]*)', r'', self.vyjimky)
-                part = textlib.replaceExcept(part, r'\|\s*(?:archive-?date|datum archivace)\s*=\s*([^\|\}\n]*)', r'', self.vyjimky)
-                part = textlib.replaceExcept(part, r'\|\s*(?:dead-?url|nedostupné)\s*=\s*([^\|\}\n]*)', r'', self.vyjimky)
+                part = textlib.replaceExcept(part, r' *\|[^=]+=\s*(?=\||\})', r'', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*označení řada\s*=', r'| typová řada =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*staré označení řady\s*=', r'| stará typová řada =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*rok výroby\s*=', r'| roky výroby =', self.vyjimky)
+                #part = textlib.replaceExcept(part, r'\|\s*v provozu\s*=', r'| období provozu =', self.vyjimky)
+                #part = textlib.replaceExcept(part, r'\|\s*období provozu\s*=\s*([Aa]no|[Nn]e)', r'| v provozu = \1', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*délka\s*=', r'| délka přes nárazníky =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*vlak\s*=', r'| název =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*napájecí soustava\s*=', r'| napájení =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*rozchod kolej[eí]\s*=', r'| rozchod =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*výkon\s*=', r'| trvalý výkon =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*trvalá tažná síla\s*=', r'| tažná síla =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*maximální tažná síla\s*=', r'| tažná síla max =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*regulace pojezdu\s*=', r'| regulace =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*výhřevná plocha kotle\s*=', r'| trubky =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*plocha přehřívače\s*=', r'| přehřívač =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*plocha roštu\s*=', r'| rošt =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*rekonstruováno\s*=', r'| na řadu =', self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|\s*vzniklo\s*=', r'| z řady =', self.vyjimky)
 
                 ################################################################
 
             if part[-2:] == '}}' and inTemplate[-1] > 0:
-                if inTemplate[-1] == 2:
-                    for num, val in enumerate(params['nedostupne']):
-                        if val.strip() == 'no':
-                            params['nedostupne'][num] = 'ne'
-                        if val.strip() == 'yes':
-                            params['nedostupne'][num] = 'ano'
-                    for key in params.keys():
-                        while '' in params[key]:
-                            params[key].remove('')
-                    if params['url_archivu']:
-                        part = textlib.replaceExcept(part, r'}}$', r'|url archivu= ' + params['url_archivu'][-1].strip() + r' }}', self.vyjimky)
-                    if params['datum_archivace']:
-                        part = textlib.replaceExcept(part, r'}}$', r'|datum archivace= ' + params['datum_archivace'][-1].strip() + r' }}', self.vyjimky)
-                    if params['nedostupne']:
-                        part = textlib.replaceExcept(part, r'}}$', r'|nedostupné= ' + params['nedostupne'][-1].strip() + r' }}', self.vyjimky)
                 inTemplate.pop()
             elif part[-1:] == ']' and inLink[-1]:
                 inLink.pop()
@@ -199,11 +195,14 @@ class BasicBot(
             newPageParts.append(part)
 
         text = ''.join(newPageParts)
+        text = textlib.replaceExcept(text, r'\n *\|\s*název\s*=[^\n]*', r'', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\n *\|\s*hmotnost na nápravu\s*=[^\n]*', r'', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\n *\|\s*trvalá rychlost\s*=[^\n]*', r'', self.vyjimky)
+        text = textlib.replaceExcept(text, r'\n *\|\s*vlakový zabezpečovač\s*=[^\n]*', r'', self.vyjimky)
 
         # if summary option is None, it takes the default i18n summary from
         # i18n subdirectory with summary_key as summary key.
-        if text.replace('_', ' ') != old_text.replace('_', ' '):
-            self.put_current(text, summary=self.shrnuti)
+        self.put_current(text, summary=self.shrnuti)
 
 
 def main(*args):
