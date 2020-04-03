@@ -30,6 +30,7 @@ import sys
 
 from datetime import timedelta
 from functools import partial
+from requests.exceptions import ReadTimeout
 from warnings import warn
 
 import pywikibot
@@ -3016,16 +3017,16 @@ class PetScanPageGenerator(object):
         """
         Initializer.
 
-        :param categories: List of categories to retrieve pages from
+        @param categories: List of categories to retrieve pages from
             (as strings)
-        :param subset_combination: Combination mode.
+        @param subset_combination: Combination mode.
             If True, returns the intersection of the results of the categories,
             else returns the union of the results of the categories
-        :param namespaces: List of namespaces to search in
+        @param namespaces: List of namespaces to search in
             (default is None, meaning all namespaces)
-        :param site: Site to operate on
+        @param site: Site to operate on
             (default is the default site from the user config)
-        :param extra_options: Dictionary of extra options to use (optional)
+        @param extra_options: Dictionary of extra options to use (optional)
         """
         if site is None:
             site = pywikibot.Site()
@@ -3039,13 +3040,13 @@ class PetScanPageGenerator(object):
         """
         Get the querystring options to query PetScan.
 
-        :param categories: List of categories (as strings)
-        :param subset_combination: Combination mode.
+        @param categories: List of categories (as strings)
+        @param subset_combination: Combination mode.
             If True, returns the intersection of the results of the categories,
             else returns the union of the results of the categories
-        :param namespaces: List of namespaces to search in
-        :param extra_options: Dictionary of extra options to use
-        :return: Dictionary of querystring parameters to use in the query
+        @param namespaces: List of namespaces to search in
+        @param extra_options: Dictionary of extra options to use
+        @return: Dictionary of querystring parameters to use in the query
         """
         extra_options = extra_options or {}
 
@@ -3077,7 +3078,11 @@ class PetScanPageGenerator(object):
         """Query PetScan."""
         url = 'https://petscan.wmflabs.org'
 
-        req = http.fetch(url, params=self.opts)
+        try:
+            req = http.fetch(url, params=self.opts)
+        except ReadTimeout:
+            raise ServerError(
+                'received ReadTimeout from {0}'.format(url))
         if 500 <= req.status < 600:
             raise ServerError(
                 'received {0} status from {1}'.format(req.status, req.uri))
