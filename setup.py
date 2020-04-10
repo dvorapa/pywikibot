@@ -41,10 +41,10 @@ extra_deps = {
     'Graphviz': ['pydot>=1.2'],
     'Google': ['google>=1.7'],
     'mwparserfromhell': ['mwparserfromhell>=0.3.3'],
-    'Tkinter': [
-        'Pillow<7.0.0,>=6.2.0;python_version<"3"',
-        'Pillow<6.0.0;python_version=="3.4"',  # vulnerability found
-        'Pillow>=6.2.1;python_version>="3.5"',  # 6.2.1 required for PY 3.8
+    'Tkinter': [  # vulnerability found in Pillow<6.2.2
+        'Pillow>=6.2.2,<7.0.0;python_version<"3"',
+        'Pillow<6.0.0;python_version=="3.4"',
+        'Pillow>=6.2.2;python_version>="3.5"',
     ],
     'security': [
         'requests[security]'
@@ -102,7 +102,7 @@ extra_deps.update({'scripts': [i for k, v in script_deps.items() for i in v]})
 dependencies = ['requests>=2.20.1,<2.22.0; python_version == "3.4"',
                 'requests>=2.20.1; python_version != "3.4"',
                 'enum34>=1.1.6,!=1.1.8; python_version < "3"',
-                'ipaddress>=1.0.23; python_version < "3"',
+                'ipaddress; python_version < "3"',
                 'pathlib2;python_version<"3"']
 
 # Python versions before 2.7.9 will cause urllib3 to trigger
