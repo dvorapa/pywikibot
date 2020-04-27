@@ -136,7 +136,6 @@ Please type "python pwb.py replace -help | more" if you can't read
 the top of the help.
 """
 #
-# (C) Daniel Herding, 2004-2012
 # (C) Pywikibot team, 2004-2020
 #
 # Distributed under the terms of the MIT license.
@@ -152,7 +151,7 @@ import re
 import warnings
 
 import pywikibot
-from pywikibot import editor as editarticle
+from pywikibot import editor
 from pywikibot.exceptions import ArgumentDeprecationWarning
 # Imports predefined replacements tasks from fixes.py
 from pywikibot import fixes
@@ -471,7 +470,7 @@ class XmlDumpReplacePageGenerator(object):
 
     def isTitleExcepted(self, title):
         """
-        Return True iff one of the exceptions applies for the given title.
+        Return True if one of the exceptions applies for the given title.
 
         @rtype: bool
         """
@@ -488,7 +487,7 @@ class XmlDumpReplacePageGenerator(object):
 
     def isTextExcepted(self, text):
         """
-        Return True iff one of the exceptions applies for the given text.
+        Return True if one of the exceptions applies for the given text.
 
         @rtype: bool
         """
@@ -534,8 +533,8 @@ class ReplaceRobot(SingleSiteBot):
     @param recursive: Recurse replacement as long as possible.
     @type recursive: bool
     @warning: Be careful, this might lead to an infinite loop.
-    @param addedCat: category to be added to every page touched
-    @type addedCat: pywikibot.Category or str or None
+    @param addcat: category to be added to every page touched
+    @type addcat: pywikibot.Category or str or None
     @param sleep: slow down between processing multiple regexes
     @type sleep: int
     @param summary: Set the summary message text bypassing the default
@@ -548,13 +547,17 @@ class ReplaceRobot(SingleSiteBot):
         about the missing site
     """
 
-    @deprecated_args(acceptall='always')
-    def __init__(self, generator, replacements, exceptions={},
-                 allowoverlap=False, recursive=False, addedCat=None,
-                 sleep=None, summary='', **kwargs):
+    @deprecated_args(acceptall='always', addedCat='addcat')
+    def __init__(self, generator, replacements, exceptions={}, **kwargs):
         """Initializer."""
-        super(ReplaceRobot, self).__init__(generator=generator,
-                                           **kwargs)
+        self.availableOptions.update({
+            'addcat': None,
+            'allowoverlap': False,
+            'recursive': False,
+            'sleep': 0.0,
+            'summary': None,
+        })
+        super(ReplaceRobot, self).__init__(generator=generator, **kwargs)
 
         for i, replacement in enumerate(replacements):
             if isinstance(replacement, Sequence):
@@ -567,17 +570,14 @@ class ReplaceRobot(SingleSiteBot):
                                                             replacement[1])
         self.replacements = replacements
         self.exceptions = exceptions
-        self.allowoverlap = allowoverlap
-        self.recursive = recursive
 
-        if addedCat:
-            if isinstance(addedCat, pywikibot.Category):
-                self.addedCat = addedCat
-            else:
-                self.addedCat = pywikibot.Category(self.site, addedCat)
+        self.sleep = self.getOption('sleep')
+        self.summary = self.getOption('summary')
 
-        self.sleep = sleep
-        self.summary = summary
+        self.addcat = self.getOption('addcat')
+        if self.addcat and isinstance(self.addcat, UnicodeType):
+            self.addcat = pywikibot.Category(self.site, self.addcat)
+
         self._pending_processed_titles = Queue()
 
     def isTitleExcepted(self, title, exceptions=None):
@@ -648,7 +648,7 @@ class ReplaceRobot(SingleSiteBot):
             new_text = textlib.replaceExcept(
                 new_text, replacement.old_regex, replacement.new,
                 exceptions + replacement.get_inside_exceptions(),
-                allowoverlap=self.allowoverlap, site=self.site)
+                allowoverlap=self.getOption('allowoverlap'), site=self.site)
             if old_text != new_text:
                 applied.add(replacement)
 
@@ -747,18 +747,18 @@ class ReplaceRobot(SingleSiteBot):
                 last_text = new_text
                 new_text = self.apply_replacements(last_text, applied,
                                                    page)
-                if not self.recursive:
+                if not self.getOption('recursive'):
                     break
             if new_text == original_text:
                 pywikibot.output('No changes were necessary in '
                                  + page.title(as_link=True))
                 break
-            if hasattr(self, 'addedCat'):
+            if self.addcat:
                 # Fetch only categories in wikitext, otherwise the others
                 # will be explicitly added.
                 cats = textlib.getCategoryLinks(new_text, site=page.site)
-                if self.addedCat not in cats:
-                    cats.append(self.addedCat)
+                if self.addcat not in cats:
+                    cats.append(self.addcat)
                     new_text = textlib.replaceCategoryLinks(new_text,
                                                             cats,
                                                             site=page.site)
@@ -778,15 +778,15 @@ class ReplaceRobot(SingleSiteBot):
                 context = context * 3 if context else 3
                 continue
             if choice == 'e':
-                editor = editarticle.TextEditor()
-                as_edited = editor.edit(original_text)
+                text_editor = editor.TextEditor()
+                as_edited = text_editor.edit(original_text)
                 # if user didn't press Cancel
                 if as_edited and as_edited != new_text:
                     new_text = as_edited
                 continue
             if choice == 'l':
-                editor = editarticle.TextEditor()
-                as_edited = editor.edit(new_text)
+                text_editor = editor.TextEditor()
+                as_edited = text_editor.edit(new_text)
                 # if user didn't press Cancel
                 if as_edited and as_edited != new_text:
                     new_text = as_edited
@@ -864,7 +864,7 @@ def main(*args):
     @param args: command line arguments
     @type args: str
     """
-    add_cat = None
+    options = {}
     gen = None
     # summary message
     edit_summary = ''
@@ -880,7 +880,7 @@ def main(*args):
         'inside': [],
         'inside-tags': [],
         'require-title': [],  # using a separate requirements dict needs some
-    }                        # major refactoring of code.
+    }                         # major refactoring of code.
 
     # Should the elements of 'replacements' and 'exceptions' be interpreted
     # as regular expressions?
@@ -892,22 +892,8 @@ def main(*args):
     xmlFilename = None
     useSql = False
     sql_query = None
-    # will become True when the user presses a ('yes to all') or uses the
-    # -always flag.
-    acceptall = False
-    # Will become True if the user inputs the commandline parameter -nocase
-    caseInsensitive = False
-    # Will become True if the user inputs the commandline parameter -dotall
-    dotall = False
-    # Will become True if the user inputs the commandline parameter -multiline
-    multiline = False
-    # Do all hits when they overlap
-    allowoverlap = False
-    # Do not recurse replacement
-    recursive = False
-    # Between a regex and another (using -fix) sleep some time (not to waste
-    # too much CPU
-    sleep = None
+    # Set the default regular expression flags
+    flags = re.UNICODE
     # Request manual replacements even if replacements are already defined
     manual_input = False
     # Replacements loaded from a file
@@ -955,25 +941,21 @@ def main(*args):
         elif arg.startswith('-fix:'):
             fixes_set += [arg[5:]]
         elif arg.startswith('-sleep:'):
-            sleep = float(arg[7:])
-        elif arg == '-always':
-            acceptall = True
-        elif arg == '-recursive':
-            recursive = True
+            options['sleep'] = float(arg[7:])
+        elif arg in ('-always', '-recursive', -'allowoverlap'):
+            options[arg[1:]] = True
         elif arg == '-nocase':
-            caseInsensitive = True
+            flags |= re.IGNORECASE
         elif arg == '-dotall':
-            dotall = True
+            flags |= re.DOTALL
         elif arg == '-multiline':
-            multiline = True
+            flags |= re.MULTILINE
         elif arg.startswith('-addcat:'):
-            add_cat = arg[8:]
+            options['addcat'] = arg[8:]
         elif arg.startswith('-summary:'):
-            edit_summary = arg[9:]
+            options['summary'] = arg[9:]
         elif arg.startswith('-automaticsummary'):
             edit_summary = True
-        elif arg.startswith('-allowoverlap'):
-            allowoverlap = True
         elif arg.startswith('-manualinput'):
             manual_input = True
         elif arg.startswith('-replacementfile'):
@@ -1139,15 +1121,6 @@ def main(*args):
         else:
             edit_summary = ''
 
-    # Set the regular expression flags
-    flags = re.UNICODE
-    if caseInsensitive:
-        flags = flags | re.IGNORECASE
-    if dotall:
-        flags = flags | re.DOTALL
-    if multiline:
-        flags = flags | re.MULTILINE
-
     # Pre-compile all regular expressions here to save time later
     for replacement in replacements:
         replacement.compile(regex, flags)
@@ -1188,9 +1161,7 @@ LIMIT 200""" % (whereClause, exceptClause)
         pywikibot.bot.suggest_help(missing_generator=True)
         return
 
-    bot = ReplaceRobot(gen, replacements, exceptions,
-                       allowoverlap, recursive, add_cat, sleep, edit_summary,
-                       always=acceptall, site=site)
+    bot = ReplaceRobot(gen, replacements, exceptions, site=site, **options)
     site.login()
     bot.run()
 
