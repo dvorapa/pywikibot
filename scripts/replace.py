@@ -777,21 +777,16 @@ class ReplaceRobot(SingleSiteBot):
             if choice == 'm':
                 context = context * 3 if context else 3
                 continue
-            if choice == 'e':
+            if choice in ('e', 'l'):
                 text_editor = editor.TextEditor()
-                as_edited = text_editor.edit(original_text)
+                edit_text = original_text if choice == 'e' else new_text
+                as_edited = text_editor.edit(edit_text)
                 # if user didn't press Cancel
                 if as_edited and as_edited != new_text:
                     new_text = as_edited
-                continue
-            if choice == 'l':
-                text_editor = editor.TextEditor()
-                as_edited = text_editor.edit(new_text)
-                # if user didn't press Cancel
-                if as_edited and as_edited != new_text:
-                    new_text = as_edited
-                    # prevent changes from being applied again
-                    last_text = new_text
+                    if choice == 'l':
+                        # prevent changes from being applied again
+                        last_text = new_text
                 continue
             if choice == 'b':
                 pywikibot.bot.open_webbrowser(page)
@@ -942,7 +937,7 @@ def main(*args):
             fixes_set += [arg[5:]]
         elif arg.startswith('-sleep:'):
             options['sleep'] = float(arg[7:])
-        elif arg in ('-always', '-recursive', -'allowoverlap'):
+        elif arg in ('-always', '-recursive', '-allowoverlap'):
             options[arg[1:]] = True
         elif arg == '-nocase':
             flags |= re.IGNORECASE
