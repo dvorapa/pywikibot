@@ -40,7 +40,7 @@ mylang = 'cs'
 # The dictionary usernames should contain a username for each site where you
 # have a bot account. If you have a unique username for all languages of a
 # family , you can use '*'
-usernames['wikipedia']['cs'] = u'DvorapaBot'
+usernames['wikipedia']['cs'] = 'DvorapaBot'
 
 # The list of BotPasswords is saved in another file. Import it if needed.
 # See https://www.mediawiki.org/wiki/Manual:Pywikibot/BotPasswords to know how
@@ -142,11 +142,6 @@ interwiki_graph_url = None
 
 # Save file with local articles without interwikis.
 without_interwiki = False
-
-# Experimental feature:
-# Store the page contents on disk (/cache/ directory) instead of loading
-# them in RAM.
-interwiki_contents_on_disk = False
 
 # ############# SOLVE_DISAMBIGUATION SETTINGS ############
 #
@@ -410,17 +405,13 @@ simulate = False
 # processing. As higher this value this effect will decrease.
 max_queue_size = 64
 
-# Settings to enable mwparserfromhell
-# <https://mwparserfromhell.readthedocs.org/en/latest/>
-# Currently used in textlib.extract_templates_and_params
-# This is more accurate than our current regex, but only works
-# if the user has already installed the library.
-use_mwparserfromhell = True
-
 # Pickle protocol version to use for storing dumps.
 # This config variable is not used for loading dumps.
+# Version 0 is a more or less human-readable protocol
 # Version 2 is common to both Python 2 and 3, and should
 # be used when dumps are accessed by both versions.
-# Version 4 is only available for Python 3.4
+# Version 3 is only available for Python 3
+# Version 4 is only available for Python 3.4+
+# Version 5 was added with Python 3.8
 pickle_protocol = 2
 
