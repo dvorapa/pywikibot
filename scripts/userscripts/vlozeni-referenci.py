@@ -147,6 +147,8 @@ class BasicBot(
         # with open('soubor.txt', 'a') as soubor:
         #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
         # text = textlib.replaceExcept(text, r'', r'', self.vyjimky)
+        if re.search(r'\<\s*references[\s\/]*\>', text):
+            return False
         reference = r'\n<references />'
         sekce = r'== Reference ==' + reference
         sekce3 = r'=== Reference ===' + reference
@@ -166,8 +168,8 @@ class BasicBot(
                 text = textlib.replaceExcept(text, r'(=== *(?:[Ll]iteratura|[Ss]ouvisející články|[Ee]xterní odkazy) *===)', sekce3 + r'\n\n\1', self.vyjimky, count=1)
             else:
                 text = textlib.replaceExcept(text, r'(== *(?:[Ll]iteratura|[Ss]ouvisející články|[Ee]xterní odkazy) *==)', sekce + r'\n\n\1', self.vyjimky, count=1)
-        elif re.search(r'\{\{ *[Pp]ahýl', text):
-            text = textlib.replaceExcept(text, r'(\{\{ *[Pp]ahýl)', sekce + r'\n\n\1', self.vyjimky)
+        elif re.search(r'\{\{ *[Pp]ahýl *\}\}', text):
+            text = textlib.replaceExcept(text, r'(\{\{ *[Pp]ahýl *\}\})', sekce + r'\n\n\1', self.vyjimky)
         else:
             sablony = re.findall(r'\{\{ *([^\|\}]*)(?:\|[^\}]*|)\}\}', text)
             for sablona in sablony:

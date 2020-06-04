@@ -101,7 +101,7 @@ class BasicBot(
         #                           shrnutí                            #
         ################################################################
 
-        shrnuti = ''
+        shrnuti = 'standardizace infoboxu'
 
         ################################################################
 
@@ -161,8 +161,8 @@ class BasicBot(
 
             if part[-2:] == '}}' and inTemplate[-1]:
                 if inTemplate[-1] == 2:
-                    # part2 = textlib.replaceExcept(part2, r'\|\s*[A-ZŽŠČŘĎŤŇÁÉÍÓÚŮÝĚ]', lambda x: x.group(0).lower(), self.vyjimky)
-                    # part2 = textlib.replaceExcept(part2, r'\|[^\|\=]+?=', lambda x: x.group(0).replace('_',' '), self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*[A-ZŽŠČŘĎŤŇÁÉÍÓÚŮÝĚ]', lambda x: x.group(0).lower(), self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|[^\|\=]+?=', lambda x: x.group(0).replace('_',' '), self.vyjimky)
                     ################################################################
                     #                            změny                             #
                     ################################################################
@@ -172,8 +172,16 @@ class BasicBot(
                     # with open('soubor.txt', 'a') as soubor:
                     #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
                     # part2 = textlib.replaceExcept(part2, r'', r'', self.vyjimky)
-                    # part2 = textlib.replaceExcept(part2, r'\s*\|\s*\s*=[^\|\}]*(?=\s*[\|\}])', r'', self.vyjimky)
-                    # part2 = textlib.replaceExcept(part2, r'\|\s*\s*=', r'|  =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\s*\|\s*(?:šířka boxu|box[Ww]idth|column[Gg]ap)\s*=[^\|\}]*(?=\s*[\|\}])', r'', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*image[Mm]ap\s*=', r'| mapa =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*width(\d|)\s*=', r'| velikost obrázku\1 =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*velikost obrázku(\d|)\s*=\s*(\d+)(?=[^\dp ])', r'| velikost obrázku\1 = \2px', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*graySubject\s*=', r'| číslo Gray =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*grayPage\s*=', r'| strana Gray =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*meshName\s*=', r'| název MeSH =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*název MeSH\s*=\s*none', r'| název MeSH =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*meshYear\s*=', r'| rok MeSH =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*meshNumber\s*=', r'| číslo MeSH =', self.vyjimky)
 
                     ################################################################
                     newPageParts.append(part2.replace('ßßß', '|').replace('ẞẞẞ', '}}'))

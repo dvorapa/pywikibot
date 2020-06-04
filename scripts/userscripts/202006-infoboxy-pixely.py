@@ -101,7 +101,7 @@ class BasicBot(
         #                           shrnutí                            #
         ################################################################
 
-        shrnuti = ''
+        shrnuti = 'oprava parametru infoboxu'
 
         ################################################################
 
@@ -173,7 +173,10 @@ class BasicBot(
                     #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
                     # part2 = textlib.replaceExcept(part2, r'', r'', self.vyjimky)
                     # part2 = textlib.replaceExcept(part2, r'\s*\|\s*\s*=[^\|\}]*(?=\s*[\|\}])', r'', self.vyjimky)
-                    # part2 = textlib.replaceExcept(part2, r'\|\s*\s*=', r'|  =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*velikost\s*=', r'| velikost obrázku =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*velikost obrázku(\d|)\s*=\s*(\d+)(?=[^\dp])', r'| velikost obrázku\1 = \2px', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*velikost loga\s*=\s*(\d+)(?=[^\dp])', r'| velikost loga = \1px', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*velikost mapy\s*=\s*(\d+)(?=[^\dp])', r'| velikost mapy = \1px', self.vyjimky)
 
                     ################################################################
                     newPageParts.append(part2.replace('ßßß', '|').replace('ẞẞẞ', '}}'))

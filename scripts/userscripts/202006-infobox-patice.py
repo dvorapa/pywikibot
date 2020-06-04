@@ -101,7 +101,7 @@ class BasicBot(
         #                           shrnutí                            #
         ################################################################
 
-        shrnuti = ''
+        shrnuti = 'standardizace infoboxu'
 
         ################################################################
 
@@ -161,8 +161,8 @@ class BasicBot(
 
             if part[-2:] == '}}' and inTemplate[-1]:
                 if inTemplate[-1] == 2:
-                    # part2 = textlib.replaceExcept(part2, r'\|\s*[A-ZŽŠČŘĎŤŇÁÉÍÓÚŮÝĚ]', lambda x: x.group(0).lower(), self.vyjimky)
-                    # part2 = textlib.replaceExcept(part2, r'\|[^\|\=]+?=', lambda x: x.group(0).replace('_',' '), self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*[A-ZŽŠČŘĎŤŇÁÉÍÓÚŮÝĚ]', lambda x: x.group(0).lower(), self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|[^\|\=]+?=', lambda x: x.group(0).replace('_',' '), self.vyjimky)
                     ################################################################
                     #                            změny                             #
                     ################################################################
@@ -171,9 +171,10 @@ class BasicBot(
                     # self.current_page.title()
                     # with open('soubor.txt', 'a') as soubor:
                     #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
-                    # part2 = textlib.replaceExcept(part2, r'', r'', self.vyjimky)
-                    # part2 = textlib.replaceExcept(part2, r'\s*\|\s*\s*=[^\|\}]*(?=\s*[\|\}])', r'', self.vyjimky)
-                    # part2 = textlib.replaceExcept(part2, r'\|\s*\s*=', r'|  =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*patice\s*=', r'| typ =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*kontaktů\s*=', r'| počet kontaktů =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*(?:jméno|titulek)\s*=', r'| název =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*název\s*=([^\n]*)\s*\|\s*název\s*=\1', r'| název =\1', self.vyjimky)
 
                     ################################################################
                     newPageParts.append(part2.replace('ßßß', '|').replace('ẞẞẞ', '}}'))

@@ -101,7 +101,7 @@ class BasicBot(
         #                           shrnutí                            #
         ################################################################
 
-        shrnuti = ''
+        shrnuti = 'standardizace infoboxu'
 
         ################################################################
 
@@ -161,8 +161,8 @@ class BasicBot(
 
             if part[-2:] == '}}' and inTemplate[-1]:
                 if inTemplate[-1] == 2:
-                    # part2 = textlib.replaceExcept(part2, r'\|\s*[A-ZŽŠČŘĎŤŇÁÉÍÓÚŮÝĚ]', lambda x: x.group(0).lower(), self.vyjimky)
-                    # part2 = textlib.replaceExcept(part2, r'\|[^\|\=]+?=', lambda x: x.group(0).replace('_',' '), self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*[A-ZŽŠČŘĎŤŇÁÉÍÓÚŮÝĚ]', lambda x: x.group(0).lower(), self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|[^\|\=]+?=', lambda x: x.group(0).replace('_',' '), self.vyjimky)
                     ################################################################
                     #                            změny                             #
                     ################################################################
@@ -172,8 +172,21 @@ class BasicBot(
                     # with open('soubor.txt', 'a') as soubor:
                     #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
                     # part2 = textlib.replaceExcept(part2, r'', r'', self.vyjimky)
-                    # part2 = textlib.replaceExcept(part2, r'\s*\|\s*\s*=[^\|\}]*(?=\s*[\|\}])', r'', self.vyjimky)
-                    # part2 = textlib.replaceExcept(part2, r'\|\s*\s*=', r'|  =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\s*\|[^\|\=]+=\s*(?:https?:\/\/|[\-]+)(?=\s*[\|\}])', r'', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*arcibiskup\s*=', r'| status = arci\n | biskup =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*pomocný biskup\s*=', r'| pomocní =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*emeritní (?:arci)?biskup\s*=', r'| emeritní =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*diecézní(?:ch)? kněží\s*=', r'| počet diecézních kněží =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*(?:stálých jáhnů|stálí jáhni)\s*=', r'| počet trvalých jáhnů =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*řeholních kněží\s*=', r'| počet řeholních kněží =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*kostelů\s*=', r'| počet kostelů =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*řeholnic\s*=', r'| počet řeholnic =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*děkanáty\s*=', r'| počet děkanátů =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*vikariáty\s*=', r'| počet vikariátů =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*farnosti\s*=', r'| počet farností =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*náboženské obce\s*=', r'| počet náboženských obcí =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*řeholníků\s*=', r'| počet řeholníků =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*katolíků\s*=', r'| počet katolíků =', self.vyjimky)
 
                     ################################################################
                     newPageParts.append(part2.replace('ßßß', '|').replace('ẞẞẞ', '}}'))

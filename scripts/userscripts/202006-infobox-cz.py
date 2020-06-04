@@ -101,7 +101,7 @@ class BasicBot(
         #                           shrnutí                            #
         ################################################################
 
-        shrnuti = ''
+        shrnuti = 'standardizace infoboxu'
 
         ################################################################
 
@@ -161,8 +161,8 @@ class BasicBot(
 
             if part[-2:] == '}}' and inTemplate[-1]:
                 if inTemplate[-1] == 2:
-                    # part2 = textlib.replaceExcept(part2, r'\|\s*[A-ZŽŠČŘĎŤŇÁÉÍÓÚŮÝĚ]', lambda x: x.group(0).lower(), self.vyjimky)
-                    # part2 = textlib.replaceExcept(part2, r'\|[^\|\=]+?=', lambda x: x.group(0).replace('_',' '), self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*[A-ZŽŠČŘĎŤŇÁÉÍÓÚŮÝĚ]', lambda x: x.group(0).lower(), self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|[^\|\=]+?=', lambda x: x.group(0).replace('_',' '), self.vyjimky)
                     ################################################################
                     #                            změny                             #
                     ################################################################
@@ -173,7 +173,11 @@ class BasicBot(
                     #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
                     # part2 = textlib.replaceExcept(part2, r'', r'', self.vyjimky)
                     # part2 = textlib.replaceExcept(part2, r'\s*\|\s*\s*=[^\|\}]*(?=\s*[\|\}])', r'', self.vyjimky)
-                    # part2 = textlib.replaceExcept(part2, r'\|\s*\s*=', r'|  =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*aktuální\s*=', r'| aktuální ročník =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*termín\s*=', r'| datum konání =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*typ závodu\s*=', r'| typ =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*počet vítězství\s*=', r'| počet nejvíce vítězství =', self.vyjimky)
+                    part2 = textlib.replaceExcept(part2, r'\|\s*nejčastější vítězové\s*=', r'| nejvíce vítězství =', self.vyjimky)
 
                     ################################################################
                     newPageParts.append(part2.replace('ßßß', '|').replace('ẞẞẞ', '}}'))

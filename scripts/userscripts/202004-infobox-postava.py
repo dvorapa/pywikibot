@@ -101,7 +101,7 @@ class BasicBot(
         #                           shrnutí                            #
         ################################################################
 
-        shrnuti = ''
+        shrnuti = 'parametr infoboxu přejmenován'
 
         ################################################################
 
@@ -112,7 +112,7 @@ class BasicBot(
             infobox = infobox[8:]
         infobox = re.escape(infobox)
         infobox = infobox.replace(r'\ ', r'[ _]')
-        self.infobox = r'\{\{\s*[' + infobox[0].upper() + infobox[0].lower() + r']' + infobox[1:] + '(?=\s*[\|\}])'
+        self.infobox = r'\{\{\s*[' + infobox[0].upper() + infobox[0].lower() + r']' + infobox[1:]
 
         # assign the generator to the bot
         self.generator = generator
@@ -132,52 +132,41 @@ class BasicBot(
         pageParts = text.strip('ß').split('ßßß')
 
         inTemplate = [0]
-        part2 = ''
-        inLink = [0]
-        inTable = [0]
-        inTag = [0]
+        inLink = [False]
+        inTable = [False]
+        inTag = [False]
         newPageParts = []
 
         for part in pageParts:
             if re.match(self.infobox, part):
-                # part = textlib.replaceExcept(part, self.infobox, r'', self.vyjimky)
                 inTemplate.append(2)
+                # part = textlib.replaceExcept(part, self.infobox, r'', self.vyjimky)
             elif part[:2] == '{{':
                 inTemplate.append(1)
             elif part[:1] == '[':
-                inLink.append(1 if inTemplate[-1] else 2)
+                inLink.append(True)
             elif part[:2] == '{|':
-                inTable.append(1 if inTemplate[-1] else 2)
+                inTable.append(True)
             elif part[:1] == '<':
-                inTag.append(1 if inTemplate[-1] else 2)
+                inTag.append(True)
 
-            if 2 in inTemplate:
-                newPart = part
-                if 1 in (inTemplate[-1], inLink[-1], inTable[-1], inTag[-1]):
-                    newPart = newPart.replace('|', 'ßßß').replace('}}', 'ẞẞẞ')
-                part2 += newPart
-            else:
-                newPageParts.append(part)
+            if inTemplate[-1] == 2 and not inLink[-1] and not inTable[-1] and not inTag[-1]:
+                part = textlib.replaceExcept(part, r'\|\s*[A-ZŽŠČŘĎŤŇÁÉÍÓÚŮÝĚ]', lambda x: x.group(0).lower(), self.vyjimky)
+                part = textlib.replaceExcept(part, r'\|[^\|\=]+?=', lambda x: x.group(0).replace('_',' '), self.vyjimky)
+                ################################################################
+                #                            změny                             #
+                ################################################################
 
-            if part[-2:] == '}}' and inTemplate[-1]:
-                if inTemplate[-1] == 2:
-                    # part2 = textlib.replaceExcept(part2, r'\|\s*[A-ZŽŠČŘĎŤŇÁÉÍÓÚŮÝĚ]', lambda x: x.group(0).lower(), self.vyjimky)
-                    # part2 = textlib.replaceExcept(part2, r'\|[^\|\=]+?=', lambda x: x.group(0).replace('_',' '), self.vyjimky)
-                    ################################################################
-                    #                            změny                             #
-                    ################################################################
+                # self.getOption('parametr')
+                # self.current_page.title()
+                # with open('soubor.txt', 'a') as soubor:
+                #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
+                part = textlib.replaceExcept(part, r'\|\s*manžel\s*=', r'| choť =', self.vyjimky)
 
-                    # self.getOption('parametr')
-                    # self.current_page.title()
-                    # with open('soubor.txt', 'a') as soubor:
-                    #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
-                    # part2 = textlib.replaceExcept(part2, r'', r'', self.vyjimky)
-                    # part2 = textlib.replaceExcept(part2, r'\s*\|\s*\s*=[^\|\}]*(?=\s*[\|\}])', r'', self.vyjimky)
-                    # part2 = textlib.replaceExcept(part2, r'\|\s*\s*=', r'|  =', self.vyjimky)
+                ################################################################
+            newPageParts.append(part)
 
-                    ################################################################
-                    newPageParts.append(part2.replace('ßßß', '|').replace('ẞẞẞ', '}}'))
-                    part2 = ''
+            if part[-2:] == '}}' and inTemplate[-1] > 0:
                 inTemplate.pop()
             elif part[-1:] == ']' and inLink[-1]:
                 inLink.pop()
