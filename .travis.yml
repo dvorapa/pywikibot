@@ -3,7 +3,7 @@
 language: python
 
 python:
-  - '2.7'
+  - '2.7.18'
   - '3.5'
   - '3.6'
   - '3.7'
@@ -144,7 +144,7 @@ matrix:
             - djvulibre-bin
             - graphviz
             - python-ipaddr
-    - python: '2.7'
+    - python: '2.7.18'
       env: LANGUAGE=en FAMILY=wpbeta PYWIKIBOT_SITE_ONLY=1 OAUTH_DOMAIN="en.wikipedia.beta.wmflabs.org"
     - python: '3.6'
       env: LANGUAGE=zh FAMILY=wpbeta PYWIKIBOT_SITE_ONLY=1 OAUTH_DOMAIN="zh.wikipedia.beta.wmflabs.org"
