@@ -1,6 +1,21 @@
 Release history
 ===============
 
+3.0.20200609
+------------
+
+* Fix page_can_be_edited for MediaWiki < 1.23 (T254623)
+* Show global options with pwb.py -help
+* Usage of SkipPageError with BaseBot has been removed
+* Throttle requests after ratelimits exceeded (T253180)
+* Make Pywikibot daemon logs unexecutable (T253472)
+* Check for missing generator after BaseBot.setup() call
+* Do not change usernames when creating a Site (T253127)
+* pagegenerators: handle protocols in -weblink (T251308, T251310)
+* Bugfixes and improvements
+* Localisation updates
+
+
 3.0.20200508
 ------------
 
