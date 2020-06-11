@@ -4,10 +4,6 @@ language: python
 
 python:
   - '2.7.18'
-  - '3.5'
-  - '3.6'
-  - '3.7'
-  - '3.8'
 
 # OSX builds do not yet support Python
 os: linux
@@ -146,30 +142,30 @@ matrix:
             - python-ipaddr
     - python: '2.7.18'
       env: LANGUAGE=en FAMILY=wpbeta PYWIKIBOT_SITE_ONLY=1 OAUTH_DOMAIN="en.wikipedia.beta.wmflabs.org"
-    - python: '3.6'
+    - python: '2.7.18'
       env: LANGUAGE=zh FAMILY=wpbeta PYWIKIBOT_SITE_ONLY=1 OAUTH_DOMAIN="zh.wikipedia.beta.wmflabs.org"
-    - python: '3.5'
+    - python: '2.7.18'
       env: LANGUAGE=en FAMILY=wsbeta PYWIKIBOT_SITE_ONLY=1
-    - python: '3.5'
+    - python: '2.7.18'
       env: LANGUAGE=en FAMILY=musicbrainz PYWIKIBOT_SITE_ONLY=1
-    - python: '3.7'
+    - python: '2.7.18'
       env: LANGUAGE=test FAMILY=wikipedia PYWIKIBOT_SITE_ONLY=1 OAUTH_DOMAIN="test.wikipedia.org"
-    - python: '3.7'
+    - python: '2.7.18'
       env: LANGUAGE=test FAMILY=wikidata PYWIKIBOT_SITE_ONLY=1
-    - python: '3.8'
+    - python: '2.7.18'
       env: LANGUAGE=ar FAMILY=wiktionary PYWIKIBOT_TEST_NO_RC=1
-    - python: '3.6'
+    - python: '2.7.18'
       env: LANGUAGE=wikidata FAMILY=wikidata PYWIKIBOT_SITE_ONLY=1
-    - python: '3.8'
+    - python: '2.7.18'
       env: LANGUAGE=uk FAMILY=wowwiki PYWIKIBOT_TEST_NO_RC=1
-    - python: '3.8'
+    - python: '2.7.18'
       env: LANGUAGE=en FAMILY=btrfswiki
     - python: '3.9-dev'
       env: LANGUAGE=test FAMILY=wikipedia PYWIKIBOT_SITE_ONLY=1
   allow_failures:
-    - python: '3.8'
+    - python: '2.7.18'
       env: LANGUAGE=uk FAMILY=wowwiki PYWIKIBOT_TEST_NO_RC=1
-    - python: '3.8'
+    - python: '2.7.18'
       env: LANGUAGE=en FAMILY=btrfswiki
     - python: '3.9-dev'
       env: LANGUAGE=test FAMILY=wikipedia PYWIKIBOT_SITE_ONLY=1
