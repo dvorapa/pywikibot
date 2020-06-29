@@ -893,7 +893,7 @@ class BasePage(UnicodeMixin, ComparableMixin):
             return Category(Link(self._catredirect, self.site))
         raise pywikibot.IsNotRedirectPage(self)
 
-    @deprecated('interwiki.page_empty_check(page)', since='20151207')
+    @deprecated(since='20151207')
     def isEmpty(self):
         """
         Return True if the page text has less than 4 characters.
@@ -6899,7 +6899,7 @@ def UnicodeToAsciiHtml(s):
     html = []
     for c in s:
         cord = ord(c)
-        if 31 < cord < 128:
+        if 31 < cord < 127:
             html.append(c)
         else:
             html.append('&#%d;' % cord)
