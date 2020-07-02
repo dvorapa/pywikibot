@@ -284,7 +284,7 @@ def main(*args):
     bot2.mapa2 = bot.mapa
     bot2.run()  # guess what it does
     page = pywikibot.Page(bot2.site, 'Wikipedie:Údržbové seznamy/Nepodporované parametry infoboxů/seznam')
-    page.text = '{| class="wikitable sortable"\n! data-sort-type="number" | Počet výskytů !! Infobox !! Parametr !! Hodnota\n'
+    page.text = '{| class="wikitable sortable"\n! data-sort-type="number" | Počet výskytů !! Infobox !! Parametr !! Hodnota\n|-\n| '
     seznam = set()
     for template, original, param, val, article in bot2.seznam:
         key = original + ':' + param
@@ -293,9 +293,12 @@ def main(*args):
             seznam.add((str(count) + ' ([https://cs.wikipedia.org/w/index.php?search=hastemplate%3A%22' + quote_plus(original) + '%22+insource%3A%2F%5C%7C+*' + quote_plus(re.escape(param)) + '+*%3D%2F&title=Speci%C3%A1ln%C3%AD%3AHled%C3%A1n%C3%AD&profile=default&fulltext=1])', template, param, ''))
         else:
             seznam.add(('1 (' + article + ')', template, param, '<nowiki>' + val + '</nowiki>'))
+    newtext = []
     for article, template, param, val in seznam:
-        page.text += '|-\n| ' + article + ' || ' + template + ' || ' + param + ' || ' + val + '\n'
-    page.text += '|}'
+        newtext.append(article + ' || ' + template + ' || ' + param + ' || ' + val)
+    newtext.sort()
+    page.text += '\n|-\n| '.join(newtext)
+    page.text += '\n|}'
     page.save(summary='Robot: ' + bot2.shrnuti)
     return True
 

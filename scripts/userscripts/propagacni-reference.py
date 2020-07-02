@@ -100,7 +100,7 @@ class BasicBot(
         #                           shrnutí                            #
         ################################################################
 
-        shrnuti = '-propagační reference'
+        shrnuti = '-nevhodný text z automaticky vygenerované reference'
         self.shrnuti = self.getOption('summary') or 'Robot: ' + shrnuti
 
         ################################################################
