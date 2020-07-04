@@ -1592,6 +1592,9 @@ class Request(MutableMapping):
             pywikibot.output(color_format(
                 '{lightyellow}SIMULATION: {0} action blocked.{default}',
                 action))
+            # for more realistic simulation
+            if config.simulate is not True:
+                pywikibot.sleep(float(config.simulate))
             return {action: {'result': 'Success', 'nochange': ''}}
 
     def _is_wikibase_error_retryable(self, error):
@@ -3037,9 +3040,9 @@ class PropertyGenerator(QueryGenerator):
 
     def _fully_retrieved_data_dicts(self, resultdata):
         """Yield items of self._previous_dicts that are not in resultdata."""
-        resuldata_titles = {d['title'] for d in resultdata}
+        resultdata_titles = {d['title'] for d in resultdata if 'title' in d}
         for prev_title, prev_dict in self._previous_dicts.copy().items():
-            if prev_title not in resuldata_titles:
+            if prev_title not in resultdata_titles:
                 yield prev_dict
                 del self._previous_dicts[prev_title]
 
