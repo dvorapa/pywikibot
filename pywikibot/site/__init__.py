@@ -4021,10 +4021,11 @@ class APISite(BaseSite):
                                total=total, g_content=content, **cmargs)
 
     @deprecated_args(getText='content', sysop=None)
+    @remove_last_args(['rollback'])
     def loadrevisions(self, page, content=False, revids=None,
                       startid=None, endid=None, starttime=None,
                       endtime=None, rvdir=None, user=None, excludeuser=None,
-                      section=None, step=None, total=None, rollback=False):
+                      section=None, step=None, total=None):
         """Retrieve revision information and store it in page object.
 
         By default, retrieves the last (current) revision of the page,
@@ -4104,8 +4105,6 @@ class APISite(BaseSite):
             rvargs['rvprop'].append('content')
             if section is not None:
                 rvargs['rvsection'] = UnicodeType(section)
-        if rollback:
-            rvargs['rvtoken'] = 'rollback'
         if revids is None:
             rvtitle = page.title(with_section=False).encode(self.encoding())
             rvargs['titles'] = rvtitle
@@ -5136,7 +5135,8 @@ class APISite(BaseSite):
                 'ususers': usernames, 'usprop': usprop})
         return usgen
 
-    @deprecated('Site.randompages(total=1)', since='20130828')
+    @deprecated('Site.randompages(total=1)', since='20130828',
+                future_warning=True)
     def randompage(self, redirect=False):
         """
         DEPRECATED.
@@ -5146,7 +5146,8 @@ class APISite(BaseSite):
         """
         return self.randompages(total=1, redirects=redirect)
 
-    @deprecated('Site.randompages(total=1, redirects=True)', since='20130828')
+    @deprecated('Site.randompages(total=1, redirects=True)', since='20130828',
+                future_warning=True)
     def randomredirectpage(self):
         """
         DEPRECATED: Use Site.randompages() instead.
