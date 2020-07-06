@@ -1774,14 +1774,15 @@ class BasePage(UnicodeMixin, ComparableMixin):
         else:
             return lastmove.target_page
 
-    @deprecated_args(getText='content', reverseOrder='reverse', step=None)
+    @deprecated_args(getText='content', reverseOrder='reverse', step=None,
+                     rollback=None)
     def revisions(self, reverse=False, total=None, content=False,
-                  rollback=False, starttime=None, endtime=None):
+                  starttime=None, endtime=None):
         """Generator which loads the version history as Revision instances."""
         # TODO: Only request uncached revisions
         self.site.loadrevisions(self, content=content, rvdir=reverse,
                                 starttime=starttime, endtime=endtime,
-                                total=total, rollback=rollback)
+                                total=total)
         return (self._revisions[rev] for rev in
                 sorted(self._revisions, reverse=not reverse)[:total])
 
@@ -2601,16 +2602,25 @@ class FilePage(Page):
                                 url_param=url_param)
         return self.latest_file_info.thumburl
 
-    @deprecated('fileIsShared', since='20121101')
+    @deprecated('file_is_shared', since='20121101', future_warning=True)
     def fileIsOnCommons(self):
         """
         DEPRECATED. Check if the image is stored on Wikimedia Commons.
 
         @rtype: bool
         """
-        return self.fileIsShared()
+        return self.file_is_shared()
 
+    @deprecated('file_is_shared', since='20200618')
     def fileIsShared(self):
+        """
+        DEPRECATED. Check if the image is stored on Wikimedia Commons.
+
+        @rtype: bool
+        """
+        return self.file_is_shared()
+
+    def file_is_shared(self):
         """
         Check if the file is stored on any known shared repository.
 
@@ -2620,12 +2630,13 @@ class FilePage(Page):
         # TODO: put the URLs to family file
         if not self.site.has_image_repository:
             return False
-        elif 'wikitravel_shared' in self.site.shared_image_repository():
+
+        if 'wikitravel_shared' in self.site.shared_image_repository():
             return self.latest_file_info.url.startswith(
                 'https://wikitravel.org/upload/shared/')
-        else:
-            return self.latest_file_info.url.startswith(
-                'https://upload.wikimedia.org/wikipedia/commons/')
+        # default to commons
+        return self.latest_file_info.url.startswith(
+            'https://upload.wikimedia.org/wikipedia/commons/')
 
     @deprecated('FilePage.latest_file_info.sha1', since='20141106')
     def getFileMd5Sum(self):
