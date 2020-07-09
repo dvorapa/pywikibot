@@ -13,13 +13,10 @@ and return a unicode string.
 #
 from __future__ import absolute_import, division, unicode_literals
 
-from collections import OrderedDict, namedtuple
-try:
-    from collections.abc import Sequence
-except ImportError:  # Python 2.7
-    from collections import Sequence
 import datetime
 import re
+
+from collections import OrderedDict, namedtuple
 
 import pywikibot
 from pywikibot.exceptions import InvalidTitle, SiteDefinitionError
@@ -35,8 +32,10 @@ from pywikibot.tools import (
 )
 
 if not PY2:
+    from collections.abc import Sequence
     from html.parser import HTMLParser
 else:
+    from collections import Sequence
     from future_builtins import zip
     from HTMLParser import HTMLParser
 
@@ -515,27 +514,42 @@ def removeHTMLParts(text, keeptags=['tt', 'nowiki', 'small', 'sup']):
     # thanks to:
     # https://www.hellboundhackers.org/articles/read-article.php?article_id=841
     parser = _GetDataHTML()
-    parser.keeptags = keeptags
-    parser.feed(text)
-    parser.close()
+    with parser:
+        parser.keeptags = keeptags
+        parser.feed(text)
     return parser.textdata
 
 
 # thanks to https://docs.python.org/3/library/html.parser.html
 class _GetDataHTML(HTMLParser):
+
+    """HTML parser which removes html tags except they are listed in keeptags.
+
+    This class is also a context manager which closes itself at exit time.
+    """
+
     textdata = ''
     keeptags = []
 
+    def __enter__(self):
+        pass
+
+    def __exit__(self, *exc_info):
+        self.close()
+
     def handle_data(self, data):
+        """Add data to text."""
         self.textdata += data
 
     def handle_starttag(self, tag, attrs):
+        """Add start tag to text if tag should be kept."""
         if tag in self.keeptags:
-            self.textdata += '<%s>' % tag
+            self.textdata += '<{}>'.format(tag)
 
     def handle_endtag(self, tag):
+        """Add end tag to text if tag should be kept."""
         if tag in self.keeptags:
-            self.textdata += '</%s>' % tag
+            self.textdata += '</{}>'.format(tag)
 
 
 def isDisabled(text, index, tags=None):
@@ -1904,111 +1918,6 @@ def glue_template_and_params(template_and_params):
         text += '|%s=%s\n' % (item, params[item])
 
     return '{{%s\n%s}}' % (template, text)
-
-
-# ----------------------------------------------
-# functions dealing with stars list (deprecated)
-# ----------------------------------------------
-
-starsList = [
-    'bueno',
-    'bom interwiki',
-    'cyswllt[ _]erthygl[ _]ddethol', 'dolen[ _]ed',
-    'destacado', 'destaca[tu]',
-    'enllaç[ _]ad',
-    'enllaz[ _]ad',
-    'leam[ _]vdc',
-    'legătură[ _]a[bcf]',
-    'liamm[ _]pub',
-    'lien[ _]adq',
-    'lien[ _]ba',
-    'liên[ _]kết[ _]bài[ _]chất[ _]lượng[ _]tốt',
-    'liên[ _]kết[ _]chọn[ _]lọc',
-    'ligam[ _]adq',
-    'ligazón[ _]a[bd]',
-    'ligoelstara',
-    'ligoleginda',
-    'link[ _][afgu]a', 'link[ _]adq', 'link[ _]f[lm]', 'link[ _]km',
-    'link[ _]sm', 'linkfa',
-    'na[ _]lotura',
-    'nasc[ _]ar',
-    'tengill[ _][úg]g',
-    'ua',
-    'yüm yg',
-    'רא',
-    'وصلة مقالة جيدة',
-    'وصلة مقالة مختارة',
-]
-
-
-@deprecated(future_warning=True, since='20200324')
-def get_stars(text):
-    """
-    Extract stars templates from wikitext.
-
-    @param text: a wiki text
-    @type text: str
-    @return: list of stars templates
-    @rtype: list
-    """
-    allstars = []
-    starstext = removeDisabledParts(text)
-    for star in starsList:
-        regex = re.compile(r'(\{\{(?:template:|)%s\|.*?\}\}[\s]*)'
-                           % star, re.I)
-        found = regex.findall(starstext)
-        if found:
-            allstars += found
-    return allstars
-
-
-@deprecated(future_warning=True, since='20200324')
-def remove_stars(text, stars_list):
-    """
-    Remove stars templates from text.
-
-    @param text: a wiki text
-    @type text: str
-    @param start_list: list of stars templates previously found in text
-    @return: modified text
-    @rtype: str
-    """
-    for star in stars_list:
-        text = text.replace(star, '')
-    return text
-
-
-@deprecated(future_warning=True, since='20200324')
-def append_stars(text, stars_list, site=None):
-    """
-    Remove stars templates from text.
-
-    @param text: a wiki text
-    @type text: str
-    @param stars_list: list of stars templates previously found in text
-    @type stars_list: list
-    @param site: a site where the given text is used.
-        interwiki_text_separator is used when a site object is given.
-        Otherwise two line separators are used to separate stars list.
-    @type site: BaseSite
-    @return: modified text
-    @rtype: str
-    """
-    LS = '\n\n' if not site else site.family.interwiki_text_separator
-    text = text.strip() + LS
-    stars = stars_list[:]
-    stars.sort()
-    for element in stars:
-        text += element.strip() + '\n'
-    return text
-
-
-@deprecated(future_warning=True, since='20200324')
-def standardize_stars(text):
-    """Make sure that star templates are in the right order."""
-    allstars = get_stars(text)
-    text = remove_stars(text, allstars)
-    return append_stars(text, allstars)
 
 
 # --------------------------
