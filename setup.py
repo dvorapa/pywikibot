@@ -36,7 +36,7 @@ from setuptools import setup
 
 PYTHON_VERSION = sys.version_info[:3]
 
-versions_required_message = """
+VERSIONS_REQUIRED_MESSAGE = """
 Pywikibot is not available on:
 {version}
 
@@ -46,12 +46,12 @@ This version of Pywikibot only supports Python 3.5+.
 
 def python_is_supported():
     """Check that Python is supported."""
-    # Any change to this must be copied to pwb.py
     return PYTHON_VERSION >= (3, 5, 0)
 
 
 if not python_is_supported():
-    raise RuntimeError(versions_required_message.format(version=sys.version))
+    # pwb.py checks this exception
+    raise RuntimeError(VERSIONS_REQUIRED_MESSAGE.format(version=sys.version))
 
 # ------- setup extra_requires ------- #
 extra_deps = {
@@ -72,6 +72,7 @@ extra_deps = {
         'pydocstyle>=4.0.0',
         'hacking',
         'flake8-coding',
+        'flake8-colors',
         'flake8-comprehensions>=3.1.4;python_version>="3.8"',
         'flake8-comprehensions>=2.2.0',
         'flake8-docstrings>=1.3.1',
@@ -138,7 +139,6 @@ if 'PYSETUP_TEST_EXTRAS' in os.environ:
 
 # These extra dependencies are needed other unittest fails to load tests.
 test_deps += extra_deps['eventstreams']
-test_deps += ['six']
 
 
 class _DottedDict(dict):
