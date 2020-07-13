@@ -759,7 +759,7 @@ class BaseSite(ComparableMixin):
                 pywikibot.log('Site %s instantiated and marked "obsolete" '
                               'to prevent access' % self)
         elif self.__code not in self.languages():
-            if self.__family.name in list(self.__family.langs.keys()) and \
+            if self.__family.name in self.__family.langs and \
                len(self.__family.langs) == 1:
                 self.__code = self.__family.name
                 if self.__family == pywikibot.config.family \
@@ -2486,7 +2486,7 @@ class APISite(BaseSite):
                     # v1.14 defined and as ',&#32;and'; fixed in v1.15
                     msgs['and'] = ' and'
                 else:
-                    msgs[key] = pywikibot.html2UnicodeType(value)
+                    msgs[key] = pywikibot.html2unicode(value)
 
         concat = msgs['and'] + msgs['word-separator']
         return msgs['comma-separator'].join(
@@ -3686,7 +3686,7 @@ class APISite(BaseSite):
                         namespaces=namespaces,
                         content=content
                     )
-            return itertools.chain(*list(genlist.values()))
+            return itertools.chain(*genlist.values())
         return blgen
 
     @deprecated_args(step=None, filterRedirects='filter_redirects')
