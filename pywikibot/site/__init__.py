@@ -131,13 +131,6 @@ class LoginStatus(IntEnum):
         return 'LoginStatus({})'.format(self)
 
 
-Family = redirect_func(pywikibot.family.Family.load,
-                       target_module='pywikibot.family.Family',
-                       old_name='Family',
-                       since='20141001',
-                       future_warning=True)
-
-
 class Namespace(Iterable, ComparableMixin):
 
     """
@@ -2389,12 +2382,6 @@ class APISite(BaseSite):
         else:
             key = '*'
         return req.submit()['expandtemplates'][key]
-
-    getExpandedString = redirect_func(expand_text,
-                                      old_name='getExpandedString',
-                                      class_name='APISite',
-                                      since='20170504',
-                                      future_warning=True)
 
     def getcurrenttimestamp(self):
         """
