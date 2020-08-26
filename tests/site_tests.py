@@ -2214,6 +2214,7 @@ class PatrolTestCase(TokenTestBase, TestCase):
         if mysite.mw_version >= '1.22':
             params['revid'] = [0, 1]
 
+        raised = False
         try:
             # no such rcid, revid or too old revid
             list(mysite.patrol(**params))
@@ -2222,7 +2223,8 @@ class PatrolTestCase(TokenTestBase, TestCase):
                 self.skipTest(error)
         except pywikibot.Error:
             # expected result
-            pass
+            raised = True
+        self.assertTrue(raised, msg='pywikibot.Error not raised')
 
 
 class SiteRandomTestCase(DefaultSiteTestCase):
@@ -3705,12 +3707,13 @@ class TestPropertyNames(DefaultSiteTestCase):
         pnames = mysite.get_property_names()
         self.assertIsInstance(pnames, list)
         for item in ('defaultsort', 'disambiguation', 'displaytitle',
-                     'forcetoc', 'graph_specs', 'hiddencat', 'newsectionlink',
+                     'forcetoc', 'hiddencat', 'index', 'newsectionlink',
                      'noeditsection', 'noexternallanglinks', 'nogallery',
                      'noindex', 'nonewsectionlink', 'notoc', 'score',
                      'templatedata', 'wikibase-badge-Q17437796',
-                     'wikibase_item'):
-            self.assertIn(item, pnames)
+                     'wikibase-badge-Q17437798', 'wikibase_item'):
+            with self.subTest(item=item):
+                self.assertIn(item, pnames)
 
 
 class TestPageFromWikibase(DefaultSiteTestCase):

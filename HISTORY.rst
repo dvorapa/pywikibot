@@ -11,6 +11,7 @@ Release history
 4.1.0
 -----
 
+* Enable Pywikibot for Python 3.9
 * APISite.loadpageinfo does not discard changes to page content when information was not loaded (T260472)
 * tools.UnicodeType and tools.signature are deprecated
 * BaseBot.stop() method is deprecated in favour of BaseBot.generator.close()
@@ -237,6 +238,7 @@ Release history
 3.0.20190430
 ------------
 
+* Unicode literals are required for all scripts; the usage of ASCII bytes may fail (T219095)
 * Don't fail if the number of forms of a plural string is less than required (T99057, T219097)
 * Implement create_short_link Page method to use Extension:UrlShortener (T220876)
 * Remove wikia family file (T220921)
