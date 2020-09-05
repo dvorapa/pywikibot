@@ -43,6 +43,7 @@ class Family(family.SubdomainFamily, family.WikimediaFamily):
         'ar': ('قالب:تحويل تصنيف',),
         'bn': ('বিষয়শ্রেণী পুনর্নির্দেশ',),
         'en': ('Category redirect',),
+        'es': ('Categoría redirigida',),
         'ro': ('Redirect categorie',),
         'zh': ('分類重定向',),
     }
@@ -97,6 +98,7 @@ class Family(family.SubdomainFamily, family.WikimediaFamily):
         'da': [102],
         'en': [102],
         'eo': [102],
+        'es': [106],
         'et': [106],
         'fa': [102],
         'fr': [102],
