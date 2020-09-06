@@ -99,6 +99,7 @@ from contextlib import closing
 from importlib import import_module
 from pathlib import Path
 from textwrap import fill
+from typing import Any, Dict
 from warnings import warn
 
 import pywikibot
@@ -220,7 +221,7 @@ class LoggingFormatter(_LoggingFormatter):
 
     def __init__(self, fmt=None, datefmt=None):
         """Initializer setting underlying encoding to console_encoding."""
-        _LoggingFormatter.__init__(self, fmt, datefmt, config.console_encoding)
+        super().__init__(fmt, datefmt, config.console_encoding)
 
 
 # Initialize the handlers and formatters for the logging system.
@@ -1024,7 +1025,7 @@ class OptionHandler:
     # The values are the default values
     # Overwrite this in subclasses!
 
-    availableOptions = {}
+    availableOptions = {}  # type: Dict[str, Any]
 
     def __init__(self, **kwargs):
         """
