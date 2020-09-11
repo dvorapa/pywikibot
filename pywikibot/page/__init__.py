@@ -3316,6 +3316,10 @@ class LanguageDict(MutableMapping):
         this = cls({key: value['value'] for key, value in data.items()})
         return this
 
+    @classmethod
+    def new_empty(cls, repo):
+        return cls()
+
     def __getitem__(self, key):
         key = self.normalizeKey(key)
         return self._data[key]
@@ -3393,6 +3397,10 @@ class AliasesDict(MutableMapping):
             this[key] = [val['value'] for val in value]
         return this
 
+    @classmethod
+    def new_empty(cls, repo):
+        return cls()
+
     def __getitem__(self, key):
         key = LanguageDict.normalizeKey(key)
         return self._data[key]
@@ -3462,6 +3470,10 @@ class ClaimCollection(MutableMapping):
         for key, claims in data.items():
             this[key] = [Claim.fromJSON(repo, claim) for claim in claims]
         return this
+
+    @classmethod
+    def new_empty(cls, repo):
+        return cls(repo)
 
     def __getitem__(self, key):
         return self._data[key]
@@ -3552,6 +3564,16 @@ class SiteLinkCollection(MutableMapping):
         if data:
             self.update(data)
 
+    @classmethod
+    def new_empty(cls, repo):
+        """Construct a new empty SiteLinkCollection."""
+        return cls(repo)
+
+    @classmethod
+    def fromJSON(cls, data, repo):
+        """Construct a new SiteLinkCollection from JSON."""
+        return cls(repo, data)
+
     @staticmethod
     def getdbName(site):
         """
@@ -3605,11 +3627,6 @@ class SiteLinkCollection(MutableMapping):
     def __contains__(self, key):
         key = self.getdbName(key)
         return key in self._data
-
-    @classmethod
-    def fromJSON(cls, data, repo):
-        """Construct a new SiteLinkCollection from JSON."""
-        return cls(repo, data)
 
     @classmethod
     def _extract_JSON(cls, obj):
@@ -3756,6 +3773,17 @@ class WikibaseEntity:
         # todo: use re.fullmatch when Python 3.4+ required
         return bool(re.match(cls.title_pattern + '$', entity_id))
 
+    def __getattr__(self, name):
+        if name in self.DATA_ATTRIBUTES:
+            if self.getID() == '-1':
+                for key, cls in self.DATA_ATTRIBUTES.items():
+                    setattr(self, key, cls.new_empty(self.repo))
+                return getattr(self, name)
+            else:
+                return self.get()[name]
+
+        return super().__getattr__(name)
+
     def _defined_by(self, singular: bool = False) -> dict:
         """
         Internal function to provide the API parameters to identify the entity.
@@ -3830,6 +3858,29 @@ class WikibaseEntity:
                 norm_data[key] = attr.normalizeData(data[key])
         return norm_data
 
+    @property
+    def latest_revision_id(self) -> Optional[int]:
+        """
+        Get the revision identifier for the most recent revision of the entity.
+
+        @rtype: int or None if it cannot be determined
+        @raise NoWikibaseEntity: if the entity doesn't exist
+        """
+        if not hasattr(self, '_revid'):
+            # fixme: unlike BasePage.latest_revision_id, this raises
+            # exception when entity is redirect, cannot use get_redirect
+            self.get()
+        return self._revid
+
+    @latest_revision_id.setter
+    def latest_revision_id(self, value: Optional[int]) -> None:
+        self._revid = value
+
+    @latest_revision_id.deleter
+    def latest_revision_id(self) -> None:
+        if hasattr(self, '_revid'):
+            del self._revid
+
     def exists(self) -> bool:
         """Determine if an entity exists in the data repository."""
         if not hasattr(self, '_content'):
@@ -3865,7 +3916,11 @@ class WikibaseEntity:
         if 'missing' in self._content:
             raise pywikibot.NoWikibaseEntity(self)
 
+        self.latest_revision_id = self._content.get('lastrevid')
+
         data = {}
+        # todo: this initializes all data,
+        # make use of lazy initialization (T245809)
         for key, cls in self.DATA_ATTRIBUTES.items():
             value = cls.fromJSON(self._content.get(key, {}), self.repo)
             setattr(self, key, value)
@@ -3884,7 +3939,10 @@ class WikibaseEntity:
         else:
             data = self._normalizeData(data)
 
-        updates = self.repo.editEntity(self, data, **kwargs)
+        baserevid = getattr(self, '_revid', None)
+
+        updates = self.repo.editEntity(
+            self, data, baserevid=baserevid, **kwargs)
 
         # the attribute may have been unset in ItemPage
         if getattr(self, 'id', '-1') == '-1':
@@ -4099,9 +4157,6 @@ class WikibasePage(BasePage, WikibaseEntity):
                 # todo: raise a nicer exception here (T87345)
             raise pywikibot.NoPage(self)
 
-        if 'lastrevid' in self._content:
-            self.latest_revision_id = self._content['lastrevid']
-
         if 'pageid' in self._content:
             self._pageid = self._content['pageid']
 
@@ -4113,7 +4168,12 @@ class WikibasePage(BasePage, WikibaseEntity):
 
     @property
     def latest_revision_id(self) -> int:
-        """Get revision identifier for the most recent revision of entity."""
+        """
+        Get the revision identifier for the most recent revision of the entity.
+
+        @rtype: int
+        @raise pywikibot.exceptions.NoPage: if the entity doesn't exist
+        """
         if not hasattr(self, '_revid'):
             self.get()
         return self._revid
@@ -4124,6 +4184,7 @@ class WikibasePage(BasePage, WikibaseEntity):
 
     @latest_revision_id.deleter
     def latest_revision_id(self):
+        # fixme: this seems too destructive in comparison to the parent
         self.clear_cache()
 
     @allow_asynchronous
@@ -4149,12 +4210,8 @@ class WikibasePage(BasePage, WikibaseEntity):
             by bots that need to keep track of which saves were successful.
         @type callback: callable
         """
-        if hasattr(self, '_revid'):
-            baserevid = self.latest_revision_id
-        else:
-            baserevid = None
-
-        super().editEntity(data, baserevid=baserevid, **kwargs)
+        # kept for the decorator
+        super().editEntity(data, **kwargs)
 
     def editLabels(self, labels, **kwargs):
         """
