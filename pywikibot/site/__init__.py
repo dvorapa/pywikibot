@@ -26,10 +26,10 @@ import uuid
 from collections import defaultdict, namedtuple
 from collections.abc import Iterable, Mapping
 from contextlib import suppress
-from enum import IntEnum
 from itertools import zip_longest
+from pywikibot.login import LoginStatus as _LoginStatus
 from textwrap import fill
-from typing import Optional
+from typing import List, Optional, Union
 from warnings import warn
 
 import pywikibot
@@ -82,6 +82,7 @@ from pywikibot.tools import (
     itergroup,
     MediaWikiVersion,
     merge_unique_dicts,
+    ModuleDeprecationWrapper,
     normalize_username,
     remove_last_args,
     SelfCallMixin,
@@ -98,35 +99,6 @@ _logger = 'wiki.site'
 class PageInUse(pywikibot.Error):
 
     """Page cannot be reserved for writing due to existing lock."""
-
-
-class LoginStatus(IntEnum):
-
-    """
-    Enum for Login statuses.
-
-    >>> LoginStatus.NOT_ATTEMPTED
-    LoginStatus(-3)
-    >>> LoginStatus.IN_PROGRESS.value
-    -2
-    >>> LoginStatus.NOT_LOGGED_IN.name
-    NOT_LOGGED_IN
-    >>> int(LoginStatus.AS_USER)
-    0
-    >>> LoginStatus(-3).name
-    'NOT_ATTEMPTED'
-    >>> LoginStatus(0).name
-    'AS_USER'
-    """
-
-    NOT_ATTEMPTED = -3
-    IN_PROGRESS = -2
-    NOT_LOGGED_IN = -1
-    AS_USER = 0
-
-    def __repr__(self):
-        """Return internal representation."""
-        return 'LoginStatus({})'.format(self)
 
 
 class Namespace(Iterable, ComparableMixin):
@@ -414,7 +386,8 @@ class Namespace(Iterable, ComparableMixin):
         return False
 
     @classmethod
-    @deprecated('NamespacesDict.lookup_name', since='20150703')
+    @deprecated('NamespacesDict.lookup_name', since='20150703',
+                future_warning=True)
     def lookup_name(cls, name, namespaces=None):
         """
         Find the Namespace for a name.
@@ -432,7 +405,8 @@ class Namespace(Iterable, ComparableMixin):
         return NamespacesDict._lookup_name(name, namespaces)
 
     @staticmethod
-    @deprecated('NamespacesDict.resolve', since='20150703')
+    @deprecated('NamespacesDict.resolve', since='20150703',
+                future_warning=True)
     def resolve(identifiers, namespaces=None):
         """
         Resolve namespace identifiers to obtain Namespace objects.
@@ -971,7 +945,8 @@ class BaseSite(ComparableMixin):
         """
         return self._interwikimap[prefix].local
 
-    @deprecated('APISite.namespaces.lookup_name', since='20150703')
+    @deprecated('APISite.namespaces.lookup_name', since='20150703',
+                future_warning=True)
     def ns_index(self, namespace):
         """
         Return the Namespace for a given namespace name.
@@ -983,7 +958,8 @@ class BaseSite(ComparableMixin):
         """
         return self.namespaces.lookup_name(namespace)
 
-    @deprecated('APISite.namespaces.lookup_name', since='20150703')
+    @deprecated('APISite.namespaces.lookup_name', since='20150703',
+                future_warning=True)
     def getNamespaceIndex(self, namespace):
         """DEPRECATED: Return the Namespace for a given namespace name."""
         return self.namespaces.lookup_name(namespace)
@@ -1180,7 +1156,8 @@ class BaseSite(ComparableMixin):
         """Return local name for the Category namespace."""
         return self.namespace(14)
 
-    @deprecated('list(namespaces.CATEGORY)', since='20150829')
+    @deprecated('list(namespaces.CATEGORY)', since='20150829',
+                future_warning=True)
     def category_namespaces(self):
         """Return names for the Category namespace."""
         return list(self.namespace(14, all=True))
@@ -1202,7 +1179,8 @@ class BaseSite(ComparableMixin):
 
     # deprecated methods for backwards-compatibility
 
-    @deprecated('pywikibot.data.api.encode_url', since='20151211')
+    @deprecated('pywikibot.data.api.encode_url', since='20151211',
+                future_warning=True)
     def urlEncode(self, query):
         """DEPRECATED."""
         return api.encode_url(query)
@@ -1315,7 +1293,7 @@ class APISite(BaseSite):
         """Initializer."""
         super().__init__(code, fam, user)
         self._msgcache = {}
-        self._loginstatus = LoginStatus.NOT_ATTEMPTED
+        self._loginstatus = _LoginStatus.NOT_ATTEMPTED
         self._siteinfo = Siteinfo(self)
         self._paraminfo = api.ParamInfo(self)
         self._interwikimap = _InterwikiMap(self)
@@ -1488,7 +1466,7 @@ class APISite(BaseSite):
         #       (below) is successful. Instead, log the problem,
         #       to be increased to 'warning' level once majority
         #       of issues are resolved.
-        if self._loginstatus == LoginStatus.IN_PROGRESS:
+        if self._loginstatus == _LoginStatus.IN_PROGRESS:
             pywikibot.log(
                 '{!r}.login() called when a previous login was in progress.'
                 .format(self))
@@ -1497,11 +1475,11 @@ class APISite(BaseSite):
         # logged_in() is False if _userinfo exists, which means this
         # will have no effect for the invocation from api.py
         if self.logged_in():
-            self._loginstatus = LoginStatus.AS_USER
+            self._loginstatus = _LoginStatus.AS_USER
             return
         # check whether a login cookie already exists for this user
         # or check user identity when OAuth enabled
-        self._loginstatus = LoginStatus.IN_PROGRESS
+        self._loginstatus = _LoginStatus.IN_PROGRESS
         try:
             self.getuserinfo(force=True)
             if self.userinfo['name'] == self.user():
@@ -1536,9 +1514,9 @@ class APISite(BaseSite):
         if login_manager.login(retry=True, autocreate=autocreate):
             self._username = login_manager.username
             self.getuserinfo(force=True)
-            self._loginstatus = LoginStatus.AS_USER
+            self._loginstatus = _LoginStatus.AS_USER
         else:
-            self._loginstatus = LoginStatus.NOT_LOGGED_IN  # failure
+            self._loginstatus = _LoginStatus.NOT_LOGGED_IN  # failure
 
     def _relogin(self):
         """Force a login sequence without logging out, using the current user.
@@ -1548,7 +1526,7 @@ class APISite(BaseSite):
         from the site.
         """
         del self._userinfo
-        self._loginstatus = LoginStatus.NOT_LOGGED_IN
+        self._loginstatus = _LoginStatus.NOT_LOGGED_IN
         self.login()
 
     def logout(self):
@@ -1568,7 +1546,7 @@ class APISite(BaseSite):
             req_params['token'] = self.tokens['csrf']
         uirequest = self._simple_request(**req_params)
         uirequest.submit()
-        self._loginstatus = LoginStatus.NOT_LOGGED_IN
+        self._loginstatus = _LoginStatus.NOT_LOGGED_IN
 
         # Reset tokens and user properties
         del self._userinfo
@@ -2006,7 +1984,7 @@ class APISite(BaseSite):
         else:
             return [word]
 
-    @deprecated('expand_text', since='20150831')
+    @deprecated('expand_text', since='20150831', future_warning=True)
     def resolvemagicwords(self, wikitext):
         """
         Replace the {{ns:xx}} marks in a wikitext with the namespace names.
@@ -2101,7 +2079,8 @@ class APISite(BaseSite):
         """Site information dict."""
         return self._siteinfo
 
-    @deprecated('siteinfo or Namespace instance', since='20150830')
+    @deprecated('siteinfo or Namespace instance', since='20150830',
+                future_warning=True)
     def case(self):
         """Return this site's capitalization rule."""
         # This is the global setting via $wgCapitalLinks, it is used whenever
@@ -2112,7 +2091,7 @@ class APISite(BaseSite):
         """Return this site's internal id."""
         return self.siteinfo['wikiid']
 
-    @deprecated('APISite.lang', since='20150629')
+    @deprecated('APISite.lang', since='20150629', future_warning=True)
     def language(self):
         """Return the code for the language of this Site."""
         return self.lang
@@ -2496,7 +2475,8 @@ class APISite(BaseSite):
         return (pageitem['imageinfo']
                 if history else pageitem['imageinfo'][0])
 
-    @deprecated('Check the content model instead', since='20150128')
+    @deprecated('Check the content model instead', since='20150128',
+                future_warning=True)
     def loadflowinfo(self, page):
         """
         Load Flow-related information about a given page.
@@ -2966,7 +2946,7 @@ class APISite(BaseSite):
 
         return user_tokens
 
-    @deprecated("the 'tokens' property", since='20150218')
+    @deprecated("the 'tokens' property", since='20150218', future_warning=True)
     @remove_last_args(['sysop'])
     def getToken(self, getalways=True, getagain=False):
         """DEPRECATED: Get edit token."""
@@ -2983,7 +2963,7 @@ class APISite(BaseSite):
             del self.tokens._tokens[self.user()][token]
         return self.tokens[token]
 
-    @deprecated("the 'tokens' property", since='20150218')
+    @deprecated("the 'tokens' property", since='20150218', future_warning=True)
     @remove_last_args(['sysop'])
     def getPatrolToken(self):
         """DEPRECATED: Get patrol token."""
@@ -4049,18 +4029,30 @@ class APISite(BaseSite):
 
         return legen
 
-    @deprecated_args(returndict=None, nobots=None, rcshow=None, rcprop=None,
-                     rctype='changetype', revision=None, repeat=None,
-                     rcstart='start', rcend='end', rcdir=None, step=None,
-                     includeredirects='redirect', namespace='namespaces',
-                     rcnamespace='namespaces', number='total', rclimit='total',
-                     showMinor='minor', showBot='bot', showAnon='anon',
-                     showRedirects='redirect', showPatrolled='patrolled',
-                     topOnly='top_only', pagelist=None)
-    def recentchanges(self, start=None, end=None, reverse=False,
-                      namespaces=None, changetype=None, minor=None, bot=None,
-                      anon=None, redirect=None, patrolled=None, top_only=False,
-                      total=None, user=None, excludeuser=None, tag=None):
+    @deprecated_args(nobots=True, includeredirects='redirect',
+                     namespace='namespaces', number='total', pagelist=True,
+                     rcdir=True, rcend='end', rclimit='total',
+                     rcnamespace='namespaces', rcshow=True, rcstart='start',
+                     rctype='changetype', repeat=True, returndict=True,
+                     revision=True, showAnon='anon', showBot='bot',
+                     showMinor='minor', showPatrolled='patrolled',
+                     showRedirects='redirect', step=True, topOnly='top_only')
+    def recentchanges(self, *,
+                      start=None,
+                      end=None,
+                      reverse: bool = False,
+                      namespaces=None,
+                      changetype: Optional[str] = None,
+                      minor: Optional[bool] = None,
+                      bot: Optional[bool] = None,
+                      anon: Optional[bool] = None,
+                      redirect: Optional[bool] = None,
+                      patrolled: Optional[bool] = None,
+                      top_only: bool = False,
+                      total: Optional[int] = None,
+                      user: Union[str, List[str], None] = None,
+                      excludeuser: Union[str, List[str], None] = None,
+                      tag: Optional[str] = None):
         """Iterate recent changes.
 
         @see: U{https://www.mediawiki.org/wiki/API:RecentChanges}
@@ -4070,7 +4062,6 @@ class APISite(BaseSite):
         @param end: Timestamp to end listing at
         @type end: pywikibot.Timestamp
         @param reverse: if True, start with oldest changes (default: newest)
-        @type reverse: bool
         @param namespaces: only iterate pages in these namespaces
         @type namespaces: iterable of basestring or Namespace key,
             or a single instance of those types. May be a '|' separated
@@ -4078,31 +4069,21 @@ class APISite(BaseSite):
         @param changetype: only iterate changes of this type ("edit" for
             edits to existing pages, "new" for new pages, "log" for log
             entries)
-        @type changetype: basestring
         @param minor: if True, only list minor edits; if False, only list
             non-minor edits; if None, list all
-        @type minor: bool or None
         @param bot: if True, only list bot edits; if False, only list
             non-bot edits; if None, list all
-        @type bot: bool or None
         @param anon: if True, only list anon edits; if False, only list
             non-anon edits; if None, list all
-        @type anon: bool or None
         @param redirect: if True, only list edits to redirect pages; if
             False, only list edits to non-redirect pages; if None, list all
-        @type redirect: bool or None
         @param patrolled: if True, only list patrolled edits; if False,
             only list non-patrolled edits; if None, list all
-        @type patrolled: bool or None
         @param top_only: if True, only list changes that are the latest
             revision (default False)
-        @type top_only: bool
         @param user: if not None, only list edits by this user or users
-        @type user: basestring|list
         @param excludeuser: if not None, exclude edits by this user or users
-        @type excludeuser: basestring|list
         @param tag: a recent changes tag
-        @type tag: str
         @raises KeyError: a namespace identifier was not resolved
         @raises TypeError: a namespace identifier has an inappropriate
             type such as NoneType or bool
@@ -5645,7 +5626,8 @@ class APISite(BaseSite):
                                       '"report_success" is True or None',
                                       '"report_success=False" or define '
                                       '"ignore_warnings" as callable/iterable',
-                                      3, since='20150823')
+                                      3, warning_class=FutureWarning,
+                                      since='20150823')
         if isinstance(ignore_warnings, Iterable):
             ignored_warnings = ignore_warnings
 
@@ -6941,6 +6923,7 @@ class DataSite(APISite):
         """Check that claim.on_item is set and matches baserevid if used."""
         if not claim.on_item:
             issue_deprecation_warning('claim without on_item set', depth=3,
+                                      warning_class=FutureWarning,
                                       since='20160309')
             if not baserevid:
                 warn('Neither claim.on_item nor baserevid provided',
@@ -6992,7 +6975,8 @@ class DataSite(APISite):
                 else:  # urls
                     instead = None
                 issue_deprecation_warning('DataSite.{0}()'.format(attr),
-                                          instead, since='20151022')
+                                          instead, warning_class=FutureWarning,
+                                          since='20151022')
                 if props == 'urls':
                     props = 'sitelinks/urls'
                 method = self._get_propertyitem
@@ -7664,3 +7648,10 @@ class DataSite(APISite):
                               data_name='search',
                               total=total, parameters=parameters)
         return gen
+
+
+wrapper = ModuleDeprecationWrapper(__name__)
+# Note: use LoginStatus instead of _LoginStatus
+#       after desupport warning is removed
+wrapper._add_deprecated_attr('LoginStatus', _LoginStatus,
+                             since='20200919', future_warning=True)
