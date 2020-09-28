@@ -584,12 +584,12 @@ class BasePage(ComparableMixin):
         del self.latest_revision_id
         self._revid = value
 
-    @deprecated('latest_revision_id', since='20150727')
+    @deprecated('latest_revision_id', since='20150727', future_warning=True)
     def latestRevision(self):
         """Return the current revision id for this page."""
         return self.latest_revision_id
 
-    @deprecated('latest_revision_id', since='20150407')
+    @deprecated('latest_revision_id', since='20150407', future_warning=True)
     def pageAPInfo(self):
         """Return the current revision id for this page."""
         if self.isRedirectPage():
@@ -738,7 +738,7 @@ class BasePage(ComparableMixin):
 
     @property
     @deprecated('latest_revision.parent_id (0 instead of -1 when no parent)',
-                since='20150609')
+                since='20150609', future_warning=True)
     def previous_revision_id(self) -> int:
         """
         Return the revision id for the previous revision of this Page.
@@ -748,7 +748,7 @@ class BasePage(ComparableMixin):
         return self.latest_revision.parent_id or -1
 
     @deprecated('latest_revision.parent_id (0 instead of -1 when no parent)',
-                since='20150609')
+                since='20150609', future_warning=True)
     def previousRevision(self) -> int:
         """
         Return the revision id for the previous revision.
@@ -833,7 +833,7 @@ class BasePage(ComparableMixin):
             return Category(Link(self._catredirect, self.site))
         raise pywikibot.IsNotRedirectPage(self)
 
-    @deprecated(since='20151207')
+    @deprecated(since='20151207', future_warning=True)
     def isEmpty(self) -> bool:
         """
         Return True if the page text has less than 4 characters.
@@ -1638,7 +1638,7 @@ class BasePage(ComparableMixin):
         """
         return self.site.getredirtarget(self)
 
-    @deprecated('moved_target()', since='20150524')
+    @deprecated('moved_target()', since='20150524', future_warning=True)
     def getMovedTarget(self):
         """
         Return a Page object for the target this Page was moved to.
@@ -1748,7 +1748,8 @@ class BasePage(ComparableMixin):
         return sum(cnt[user.username] if isinstance(user, User) else cnt[user]
                    for user in contributors)
 
-    @deprecated('contributors() or revisions()', since='20150206')
+    @deprecated('contributors() or revisions()', since='20150206',
+                future_warning=True)
     @deprecated_args(limit='total')
     def getLatestEditors(self, total=1) -> list:
         """
@@ -1963,23 +1964,23 @@ class BasePage(ComparableMixin):
 
     @deprecated_args(throttle=True)
     def protect(self, edit=False, move=False, create=None, upload=None,
-                unprotect=False, reason=None, prompt=None, protections=None,
+                unprotect=False,
+                reason: Optional[str] = None,
+                prompt: Optional[bool] = None,
+                protections: Optional[dict] = None,
                 **kwargs):
         """
         Protect or unprotect a wiki page. Requires administrator status.
 
-        Valid protection levels (in MediaWiki 1.12) are '' (equivalent to
-        'none'), 'autoconfirmed', and 'sysop'. If None is given, however,
+        Valid protection levels are '' (equivalent to 'none'),
+        'autoconfirmed', and 'sysop'. If None is given, however,
         that protection will be skipped.
 
         @param protections: A dict mapping type of protection to protection
             level of that type.
-        @type protections: dict
         @param reason: Reason for the action
-        @type reason: basestring
         @param prompt: Whether to ask user for confirmation (deprecated).
                        Defaults to protections is None
-        @type prompt: bool
         """
         def process_deprecated_arg(value, arg_name):
             # if protections was set and value is None, don't interpret that
@@ -2130,7 +2131,7 @@ class BasePage(ComparableMixin):
                                  'required.' % self.title(as_link=True))
         return False
 
-    @deprecated('Page.is_flow_page()', since='20150128')
+    @deprecated('Page.is_flow_page()', since='20150128', future_warning=True)
     def isFlowPage(self):
         """DEPRECATED: use self.is_flow_page instead."""
         return self.is_flow_page()
@@ -2171,7 +2172,7 @@ class BasePage(ComparableMixin):
 
 # ####### DEPRECATED METHODS ########
 
-    @deprecated('Page.protection()', since='20150725')
+    @deprecated('Page.protection()', since='20150725', future_warning=True)
     def getRestrictions(self):
         """DEPRECATED. Use self.protection() instead."""
         restrictions = self.protection()
@@ -4108,6 +4109,7 @@ class WikibasePage(BasePage, WikibaseEntity):
         if name == 'lastrevid':
             issue_deprecation_warning(
                 'WikibasePage.lastrevid', 'latest_revision_id',
+                warning_class=FutureWarning,
                 since='20150607')
             name = '_revid'
         return super().__getattribute__(name)
@@ -4117,6 +4119,7 @@ class WikibasePage(BasePage, WikibaseEntity):
         if attr == 'lastrevid':
             issue_deprecation_warning(
                 'WikibasePage.lastrevid', 'latest_revision_id',
+                warning_class=FutureWarning,
                 since='20150607')
             attr = '_revid'
         return super().__setattr__(attr, value)
@@ -4126,6 +4129,7 @@ class WikibasePage(BasePage, WikibaseEntity):
         if attr == 'lastrevid':
             issue_deprecation_warning(
                 'WikibasePage.lastrevid', 'latest_revision_id',
+                warning_class=FutureWarning,
                 since='20150607')
             attr = '_revid'
         return super().__delattr__(attr)
