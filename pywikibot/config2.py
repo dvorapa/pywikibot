@@ -51,7 +51,7 @@ from textwrap import fill
 from typing import Dict, List, Tuple
 from warnings import warn
 
-from pywikibot import __version__ as pwb_version
+from pywikibot.__metadata__ import __version__ as pwb_version
 from pywikibot.logging import error, output, warning
 from pywikibot.tools import issue_deprecation_warning
 
@@ -1012,7 +1012,7 @@ class _DifferentTypeError(UserWarning, TypeError):
     """An error when the required type doesn't match the actual type."""
 
     def __init__(self, name, actual_type, allowed_types):
-        super(_DifferentTypeError, self).__init__(
+        super().__init__(
             'Configuration variable "{0}" is defined as "{1.__name__}" in '
             'your user-config.py but expected "{2}".'
             .format(name, actual_type, '", "'.join(t.__name__
