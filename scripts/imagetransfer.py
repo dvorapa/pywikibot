@@ -71,6 +71,14 @@ nowCommonsTemplate = {
 # Translations for license templates.
 # Must only be given when they are in fact different.
 licenseTemplates = {
+    ('wikipedia:ar', 'commons:commons'): {
+        'رخصة جنو للوثائق الحرة': 'GFDL',
+        'رخصة جنو للوثائق الحرة - شخصي': 'GFDL-self',
+        'ملكية عامة': 'PD',
+        'ملكية عامة - شخصي': 'PD-self',
+        'ملكية عامة - فن': 'PD-Art',
+        'ملكية عامة - الحكومة الأمريكية': 'PD-USGov',
+    },
     ('wikipedia:de', 'commons:commons'): {
         'Bild-GFDL': 'GFDL',
         'Bild-GFDL-OpenGeoDB': 'GFDL-OpenGeoDB',
@@ -148,7 +156,7 @@ class ImageTransferBot(object):
         @return: the filename which was used to upload the image
         """
         sourceSite = sourceImagePage.site
-        url = sourceImagePage.get_file_url().encode('utf-8')
+        url = sourceImagePage.get_file_url()
         pywikibot.output('URL should be: ' + url)
         # localize the text that should be printed on image description page
         try:
