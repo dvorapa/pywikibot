@@ -378,7 +378,7 @@ class CosmeticChangesToolkit:
 
     def translateAndCapitalizeNamespaces(self, text):
         """Use localized namespace names."""
-        # arz uses english stylish codes
+        # arz uses English stylish codes
         if self.site.sitename == 'wikipedia:arz':
             return text
         # wiki links aren't parsed here.
@@ -439,7 +439,7 @@ class CosmeticChangesToolkit:
     def translateMagicWords(self, text):
         """Use localized magic words."""
         # not wanted at ru
-        # arz uses english stylish codes
+        # arz uses English stylish codes
         # no need to run on English wikis
         if self.site.code in ['arz', 'en', 'ru']:
             return text
