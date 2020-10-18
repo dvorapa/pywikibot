@@ -10,7 +10,8 @@ import os
 import sys
 
 # logging levels
-from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL, StreamHandler
+from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
+from typing import Optional
 
 STDOUT = 16
 VERBOSE = 18
@@ -69,9 +70,6 @@ def logoutput(text, decoder=None, newline=True, _level=INFO, _logger='',
         logger = logging.getLogger('pywiki.' + _logger)
     else:
         logger = logging.getLogger('pywiki')
-
-    if not logger.handlers:  # lastResort for Python 2 (T188417)
-        logger.handlers.append(StreamHandler())
 
     # invoke any init routines
     if _init_routines:
@@ -143,16 +141,14 @@ def stdout(text, decoder=None, newline=True, **kwargs):
     logoutput(text, decoder, newline, STDOUT, **kwargs)
 
 
-def warning(text, decoder=None, newline=True, **kwargs):
+def warning(text: str, decoder: Optional[str] = None,
+            newline: bool = True, **kwargs):
     """Output a warning message to the user via the userinterface.
 
     @param text: the message the user wants to display.
-    @type text: str
     @param decoder: If None, text should be a unicode string. Otherwise it
         should be encoded in the given encoding.
-    @type decoder: str
     @param newline: If True, a line feed will be added after printing the text.
-    @type newline: bool
     @param kwargs: The keyword arguments can be found in the python doc:
         https://docs.python.org/3/howto/logging-cookbook.html.
     """
