@@ -6,7 +6,7 @@
 # Distributed under the terms of the MIT license.
 #
 from collections import UserDict
-from typing import Optional
+from typing import List, Optional
 
 import pywikibot
 from pywikibot.exceptions import Error, HiddenKeyError
@@ -189,14 +189,13 @@ class BlockEntry(LogEntry):
         else:
             return super(BlockEntry, self).page()
 
-    def flags(self):
+    def flags(self) -> List[str]:
         """
         Return a list of (str) flags associated with the block entry.
 
         It raises an Error if the entry is an unblocking log entry.
 
         @return: list of flags strings
-        @rtype: list
         """
         if self.action() == 'unblock':
             return []
@@ -339,24 +338,16 @@ class PatrolEntry(LogEntry):
     _expected_type = 'patrol'
 
     @property
-    def current_id(self):
-        """
-        Return the current id.
-
-        @rtype: int
-        """
+    def current_id(self) -> int:
+        """Return the current id."""
         # key has been changed in mw 1.19; try the new mw style first
         # sometimes it returns strs sometimes ints
         return int(self._params['curid']
                    if 'curid' in self._params else self._params['cur'])
 
     @property
-    def previous_id(self):
-        """
-        Return the previous id.
-
-        @rtype: int
-        """
+    def previous_id(self) -> int:
+        """Return the previous id."""
         # key has been changed in mw 1.19; try the new mw style first
         # sometimes it returns strs sometimes ints
         return int(self._params['previd']
@@ -457,12 +448,11 @@ class LogEntryFactory(object):
                 classname, bases, {'_expected_type': logtype})
         return cls._logtypes[logtype]
 
-    def _createFromData(self, logdata):
+    def _createFromData(self, logdata: dict):
         """
         Check for logtype from data, and creates the correct LogEntry.
 
         @param logdata: log entry data
-        @type logdata: dict
         @rtype: LogEntry
         """
         try:
