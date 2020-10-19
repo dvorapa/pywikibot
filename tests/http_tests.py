@@ -43,7 +43,7 @@ class HttpTestCase(TestCase):
         """Test http._enqueue using http://www.wikipedia.org/."""
         r = http._enqueue('http://www.wikipedia.org/')
         self.assertIsInstance(r, threadedhttp.HttpRequest)
-        self.assertEqual(r.status, 200)
+        self.assertEqual(r.status_code, 200)
         self.assertIn('<html lang="mul"', r.text)
         self.assertIsInstance(r.text, str)
         self.assertIsInstance(r.raw, bytes)
@@ -52,11 +52,9 @@ class HttpTestCase(TestCase):
         """Test http.fetch using http://www.wikipedia.org/."""
         r = http.fetch('http://www.wikipedia.org/')
         self.assertIsInstance(r, threadedhttp.HttpRequest)
-        self.assertEqual(r.status, 200)
+        self.assertEqual(r.status_code, 200)
         self.assertIn('<html lang="mul"', r.text)
         self.assertIsInstance(r.text, str)
-        with suppress_warnings(r'.*HttpRequest\.content is deprecated'):
-            self.assertEqual(r.content, r.text)
         self.assertIsInstance(r.raw, bytes)
 
 
@@ -338,6 +336,18 @@ class LiveFakeUserAgentTestCase(HttpbinTestCase):
             use_fake_user_agent='ARBITRARY')
         self.assertEqual(r.headers['user-agent'], 'ARBITRARY')
 
+        # Empty value
+        self.assertRaisesRegex(ValueError,
+                               'Invalid parameter: use_fake_user_agent',
+                               http.fetch, self.get_httpbin_url('/status/200'),
+                               use_fake_user_agent='')
+
+        # Parameter wrongly set to None
+        self.assertRaisesRegex(ValueError,
+                               'Invalid parameter: use_fake_user_agent',
+                               http.fetch, self.get_httpbin_url('/status/200'),
+                               use_fake_user_agent=None)
+
         # Manually overridden domains
         config.fake_user_agent_exceptions = {
             self.get_httpbin_hostname(): 'OVERRIDDEN'}
@@ -369,17 +379,18 @@ class GetFakeUserAgentTestCase(TestCase):
 
     def _test_config_settings(self):
         """Test if method honours configuration toggle."""
-        # ON: True and None in config are considered turned on.
-        config.fake_user_agent = True
-        self.assertNotEqual(http.get_fake_user_agent(), http.user_agent())
-        config.fake_user_agent = None
-        self.assertNotEqual(http.get_fake_user_agent(), http.user_agent())
+        with suppress_warnings(r'.*?get_fake_user_agent is deprecated'):
+            # ON: True and None in config are considered turned on.
+            config.fake_user_agent = True
+            self.assertNotEqual(http.get_fake_user_agent(), http.user_agent())
+            config.fake_user_agent = None
+            self.assertNotEqual(http.get_fake_user_agent(), http.user_agent())
 
-        # OFF: All other values won't make it return random UA.
-        config.fake_user_agent = False
-        self.assertEqual(http.get_fake_user_agent(), http.user_agent())
-        config.fake_user_agent = 'ARBITRARY'
-        self.assertEqual(http.get_fake_user_agent(), 'ARBITRARY')
+            # OFF: All other values won't make it return random UA.
+            config.fake_user_agent = False
+            self.assertEqual(http.get_fake_user_agent(), http.user_agent())
+            config.fake_user_agent = 'ARBITRARY'
+            self.assertEqual(http.get_fake_user_agent(), 'ARBITRARY')
 
     @require_modules('fake_useragent')
     def test_with_fake_useragent(self):
@@ -614,10 +625,10 @@ class QueryStringParamsTestCase(HttpbinTestCase):
     def test_no_params(self):
         """Test fetch method with no parameters."""
         r = http.fetch(uri=self.url, params={})
-        if r.status == 503:  # T203637
+        if r.status_code == 503:  # T203637
             self.skipTest(
                 '503: Service currently not available for ' + self.url)
-        self.assertEqual(r.status, 200)
+        self.assertEqual(r.status_code, 200)
 
         content = json.loads(r.text)
         self.assertDictEqual(content['args'], {})
@@ -630,10 +641,10 @@ class QueryStringParamsTestCase(HttpbinTestCase):
         should be the same as what we get out.
         """
         r = http.fetch(uri=self.url, params={'fish&chips': 'delicious'})
-        if r.status == 503:  # T203637
+        if r.status_code == 503:  # T203637
             self.skipTest(
                 '503: Service currently not available for ' + self.url)
-        self.assertEqual(r.status, 200)
+        self.assertEqual(r.status_code, 200)
 
         content = json.loads(r.text)
         self.assertDictEqual(content['args'], {'fish&chips': 'delicious'})
@@ -646,10 +657,10 @@ class QueryStringParamsTestCase(HttpbinTestCase):
         should be the same as what we get out.
         """
         r = http.fetch(uri=self.url, params={'fish%26chips': 'delicious'})
-        if r.status == 503:  # T203637
+        if r.status_code == 503:  # T203637
             self.skipTest(
                 '503: Service currently not available for ' + self.url)
-        self.assertEqual(r.status, 200)
+        self.assertEqual(r.status_code, 200)
 
         content = json.loads(r.text)
         self.assertDictEqual(content['args'], {'fish%26chips': 'delicious'})
