@@ -414,10 +414,10 @@ class ReferencesRobot(SingleSiteBot):
                 break
         if code:
             manual += '/{}'.format(code)
-        if self.opt.summary is None:
-            self.msg = i18n.twtranslate(self.site, 'reflinks-msg', locals())
-        else:
+        if self.opt.summary:
             self.msg = self.opt.summary
+        else:
+            self.msg = i18n.twtranslate(self.site, 'reflinks-msg', locals())
 
         local = i18n.translate(self.site, badtitles)
         if local:
@@ -495,8 +495,8 @@ class ReferencesRobot(SingleSiteBot):
     def setup(self):
         """Read dead links from file."""
         try:
-            self.dead_links = codecs.open(
-                listof404pages, 'r', 'latin_1').read()
+            with codecs.open(listof404pages, 'r', 'latin_1') as f:
+                self.dead_links = f.read()
         except IOError:
             raise NotImplementedError(
                 '404-links.txt is required for reflinks.py\n'
@@ -506,6 +506,7 @@ class ReferencesRobot(SingleSiteBot):
 
     def run(self):
         """Run the Bot."""
+        self.setup()
         editedpages = 0
         for page in self.generator:
             try:
@@ -613,6 +614,7 @@ class ReferencesRobot(SingleSiteBot):
                         IOError,
                         httplib.error,
                         pywikibot.FatalServerError,
+                        pywikibot.Server414Error,
                         pywikibot.Server504Error) as e:
                     pywikibot.output("Can't retrieve page {} : {}"
                                      .format(ref.url, e))
