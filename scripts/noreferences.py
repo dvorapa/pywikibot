@@ -707,42 +707,33 @@ class NoReferencesBot(SingleSiteBot, ExistingPageBot, NoRedirectPageBot):
                 ident=ident, text=self.referencesText)
         return oldText[:index].rstrip() + ref_section + oldText[index:]
 
+    def skip_page(self, page):
+        """Check whether the page could be processed."""
+        if page.isDisambig():
+            pywikibot.output('Page {} is a disambig; skipping.'
+                             .format(page.title(as_link=True)))
+            return True
+
+        if self.site.sitename == 'wikipedia:en' and page.isIpEdit():
+            pywikibot.warning(
+                'Page {} is edited by IP. Possible vandalized'
+                .format(page.title(as_link=True)))
+            return True
+
+        return super().skip_page(page)
+
     def treat_page(self) -> None:
         """Run the bot."""
         page = self.current_page
         try:
             text = page.text
         except pywikibot.LockedPage:
-            pywikibot.warning('Page {0} is locked?!'
+            pywikibot.warning('Page {} is locked?!'
                               .format(page.title(as_link=True)))
             return
 
-        if page.isDisambig():
-            pywikibot.output('Page {0} is a disambig; skipping.'
-                             .format(page.title(as_link=True)))
-            return
-
-        if self.site.sitename == 'wikipedia:en' and page.isIpEdit():
-            pywikibot.warning(
-                'Page {0} is edited by IP. Possible vandalized'
-                .format(page.title(as_link=True)))
-            return
-
         if self.lacksReferences(text):
-            newText = self.addReferences(text)
-            try:
-                self.userPut(
-                    page, page.text, newText, summary=self.comment)
-            except pywikibot.EditConflict:
-                pywikibot.warning('Skipping {0} because of edit conflict'
-                                  .format(page.title(as_link=True)))
-            except pywikibot.SpamblacklistError as e:
-                pywikibot.warning(
-                    'Cannot change {0} because of blacklist entry {1}'
-                    .format(page.title(as_link=True), e.url))
-            except pywikibot.LockedPage:
-                pywikibot.warning('Skipping {0} (locked page)'
-                                  .format(page.title(as_link=True)))
+            self.put_current(self.addReferences(text), summary=self.comment)
 
 
 def main(*args) -> None:
