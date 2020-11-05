@@ -58,7 +58,6 @@ from pywikibot.site import BaseSite, DataSite, APISite, ClosedSite
 from pywikibot.tools import (
     classproperty,
     deprecate_arg as _deprecate_arg,
-    issue_deprecation_warning,
     normalize_username,
     MediaWikiVersion as _MediaWikiVersion,
     ModuleDeprecationWrapper as _ModuleDeprecationWrapper,
@@ -1087,8 +1086,8 @@ def _code_fam_from_url(url: str):
 
 
 @_deprecate_arg('sysop', None)
-def Site(code: Optional[str] = None, fam=None, user: Optional[str] = None,
-         sysop=None, interface=None,
+def Site(code: Optional[str] = None, fam=None, user: Optional[str] = None, *,
+         interface=None,
          url: Optional[str] = None) -> Union[APISite, DataSite, ClosedSite]:
     """A factory method to obtain a Site object.
 
@@ -1098,6 +1097,7 @@ def Site(code: Optional[str] = None, fam=None, user: Optional[str] = None,
     using the method parameters.
 
     @param code: language code (override config.mylang)
+        code may also be a sitename like 'wikipedia:test'
     @param fam: family name or object (override config.family)
     @type fam: str or pywikibot.family.Family
     @param user: bot user name to use on this site (override config.usernames)
@@ -1112,10 +1112,6 @@ def Site(code: Optional[str] = None, fam=None, user: Optional[str] = None,
     """
     _logger = 'wiki'
 
-    if sysop is not None:
-        issue_deprecation_warning('positional argument of "sysop"', depth=3,
-                                  warning_class=DeprecationWarning,
-                                  since='20190907')
     if url:
         # Either code and fam or only url
         if code or fam:
@@ -1123,13 +1119,19 @@ def Site(code: Optional[str] = None, fam=None, user: Optional[str] = None,
                 'URL to the wiki OR a pair of code and family name '
                 'should be provided')
         code, fam = _code_fam_from_url(url)
+    elif code and ':' in code:
+        if fam:
+            raise ValueError(
+                'sitename OR a pair of code and family name '
+                'should be provided')
+        fam, _, code = code.partition(':')
     else:
         # Fallback to config defaults
         code = code or config.mylang
         fam = fam or config.family
 
-        if not isinstance(fam, Family):
-            fam = Family.load(fam)
+    if not isinstance(fam, Family):
+        fam = Family.load(fam)
 
     interface = interface or fam.interface(code)
 
