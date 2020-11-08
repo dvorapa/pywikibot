@@ -571,7 +571,7 @@ class GeneratorFactory:
 
         if self.catfilter_list:
             dupfiltergen = CategoryFilterPageGenerator(
-                dupfiltergen, self.catfilter_list, self.site)
+                dupfiltergen, self.catfilter_list)
 
         if (preload or self.articlefilter_list) and not self.nopreload:
             if isinstance(dupfiltergen, DequeGenerator):
@@ -1604,18 +1604,19 @@ def PageTitleFilterPageGenerator(generator, ignore_list: dict):
 
     """
     def is_ignored(page):
-        if page.site.code in ignore_list.get(page.site.family.name, {}):
-            for ig in ignore_list[page.site.family.name][page.site.code]:
-                if re.search(ig, page.title()):
-                    return True
-        return False
+        try:
+            site_ig_list = ignore_list[page.site.family.name][page.site.code]
+        except KeyError:
+            return False
+        return any(re.search(ig, page.title()) for ig in site_ig_list)
 
     for page in generator:
-        if is_ignored(page):
-            if config.verbose_output:
-                pywikibot.output('Ignoring page %s' % page.title())
-        else:
+        if not is_ignored(page):
             yield page
+            continue
+
+        if config.verbose_output:
+            pywikibot.output('Ignoring page %s' % page.title())
 
 
 def RedirectFilterPageGenerator(generator, no_redirects: bool = True,
@@ -1833,7 +1834,8 @@ def QualityFilterPageGenerator(generator, quality: List[int]):
             yield page
 
 
-def CategoryFilterPageGenerator(generator, category_list, site=None):
+@deprecated_args(site=None, since='20201107')
+def CategoryFilterPageGenerator(generator, category_list):
     """
     Wrap a generator to filter pages by categories specified.
 
@@ -1842,10 +1844,8 @@ def CategoryFilterPageGenerator(generator, category_list, site=None):
     @type category_list: list of category objects
 
     """
-    if site is None:
-        site = pywikibot.Site()
     for page in generator:
-        if all(x in site.pagecategories(page) for x in category_list):
+        if all(x in page.categories() for x in category_list):
             yield page
 
 
