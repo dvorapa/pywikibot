@@ -505,7 +505,7 @@ class CosmeticChangesToolkit:
                 split[0], '|'.join(cache.get(x.strip(), x) for x in split[1:]))
 
         cache = {}
-        exceptions = ['nowiki', 'comment', 'pre', 'source']
+        exceptions = ['comment', 'nowiki', 'pre', 'syntaxhighlight']
         regex = re.compile(
             FILE_LINK_REGEX % '|'.join(self.site.namespaces[6]),
             flags=re.X)
@@ -691,7 +691,7 @@ class CosmeticChangesToolkit:
         # TODO: T254350 - what other extension tags should be avoided?
         # (graph, math, score, timeline, etc.)
         text = pywikibot.html2unicode(
-            text, ignore=ignore, exceptions=['comment', 'source'])
+            text, ignore=ignore, exceptions=['comment', 'syntaxhighlight'])
         return text
 
     def removeEmptySections(self, text):
@@ -740,8 +740,8 @@ class CosmeticChangesToolkit:
 
     def removeUselessSpaces(self, text):
         """Cleanup multiple or trailing spaces."""
-        exceptions = ['comment', 'math', 'nowiki', 'pre', 'startspace',
-                      'source', 'table']
+        exceptions = ['comment', 'math', 'nowiki', 'pre', 'syntaxhighlight',
+                      'startspace', 'table']
         if self.site.sitename != 'wikipedia:cs':
             exceptions.append('template')
         text = textlib.replaceExcept(text, r'(?m)[\t ]+( |$)', r'\1',
@@ -884,8 +884,9 @@ class CosmeticChangesToolkit:
         other wikis. If there are any complaints, please file a bug report.
         """
         if not self.template:
-            exceptions = ['comment', 'math', 'nowiki', 'pre', 'source',
-                          'template', 'timeline', self.site.redirectRegex()]
+            exceptions = ['comment', 'math', 'nowiki', 'pre',
+                          'syntaxhighlight', 'template', 'timeline',
+                          self.site.redirectRegex()]
             text = textlib.replaceExcept(
                 text,
                 r'(?m)'
@@ -931,8 +932,8 @@ class CosmeticChangesToolkit:
                 replacement += '|' + match.group('title')
             return replacement + ']]'
 
-        exceptions = ['nowiki', 'comment', 'math', 'pre', 'source',
-                      'startspace']
+        exceptions = ['comment', 'math', 'nowiki', 'pre', 'startspace',
+                      'syntaxhighlight']
         # link to the wiki working on
         # Only use suffixes for article paths
         for suffix in self.site._interwiki_urls(True):
@@ -994,8 +995,8 @@ class CosmeticChangesToolkit:
 
         # Everything case-insensitive (?i)
         # Keep in mind that MediaWiki automatically converts <br> to <br />
-        exceptions = ['nowiki', 'comment', 'math', 'pre', 'source',
-                      'startspace']
+        exceptions = ['comment', 'math', 'nowiki', 'pre', 'startspace',
+                      'syntaxhighlight']
         text = textlib.replaceExcept(text, r'(?i)<(b|strong)>(.*?)</\1>',
                                      r"'''\2'''", exceptions, site=self.site)
         text = textlib.replaceExcept(text, r'(?i)<(i|em)>(.*?)</\1>',
@@ -1021,7 +1022,7 @@ class CosmeticChangesToolkit:
         """Fix references tags."""
         # See also
         # https://en.wikipedia.org/wiki/User:AnomieBOT/source/tasks/OrphanReferenceFixer.pm
-        exceptions = ['nowiki', 'comment', 'math', 'pre', 'source',
+        exceptions = ['comment', 'math', 'nowiki', 'pre', 'syntaxhighlight',
                       'startspace']
 
         # it should be name = " or name=" NOT name   ="
@@ -1037,8 +1038,8 @@ class CosmeticChangesToolkit:
 
     def fixStyle(self, text):
         """Convert prettytable to wikitable class."""
-        exceptions = ['nowiki', 'comment', 'math', 'pre', 'source',
-                      'startspace']
+        exceptions = ['comment', 'math', 'nowiki', 'pre', 'startspace',
+                      'syntaxhighlight']
         if self.site.code in ('de', 'en'):
             text = textlib.replaceExcept(text,
                                          r'(class="[^"]*)prettytable([^"]*")',
@@ -1047,9 +1048,8 @@ class CosmeticChangesToolkit:
 
     def fixTypo(self, text):
         """Fix units."""
-        exceptions = ['nowiki', 'comment', 'math', 'pre', 'source',
-                      'startspace', 'gallery', 'hyperlink', 'interwiki',
-                      'link']
+        exceptions = ['comment', 'gallery', 'hyperlink', 'interwiki', 'link',
+                      'nowiki', 'math', 'pre', 'startspace', 'syntaxhighlight']
         # change <number> ccm -> <number> cm³
         text = textlib.replaceExcept(text, r'(\d)\s*(?:&nbsp;)?ccm',
                                      r'\1&nbsp;cm³', exceptions,
@@ -1070,11 +1070,13 @@ class CosmeticChangesToolkit:
         """Fix arabic and persian letters."""
         if self.site.code not in ['ckb', 'fa']:
             return text
+
         exceptions = [
-            'gallery',
             'file',
+            'gallery',
             'hyperlink',
             'interwiki',
+            'inputbox',
             # FIXME: but changes letters inside wikilinks
             # 'link',
             'math',
@@ -1082,9 +1084,8 @@ class CosmeticChangesToolkit:
             'template',
             'timeline',
             'ref',
-            'source',
             'startspace',
-            'inputbox',
+            'syntaxhighlight',
         ]
 
         digits = textlib.NON_LATIN_DIGITS
@@ -1126,7 +1127,7 @@ class CosmeticChangesToolkit:
 
         # section headers to {{int:}} versions
         exceptions = ['comment', 'includeonly', 'math', 'noinclude', 'nowiki',
-                      'pre', 'source', 'ref', 'timeline']
+                      'pre', 'syntaxhighlight', 'ref', 'timeline']
         text = textlib.replaceExcept(text,
                                      r'([\r\n]|^)\=\= *Summary *\=\=',
                                      r'\1== {{int:filedesc}} ==',
