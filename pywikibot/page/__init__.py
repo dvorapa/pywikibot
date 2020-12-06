@@ -62,13 +62,10 @@ from pywikibot.tools import (
 from pywikibot.tools import is_IP
 
 if PYTHON_VERSION >= (3, 9):
-    from functools import cache
     Dict = dict
     List = list
 else:
-    from functools import lru_cache
     from typing import Dict, List
-    cache = lru_cache(None)
 
 
 PROTOCOL_REGEX = r'\Ahttps?://'
@@ -620,11 +617,18 @@ class BasePage(ComparableMixin):
         if getattr(self, '_text', None) is not None:
             return self._text
 
+        if hasattr(self, '_revid'):
+            return self.latest_revision.text
+
         try:
-            return self.get(get_redirect=True)
+            self.get(get_redirect=True)
         except pywikibot.NoPage:
             # TODO: what other exceptions might be returned?
             return ''
+
+        # check botMayEdit on a very early state (T262136)
+        self._bot_may_edit = self.botMayEdit()
+        return self.latest_revision.text
 
     @text.setter
     def text(self, value: str):
@@ -633,8 +637,6 @@ class BasePage(ComparableMixin):
 
         @param value: New value or None
         """
-        self.botMayEdit()  # T262136, T267770
-
         del self.text
         self._text = None if value is None else str(value)
 
@@ -1091,7 +1093,6 @@ class BasePage(ComparableMixin):
         """DEPRECATED. Determine whether the page may be edited."""
         return self.has_permission()
 
-    @cache
     def botMayEdit(self) -> bool:
         """
         Determine whether the active bot is allowed to edit the page.
@@ -1107,6 +1108,9 @@ class BasePage(ComparableMixin):
         to override this by setting ignore_bot_templates=True in
         user-config.py, or using page.put(force=True).
         """
+        if hasattr(self, '_bot_may_edit'):
+            return self._bot_may_edit
+
         if not hasattr(self, 'templatesWithParams'):
             return True
 
@@ -3430,17 +3434,13 @@ class LanguageDict(BaseDataDict):
 
     def toJSON(self, diffto=None):
         data = {}
-        if diffto:
-            for key in diffto:
-                if key not in self:
-                    data[key] = {'language': key, 'value': ''}
-                elif self[key] != diffto[key]['value']:
-                    data[key] = {'language': key, 'value': self[key]}
-            for key in self:
-                if key not in diffto:
-                    data[key] = {'language': key, 'value': self[key]}
-        else:
-            for key in self:
+        diffto = diffto or {}
+        for key in diffto.keys() - self.keys():
+            data[key] = {'language': key, 'value': ''}
+        for key in self.keys() - diffto.keys():
+            data[key] = {'language': key, 'value': self[key]}
+        for key in self.keys() & diffto.keys():
+            if self[key] != diffto[key]['value']:
                 data[key] = {'language': key, 'value': self[key]}
         return data
 
@@ -3476,20 +3476,18 @@ class AliasesDict(BaseDataDict):
 
     def toJSON(self, diffto=None):
         data = {}
-        if diffto:
-            for lang, strings in diffto.items():
-                if len(self.get(lang, [])) > 0:
-                    if tuple(sorted(val['value'] for val in strings)) != tuple(
-                            sorted(self[lang])):
-                        data[lang] = [{'language': lang, 'value': i}
-                                      for i in self[lang]]
-                else:
-                    data[lang] = [
-                        {'language': lang, 'value': i['value'], 'remove': ''}
-                        for i in strings]
-        else:
-            for lang, values in self.items():
-                data[lang] = [{'language': lang, 'value': i} for i in values]
+        diffto = diffto or {}
+        for lang in diffto.keys() & self.keys():
+            if (sorted(val['value'] for val in diffto[lang])
+                    != sorted(self[lang])):
+                data[lang] = [{'language': lang, 'value': i}
+                              for i in self[lang]]
+        for lang in diffto.keys() - self.keys():
+            data[lang] = [
+                {'language': lang, 'value': i['value'], 'remove': ''}
+                for i in diffto[lang]]
+        for lang in self.keys() - diffto.keys():
+            data[lang] = [{'language': lang, 'value': i} for i in self[lang]]
         return data
 
 
