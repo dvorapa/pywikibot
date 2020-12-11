@@ -155,12 +155,12 @@ class Photo(pywikibot.FilePage):
 
     def downloadPhoto(self):
         """
-        Download the photo and store it in a io.BytesIO object.
+        Download the photo and store it in an io.BytesIO object.
 
         TODO: Add exception handling
         """
         if not self.contents:
-            imageFile = fetch(self.URL).raw
+            imageFile = fetch(self.URL).content
             self.contents = io.BytesIO(imageFile)
         return self.contents
 
