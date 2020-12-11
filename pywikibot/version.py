@@ -141,7 +141,7 @@ def getversiondict():
 
 
 def svn_rev_info(path):
-    """Fetch information about the current revision of an Subversion checkout.
+    """Fetch information about the current revision of a Subversion checkout.
 
     @param path: directory of the Subversion checkout
     @return:
@@ -204,7 +204,7 @@ def github_svn_rev2hash(tag: str, rev):
                          '<propfind xmlns=\"DAV:\"><allprop/></propfind>',
                     headers={'label': str(rev),
                              'user-agent': 'SVN/1.7.5 {pwb}'})
-    dom = xml.dom.minidom.parse(BytesIO(request.raw))
+    dom = xml.dom.minidom.parse(BytesIO(request.content))
     hsh = dom.getElementsByTagName('C:git-commit')[0].firstChild.nodeValue
     date = dom.getElementsByTagName('S:date')[0].firstChild.nodeValue
     date = time.strptime(date[:19], '%Y-%m-%dT%H:%M:%S')
