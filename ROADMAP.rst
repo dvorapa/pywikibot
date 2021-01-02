@@ -1,16 +1,14 @@
 Current release changes
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-* Desupported shared_image_repository() and nocapitalize() methods were removed (T89451)
-* pywikibot.cookie_jar was removed in favour of pywikibot.comms.http.cookie_jar
-* Align http.fetch() params with requests and rename 'disable_ssl_certificate_validation' to 'verify' (T265206)
-* Deprecated compat BasePage.getRestrictions() method was removed
-* Outdated Site.recentchanges() parameters has been dropped
-* site.LoginStatus has been removed in favour of login.LoginStatus
+* (no changes yet)
 
 Future release notes
 ~~~~~~~~~~~~~~~~~~~~
 
+* 5.4.0: Support of MediaWiki < 1.23 will be dropped with release 6.0  (T268979)
+* 5.4.0: LoginManager.getCookie() is deprecated and will be removed
+* 5.4.0: tools.PY2 will be removed (T213287)
 * 5.3.0: api.ParamInfo.modules property will be removed
 * 5.3.0: LogEntryFactory.logtypes property will be removed
 * 5.3.0: stdout parameter of logging.output()/pywikibot.output() function will be desupported
