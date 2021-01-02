@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 """Objects representing MediaWiki families."""
 #
-# (C) Pywikibot team, 2004-2020
+# (C) Pywikibot team, 2004-2021
 #
 # Distributed under the terms of the MIT license.
 #
@@ -112,8 +111,8 @@ class Family:
         'pa', 'pi', 'pfl', 'pag', 'pnb', 'pap', 'ps', 'jam', 'koi', 'km',
         'pcd', 'pms', 'tpi', 'nds', 'pl', 'pnt', 'pt', 'aa', 'kaa', 'crh',
         'ty', 'ksh', 'ro', 'rmy', 'rm', 'qu', 'rue', 'ru', 'sah', 'szy', 'se',
-        'sm', 'sa', 'sg', 'sat', 'sc', 'sco', 'stq', 'st', 'nso', 'tn', 'sq',
-        'scn', 'si', 'simple', 'sd', 'ss', 'sk', 'sl', 'cu', 'szl', 'so',
+        'sm', 'sa', 'sg', 'sat', 'skr', 'sc', 'sco', 'stq', 'st', 'nso', 'tn',
+        'sq', 'scn', 'si', 'simple', 'sd', 'ss', 'sk', 'sl', 'cu', 'szl', 'so',
         'ckb', 'srn', 'sr', 'sh', 'su', 'fi', 'sv', 'tl', 'shn', 'ta', 'kab',
         'roa-tara', 'tt', 'te', 'tet', 'th', 'ti', 'tg', 'to', 'chr', 'chy',
         've', 'tcy', 'tr', 'azb', 'tk', 'tw', 'tyv', 'din', 'udm', 'bug', 'uk',
@@ -148,8 +147,8 @@ class Family:
         'or', 'om', 'ng', 'hz', 'uz', 'pa', 'pi', 'pfl', 'pag', 'pnb', 'pap',
         'ps', 'jam', 'km', 'pcd', 'pms', 'nds', 'pl', 'pnt', 'pt', 'aa', 'kaa',
         'crh', 'ty', 'ksh', 'ro', 'rmy', 'rm', 'qu', 'ru', 'rue', 'sah', 'szy',
-        'se', 'sa', 'sg', 'sat', 'sc', 'sco', 'stq', 'st', 'nso', 'tn', 'sq',
-        'scn', 'si', 'simple', 'sd', 'ss', 'sk', 'sl', 'cu', 'szl', 'so',
+        'se', 'sa', 'sg', 'sat', 'skr', 'sc', 'sco', 'stq', 'st', 'nso', 'tn',
+        'sq', 'scn', 'si', 'simple', 'sd', 'ss', 'sk', 'sl', 'cu', 'szl', 'so',
         'ckb', 'srn', 'sr', 'sh', 'fi', 'sv', 'tl', 'ta', 'kab', 'kbp',
         'roa-tara', 'tt', 'te', 'tet', 'th', 'vi', 'ti', 'tg', 'tpi', 'chr',
         'chy', 've', 'tcy', 'tr', 'azb', 'tk', 'tw', 'tyv', 'din', 'udm', 'uk',
