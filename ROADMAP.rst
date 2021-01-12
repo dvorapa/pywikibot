@@ -1,11 +1,13 @@
 Current release changes
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-* -grepnot filter option was added to pagegenerators module (T219281)
+* (no changes yet)
 
 Future release notes
 ~~~~~~~~~~~~~~~~~~~~
 
+* 5.5.0: Site.getuserinfo() method will be dropped in favour of userinfo property
+* 5.5.0: Site.getglobaluserinfo() method will be dropped in favour of globaluserinfo property
 * 5.4.0: Support of MediaWiki < 1.23 will be dropped with release 6.0  (T268979)
 * 5.4.0: LoginManager.getCookie() is deprecated and will be removed
 * 5.4.0: tools.PY2 will be removed (T213287)
