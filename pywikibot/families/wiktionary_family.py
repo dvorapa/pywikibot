@@ -17,9 +17,8 @@ class Family(family.SubdomainFamily, family.WikimediaFamily):
 
     closed_wikis = [
         # See https://noc.wikimedia.org/conf/highlight.php?file=dblists/closed.dblist  # noqa
-        'aa', 'ab', 'ak', 'as', 'av', 'ba', 'bh', 'bi', 'bm', 'bo',
-        'ch', 'cr', 'dz', 'ik', 'mh', 'pi', 'rm', 'rn', 'sc', 'sn', 'to', 'tw',
-        'xh', 'yo', 'za',
+        'aa', 'ab', 'ak', 'as', 'av', 'bh', 'bi', 'bm', 'bo', 'ch', 'cr', 'dz',
+        'ik', 'mh', 'pi', 'rm', 'rn', 'sc', 'sn', 'to', 'tw', 'xh', 'yo', 'za',
     ]
 
     removed_wikis = [
@@ -36,10 +35,10 @@ class Family(family.SubdomainFamily, family.WikimediaFamily):
         'la', 'fj', 'tg', 'ky', 'sk', 'bg', 'wa', 'ur', 'ps', 'cy', 'vo',
         'skr', 'af', 'zh-min-nan', 'he', 'shn', 'scn', 'sl', 'tl', 'pa', 'sw',
         'fy', 'bn', 'nn', 'lv', 'ka', 'sq', 'co', 'mn', 'pnb', 'min', 'lb',
-        'nds', 'bs', 'nah', 'yue', 'ms', 'sa', 'kk', 'km', 'vec', 'tk', 'diq',
+        'nds', 'bs', 'nah', 'ms', 'yue', 'sa', 'kk', 'km', 'vec', 'tk', 'diq',
         'mk', 'be', 'sm', 'hsb', 'shy', 'gd', 'ga', 'an', 'wo', 'gom', 'ang',
         'ia', 'tt', 'mt', 'sd', 'gn', 'mr', 'fo', 'ie', 'so', 'csb', 'ug',
-        'st', 'bcl', 'roa-rup', 'si', 'hif', 'zu', 'kl', 'mi', 'su', 'ay',
+        'bcl', 'st', 'roa-rup', 'si', 'hif', 'zu', 'kl', 'mi', 'su', 'ay',
         'nia', 'jbo', 'ln', 'yi', 'gu', 'na', 'gv', 'kw', 'tpi', 'ne', 'rw',
         'ts', 'om', 'qu', 'ha', 'ss', 'iu', 'am', 'dv', 'sg', 'ti', 'tn', 'ks',
     ]
@@ -54,19 +53,18 @@ class Family(family.SubdomainFamily, family.WikimediaFamily):
     # https://meta.wikimedia.org/wiki/BPI#Current_implementation
     # & https://meta.wikimedia.org/wiki/Special:WikiSets/2
     cross_allowed = [
-        'af', 'am', 'an', 'ang', 'ar', 'ast', 'ay', 'az', 'be', 'bg',
-        'bn', 'br', 'bs', 'ca', 'chr', 'co', 'cs', 'csb', 'cy', 'da',
-        'dv', 'el', 'eo', 'es', 'et', 'eu', 'fa', 'fi', 'fj', 'fo',
-        'fy', 'ga', 'gd', 'gl', 'gn', 'gu', 'gv', 'ha', 'hsb', 'hu',
-        'hy', 'ia', 'id', 'ie', 'io', 'iu', 'jbo', 'jv', 'ka', 'kk', 'kl',
-        'km', 'kn', 'ko', 'ks', 'ku', 'kw', 'ky', 'la', 'lb', 'ln', 'lo',
-        'lt', 'lv', 'mg', 'mi', 'mk', 'ml', 'mn', 'ms', 'mt', 'my', 'na',
-        'nah', 'nds', 'ne', 'nl', 'nn', 'no', 'oc', 'om', 'or', 'pa', 'pnb',
-        'ps', 'pt', 'qu', 'roa-rup', 'rw', 'sa', 'scn', 'sd', 'sg', 'sh', 'si',
-        'simple', 'sk', 'sl', 'sm', 'so', 'sq', 'sr', 'ss', 'st', 'su', 'sv',
-        'sw', 'ta', 'te', 'tg', 'th', 'ti', 'tk', 'tl', 'tn', 'tpi', 'tr',
-        'ts', 'tt', 'ug', 'uk', 'ur', 'uz', 'vec', 'vi', 'vo', 'wa', 'wo',
-        'yi', 'zh', 'zh-min-nan', 'zu',
+        'af', 'am', 'an', 'ang', 'ar', 'ast', 'ay', 'az', 'be', 'bg', 'bn',
+        'br', 'bs', 'ca', 'chr', 'co', 'cs', 'csb', 'cy', 'da', 'dv', 'el',
+        'eo', 'es', 'et', 'eu', 'fa', 'fi', 'fj', 'fo', 'fy', 'ga', 'gd', 'gl',
+        'gn', 'gu', 'gv', 'ha', 'hsb', 'hu', 'hy', 'ia', 'id', 'ie', 'io',
+        'iu', 'jbo', 'jv', 'ka', 'kk', 'kl', 'km', 'kn', 'ko', 'ks', 'ku',
+        'kw', 'ky', 'la', 'lb', 'ln', 'lo', 'lt', 'lv', 'mg', 'mi', 'mk', 'ml',
+        'mn', 'ms', 'mt', 'my', 'na', 'nah', 'nds', 'ne', 'nl', 'nn', 'no',
+        'oc', 'om', 'or', 'pa', 'pnb', 'ps', 'pt', 'qu', 'roa-rup', 'rw', 'sa',
+        'scn', 'sd', 'sg', 'sh', 'si', 'simple', 'sk', 'sl', 'sm', 'so', 'sq',
+        'sr', 'ss', 'st', 'su', 'sv', 'sw', 'ta', 'te', 'tg', 'th', 'ti', 'tk',
+        'tl', 'tn', 'tpi', 'tr', 'ts', 'tt', 'ug', 'uk', 'ur', 'uz', 'vec',
+        'vi', 'vo', 'wa', 'wo', 'yi', 'zh', 'zh-min-nan', 'zu',
     ]
 
     # Which languages have a special order for putting interlanguage links,
