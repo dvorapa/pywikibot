@@ -10,13 +10,10 @@ groups of wikis on the same topic in different languages.
 # Distributed under the terms of the MIT license.
 #
 import datetime
-import functools
 import heapq
-import inspect
 import itertools
 import json
 import mimetypes
-import opcode
 import os
 import re
 import time
@@ -399,7 +396,7 @@ class APISite(BaseSite):
         the internal login state does not match the state we receive
         from the site.
         """
-        del self._userinfo
+        del self.userinfo
         self._loginstatus = _LoginStatus.NOT_LOGGED_IN
         self.login()
 
@@ -423,7 +420,7 @@ class APISite(BaseSite):
         self._loginstatus = _LoginStatus.NOT_LOGGED_IN
 
         # Reset tokens and user properties
-        del self._userinfo
+        del self.userinfo
         self.tokens = TokenWallet(self)
         self._paraminfo = api.ParamInfo(self)
 
@@ -1226,12 +1223,29 @@ class APISite(BaseSite):
             return self.namespaces[num]
         return self.namespaces[num][0]
 
-    def _update_page(self, page, query):
+    def _update_page(self, page, query, verify_imageinfo: bool = False):
+        """Update page attributes.
+
+        @param page: page object to be updated
+        @param query: a api.QueryGenerator
+        @param verify_imageinfo: if given, every pageitem is checked
+            whether 'imageinfo' is missing. In that case an exception
+            is raised.
+
+        @raises NoPage: 'missing' key is found in pageitem
+        @raises PageRelatedError: 'imageinfo' is missing in pageitem
+        """
         for pageitem in query:
             if not self.sametitle(pageitem['title'],
                                   page.title(with_section=False)):
                 raise InconsistentTitleReceived(page, pageitem['title'])
             api.update_page(page, pageitem, query.props)
+
+            if verify_imageinfo and 'imageinfo' not in pageitem:
+                if 'missing' in pageitem:
+                    raise NoPage(page)
+                raise PageRelatedError(
+                    page, 'loadimageinfo: Query on %s returned no imageinfo')
 
     def loadpageinfo(self, page, preload=False):
         """Load page info from api and store in page attributes.
@@ -1361,40 +1375,7 @@ class APISite(BaseSite):
                                         'url', 'size', 'sha1', 'mime',
                                         'metadata', 'archivename'],
                                 **args)
-        # kept for backward compatibility
-        # TODO: when backward compatibility can be broken, adopt
-        # self._update_page() pattern and remove return
-        for pageitem in query:
-            if not self.sametitle(pageitem['title'], title):
-                raise InconsistentTitleReceived(page, pageitem['title'])
-            api.update_page(page, pageitem, query.props)
-
-            if 'imageinfo' not in pageitem:
-                if 'missing' in pageitem:
-                    raise NoPage(page)
-                raise PageRelatedError(
-                    page,
-                    'loadimageinfo: Query on %s returned no imageinfo')
-
-        # inspect whether the result is assigned and print an deprecation
-        # warning in that case; implementation inspired by
-        # https://stackoverflow.com/questions/813882/is-there-a-way-to-check-whether-function-output-is-assigned-to-a-variable-in-pyt
-        try:
-            frame = inspect.currentframe().f_back
-            next_opcode = opcode.opname[
-                frame.f_code.co_code[frame.f_lasti + 3]]
-            if next_opcode in ('POP_TOP', 'ROT_TWO', 'ROT_THREE'):
-                issue_deprecation_warning(
-                    'APISite.loadimageinfo() result dict and any assignment',
-                    "pageitem['imageinfo'] if history is True "
-                    "else pageitem['imageinfo'][0]",
-                    warning_class=FutureWarning,
-                    since='20210110')
-        finally:
-            del frame
-
-        return (pageitem['imageinfo']
-                if history else pageitem['imageinfo'][0])
+        self._update_page(page, query, verify_imageinfo=True)
 
     @deprecated('Check the content model instead', since='20150128',
                 future_warning=True)
@@ -5941,92 +5922,6 @@ class DataSite(APISite):
                  UserWarning, 3)
 
         return baserevid
-
-    def __getattr__(self, attr):
-        """
-        Provide data access methods.
-
-        Methods provided are get_info, get_sitelinks, get_aliases,
-        get_labels, get_descriptions, and get_urls.
-        """
-        if hasattr(self.__class__, attr):
-            return getattr(self.__class__, attr)
-        if attr.startswith('get_'):
-            props = attr.replace('get_', '')
-            if props in ['info', 'sitelinks', 'aliases', 'labels',
-                         'descriptions', 'urls']:
-                if props == 'info':
-                    instead = (
-                        '\n'
-                        "{'lastrevid': ItemPage.latest_revision_id,\n"
-                        " 'pageid': ItemPage.pageid,\n"
-                        " 'title': ItemPage.title(),\n"
-                        " 'modified': ItemPage._timestamp,\n"
-                        " 'ns': ItemPage.namespace(),\n"
-                        " 'type': ItemPage.entity_type, # for subclasses\n"
-                        " 'id': ItemPage.id"
-                        '}\n')
-                elif props == 'sitelinks':
-                    instead = 'ItemPage.sitelinks'
-                elif props in ('aliases', 'labels', 'descriptions'):
-                    instead = ('ItemPage.{0} after ItemPage.get()'
-                               .format(attr))
-                else:  # urls
-                    instead = None
-                issue_deprecation_warning('DataSite.{0}()'.format(attr),
-                                          instead, warning_class=FutureWarning,
-                                          since='20151022')
-                if props == 'urls':
-                    props = 'sitelinks/urls'
-                method = self._get_propertyitem
-                f = functools.partial(method, props)
-                if hasattr(method, '__doc__'):
-                    f.__doc__ = method.__doc__
-                return f
-
-        return super().__getattr__(attr)
-
-    def _get_propertyitem(self, props, source, **params):
-        """Generic method to get the data for multiple Wikibase items."""
-        wbdata = self._get_item(source, props=props, **params)
-        if props == 'info':
-            return wbdata
-
-        if props == 'sitelinks/urls':
-            props = 'sitelinks'
-
-        assert props in wbdata, \
-            'API wbgetentities response lacks %s key' % props
-        return wbdata[props]
-
-    # Only separated from get_item to avoid the deprecation message via
-    # _get_propertyitem
-    def _get_item(self, source, **params):
-        assert set(params) <= {'props'}, \
-            'Only "props" is a valid kwarg, not {0}'.format(set(params)
-                                                            - {'props'})
-        try:
-            source = int(source)
-        except ValueError:
-            raise NotImplementedError
-        ids = 'q' + str(source)
-        params = merge_unique_dicts(params, action='wbgetentities',
-                                    ids=ids)
-        wbrequest = self._simple_request(**params)
-        wbdata = wbrequest.submit()
-        assert 'success' in wbdata, \
-            "API wbgetentities response lacks 'success' key"
-        assert wbdata['success'] == 1, "API 'success' key is not 1"
-        assert 'entities' in wbdata, \
-            "API wbgetentities response lacks 'entities' key"
-
-        if ids.upper() in wbdata['entities']:
-            ids = ids.upper()
-
-        assert ids in wbdata['entities'], \
-            'API wbgetentities response lacks %s key' % ids
-
-        return wbdata['entities'][ids]
 
     def data_repository(self):
         """
