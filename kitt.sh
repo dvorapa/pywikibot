@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$1" == "pull" ]; then
-	current=`git branch --show-current`
+	current=`git rev-parse --abbrev-ref HEAD`
 fi
 
 
