@@ -5,10 +5,10 @@ if [ "$1" == "pull" ]; then
 fi
 
 
-if [ ! -z "$current" ]; then
-	target="$current"
-elif [ ! -z "$2" ]; then
+if [ ! -z "$2" ]; then
 	target="$2"
+elif [ ! -z "$current" ]; then
+	target="$current"
 else
     read -p "Target branch: " target
 fi
