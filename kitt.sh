@@ -28,7 +28,7 @@ if [ "$1" == "clone" ]; then
 	git branch -u origin
 elif [ "$1" == "pull" ]; then
 	git checkout master
-	git pull update master
+	git pull update master --no-edit
 else
 	echo "-bash: command not found"
 	exit 127
