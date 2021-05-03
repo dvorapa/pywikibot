@@ -215,7 +215,7 @@ def main(*args):
     for arg in local_args:
 
         # Catch the pagegenerators options
-        if gen_factory.handleArg(arg) and not arg.startswith('-ref:'):
+        if gen_factory.handle_arg(arg) and not arg.startswith('-ref:'):
             continue  # nothing to do here
 
         # Now pick up your own options

@@ -226,7 +226,7 @@ def main(*args):
     for arg in local_args:
 
         # Catch the pagegenerators options
-        if genFactory.handleArg(arg):
+        if genFactory.handle_arg(arg):
             continue  # nothing to do here
 
         # Now pick up your own options
