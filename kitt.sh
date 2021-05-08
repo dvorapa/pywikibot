@@ -1,16 +1,15 @@
 #!/bin/bash
 
 if [ "$1" == "pull" ]; then
-	current=`git rev-parse --abbrev-ref HEAD`
+	current=$(git rev-parse --abbrev-ref HEAD)
 fi
 
-
-if [ ! -z "$2" ]; then
+if [ -n "$2" ]; then
 	target="$2"
-elif [ ! -z "$current" ]; then
+elif [ -n "$current" ]; then
 	target="$current"
 else
-    read -p "Target branch: " target
+	read -p "Target branch: " target
 fi
 
 if [ "$1" == "clone" ]; then
@@ -40,8 +39,8 @@ git pull
 for branch in dvorapa-test dvorapabot-remote dvorapabot-local; do
 	git checkout $branch
 	if [ "$1" == "pull" ]; then
-    	git pull update $branch
-    fi
+		git pull update $branch
+	fi
 	git merge master --no-edit
 done
 
