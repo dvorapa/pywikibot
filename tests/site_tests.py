@@ -953,7 +953,7 @@ class TestLockingPage(DefaultSiteTestCase):
         """Test lock_page and unlock_page methods for multiple threads."""
         # Start few threads
         threads = []
-        for i in range(5):
+        for _ in range(5):
             thread = threading.Thread(target=self.worker)
             thread.setDaemon(True)
             thread.start()
@@ -1047,8 +1047,8 @@ class TestSiteGeneratorsUsers(DefaultSiteTestCase):
             self.assertTrue(user['name'].startswith('D'))
             self.assertIn('editcount', user)
             self.assertIn('registration', user)
-            self.assertIn('groups' in user)
-            self.assertIn('sysop' in user['groups'])
+            self.assertIn('groups', user)
+            self.assertIn('sysop', user['groups'])
 
 
 class TestImageUsage(DefaultSiteTestCase):
