@@ -700,7 +700,7 @@ class MetaTestCaseClass(type):
         if 'family' in dct or 'code' in dct:
             dct['site'] = True
 
-            if (('sites' not in dct or not len(dct['sites']))
+            if (('sites' not in dct or not dct['sites'])
                     and 'family' in dct
                     and 'code' in dct and dct['code'] != '*'):
                 # Add entry to self.sites
@@ -1031,7 +1031,6 @@ class CapturingTestCase(TestCase):
 
     def after_assert(self, assertion, *args, **kwargs):
         """Handle after the assertion."""
-        pass
 
     def patch_assert(self, assertion):
         """Execute process_assert when the assertion is called."""
@@ -1282,8 +1281,6 @@ class DefaultWikibaseClientTestCase(WikibaseClientTestCase,
                                     DefaultSiteTestCase):
 
     """Run tests against any site connected to a Wikibase."""
-
-    pass
 
 
 class WikidataTestCase(WikibaseTestCase):
