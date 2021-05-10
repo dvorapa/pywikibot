@@ -651,8 +651,8 @@ class APISite(
                 except KeyError:
                     raise KeyError("No message '{}' found for lang '{}'"
                                    .format(key, amlang))
-            else:
-                return result
+
+            return result
 
         return OrderedDict((key, _mw_msg_cache[amlang][key]) for key in keys)
 
@@ -1260,17 +1260,15 @@ class APISite(
             for _from, _to in redirmap.items():
                 if _to['title'] in redirmap:
                     raise CircularRedirectError(page)
-            else:
-                target = pywikibot.Page(source=page.site, title=target_title)
 
-                # Check if target is on another site.
-                if target.site != page.site:
-                    raise InterwikiRedirectPageError(page, target)
-
-                # Redirect to Special: & Media: pages, which do not work
-                # like redirects, but are rendered like a redirect.
-                page._redirtarget = target
-                return page._redirtarget
+            target = pywikibot.Page(source=page.site, title=target_title)
+            # Check if target is on another site.
+            if target.site != page.site:
+                raise InterwikiRedirectPageError(page, target)
+            # Redirect to Special: & Media: pages, which do not work
+            # like redirects, but are rendered like a redirect.
+            page._redirtarget = target
+            return page._redirtarget
 
         pagedata = list(result['query']['pages'].values())[0]
         # There should be only one value in 'pages' (the ultimate
@@ -1437,6 +1435,8 @@ class APISite(
 
         If more than one target id is provided, the same action is taken for
         all of them.
+
+        *New in version 6.0.*
 
         @param targettype: Type of target. One of "archive", "filearchive",
             "logging", "oldimage", "revision".
@@ -2061,6 +2061,9 @@ class APISite(
         To delete a specific version of an image the oldimage identifier
         must be provided.
 
+        *Renamed in version 6.1.*
+
+        *New in version 6.1:* keyword only parameter *oldimage* was added.
 
         @param page: Page to be deleted or its pageid.
         @type page: L{pywikibot.page.BasePage} or, for pageid, int or str
@@ -2149,6 +2152,12 @@ class APISite(
         """Undelete page from the wiki. Requires appropriate privilege level.
 
         @see: U{https://www.mediawiki.org/wiki/API:Undelete}
+
+        *Renamed in version 6.1.*
+
+        *New in version 6.1:* *fileids* parameter was added.
+
+        *Changed in verson 6.1:* keyword argument required for *revisions*.
 
         @param page: Page to be deleted.
         @type page: pywikibot.BasePage
@@ -2544,6 +2553,9 @@ class APISite(
         @see: U{https://www.mediawiki.org/wiki/API:Upload}
 
         Either source_filename or source_url, but not both, must be provided.
+
+        *Changed in version 6.0:* keyword arguments required for all
+        parameters except *filepage*.
 
         @param filepage: a FilePage object from which the wiki-name of the
             file will be obtained.

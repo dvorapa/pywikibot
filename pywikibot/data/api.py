@@ -533,10 +533,9 @@ class ParamInfo(Sized, Container):
         self.fetch({key})
         if key in self._paraminfo:
             return self._paraminfo[key]
-        elif '+' not in key:
+        if '+' not in key:
             return self._paraminfo['query+' + key]
-        else:
-            raise KeyError(key)
+        raise KeyError(key)
 
     def __contains__(self, key) -> bool:
         """Return whether the key is valid."""
@@ -1132,11 +1131,10 @@ class Request(MutableMapping):
         """
         if isinstance(value, datetime.datetime):
             return value.strftime(pywikibot.Timestamp.ISO8601Format)
-        elif isinstance(value, pywikibot.page.BasePage):
+        if isinstance(value, pywikibot.page.BasePage):
             assert(value.site == self.site)
             return value.title(with_section=False)
-        else:
-            return str(value)
+        return str(value)
 
     def __getitem__(self, key):
         """Implement dict interface."""
@@ -1350,8 +1348,8 @@ class Request(MutableMapping):
                 action = err_msg.get(message)
                 if action is True or action == self.action:
                     return True
-            else:
-                return False
+
+            return False
 
         if isinstance(messages, dict):
             try:  # behaviour before gerrit 124323 breaking change
@@ -2178,8 +2176,7 @@ class QueryGenerator(_RequestWrapper):
         if 'action' in parameters and parameters['action'] != 'query':
             raise Error("{}: 'action' must be 'query', not {}"
                         .format(self.__class__.__name__, kwargs['action']))
-        else:
-            parameters['action'] = 'query'
+        parameters['action'] = 'query'
         # make sure request type is valid, and get limit key if any
         for modtype in ('generator', 'list', 'prop', 'meta'):
             if modtype in parameters:
@@ -2424,9 +2421,8 @@ class QueryGenerator(_RequestWrapper):
             if self._check_result_namespace is NotImplemented:
                 raise TypeError('{} module does not support multiple '
                                 'namespaces'.format(self.limited_module))
-            else:
-                self._namespaces = set(namespaces)
-                namespaces = None
+            self._namespaces = set(namespaces)
+            namespaces = None
 
         if namespaces:
             self.request[self.prefix + 'namespace'] = namespaces
