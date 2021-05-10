@@ -48,7 +48,8 @@ class TestSectionFunctions(TestCase):
         self.catresult1 = '[[Category:Cat1]]\n[[Category:Cat2]]\n'
         super().setUp()
 
-    def contains(self, fn, sn):
+    @staticmethod
+    def contains(fn, sn):
         """Invoke does_text_contain_section()."""
         return textlib.does_text_contain_section(
             files[fn], sn)
@@ -221,8 +222,8 @@ class TestCategoryRearrangement(DefaultDrySiteTestCase):
                 new = textlib.replaceCategoryInPlace(temp, dummy, cat,
                                                      site=self.site)
                 self.assertEqual(self.old, new)
-        else:
-            self.assertEqual(count, 3)
+
+        self.assertEqual(count, 3)
 
         # Testing removing categories
         temp = textlib.replaceCategoryInPlace(self.old, cats[0],

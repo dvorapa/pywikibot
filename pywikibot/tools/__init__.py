@@ -61,8 +61,6 @@ class _NotImplementedWarning(RuntimeWarning):
 
     """Feature that is no longer implemented."""
 
-    pass
-
 
 def is_IP(IP: str) -> bool:  # noqa N802, N803
     """Verify the IP address provided is valid.
@@ -79,7 +77,10 @@ def is_IP(IP: str) -> bool:  # noqa N802, N803
 
 
 def has_module(module, version=None):
-    """Check if a module can be imported."""
+    """Check if a module can be imported.
+
+    *New in version 3.0.*
+    """
     try:
         m = import_module(module)
     except ImportError:
@@ -102,7 +103,7 @@ def has_module(module, version=None):
 
 def empty_iterator():
     # http://stackoverflow.com/a/13243870/473890
-    """An iterator which does nothing."""
+    """DEPRECATED. An iterator which does nothing."""
     return
     yield
 
@@ -141,6 +142,8 @@ class suppress_warnings(catch_warnings):  # noqa: N801
 
     Those suppressed warnings that do not match the parameters will be raised
     shown upon exit.
+
+    *New in vesion 3.0.*
     """
 
     def __init__(self, message='', category=Warning, filename=''):
@@ -223,7 +226,7 @@ class ComparableMixin:
 
 class DotReadableDict:
 
-    """Parent class of Revision() and FileInfo().
+    """DEPRECATED. Lecacy class of Revision() and FileInfo().
 
     Provide: __getitem__() and __repr__().
     """
@@ -246,7 +249,7 @@ class DotReadableDict:
 
 class frozenmap(Mapping):  # noqa:  N801
 
-    """Frozen mapping, preventing write after initialisation."""
+    """DEPRECATED. Frozen mapping, preventing write after initialisation."""
 
     def __init__(self, data=(), **kwargs):
         """Initialize data in same ways like a dict."""
@@ -310,6 +313,8 @@ class SizedKeyCollection(Container, Iterable, Sized):
         >>> data.clear()
         >>> list(data)
         []
+
+    *New in version 6.1.*
     """
 
     def __init__(self, keyattr: str):
@@ -386,7 +391,7 @@ class SizedKeyCollection(Container, Iterable, Sized):
 class LazyRegex:
 
     """
-    Regex object that obtains and compiles the regex on usage.
+    DEPRECATED. Regex object that obtains and compiles the regex on usage.
 
     Instances behave like the object created using L{re.compile}.
     """
@@ -449,7 +454,7 @@ class DeprecatedRegex(LazyRegex):
 
     def __init__(self, pattern, flags=0, name=None, instead=None, since=None):
         """
-        Initializer.
+        DEPRECATED. Deprecate a give regex.
 
         If name is None, the regex pattern will be used as part of
         the deprecation warning.
@@ -921,6 +926,8 @@ def roundrobin_generators(*iterables):
     >>> tuple(roundrobin_generators('ABC', range(5)))
     ('A', 0, 'B', 1, 'C', 2, 3, 4)
 
+    *New in version 3.0.*
+
     @param iterables: any iterable to combine in roundrobin way
     @type iterables: iterable
     @return: the combined generator of iterables
@@ -1049,14 +1056,10 @@ class SelfCallDict(SelfCallMixin, dict):
 
     """Dict with SelfCallMixin."""
 
-    pass
-
 
 class SelfCallString(SelfCallMixin, str):
 
     """String with SelfCallMixin."""
-
-    pass
 
 
 class DequeGenerator(Iterator, collections.deque):
