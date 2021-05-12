@@ -1596,22 +1596,26 @@ def extract_templates_and_params(text: str,
     There are minor differences between the two implementations.
 
     The two implementations return nested templates in a different
-    order, i.e. for {{a|b={{c}}}}, parsers returns [a, c], whereas regex
-    returns [c, a].
+    order, i.e. for `{{a|b={{c}}}}`, parsers returns `[a, c]`, whereas
+    regex returns `[c, a]`.
 
     The parser packages preserves whitespace in parameter names and
     values.
 
-    If there are multiple numbered parameters in the wikitext for the same
-    position, MediaWiki will only use the last parameter value.
-    e.g. {{a| foo | 2 <!-- --> = bar | baz }} is {{a|1=foo|2=baz}}
-    To replicate that behaviour, enable both remove_disabled_parts and strip.
+    If there are multiple numbered parameters in the wikitext for the
+    same position, MediaWiki will only use the last parameter value.
+    e.g. `{{a| foo | 2 <!-- --> = bar | baz }}` is `{{a|1=foo|2=baz}}`
+    To replicate that behaviour, enable both `remove_disabled_parts`
+    and `strip` parameters.
 
     @param text: The wikitext from which templates are extracted
     @param remove_disabled_parts: If enabled, remove disabled wikitext
         such as comments and pre.
     @param strip: If enabled, strip arguments and values of templates.
     @return: list of template name and params
+
+    *New in version 6.1:* *wikitextparser* package is supported; either
+    *wikitextparser* or *mwparserfromhell* is strictly recommended.
     """
     use_regex = isinstance(wikitextparser, ImportError)
 
