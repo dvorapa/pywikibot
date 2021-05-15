@@ -61,11 +61,10 @@ from typing import Optional
 import pywikibot
 from pywikibot import textlib
 from pywikibot.exceptions import InvalidTitleError
-from pywikibot.page import url2unicode
 from pywikibot.textlib import (
     FILE_LINK_REGEX,
+    MultiTemplateMatchBuilder,
     _get_regexes,
-    _MultiTemplateMatchBuilder,
 )
 from pywikibot.tools import (
     deprecated,
@@ -74,6 +73,7 @@ from pywikibot.tools import (
     first_upper,
     issue_deprecation_warning,
 )
+from pywikibot.tools.chars import url2string
 
 
 try:
@@ -583,8 +583,8 @@ class CosmeticChangesToolkit:
                 hadTrailingSpaces = len(titleWithSection) != titleLength
 
             # Convert URL-encoded characters to str
-            titleWithSection = url2unicode(titleWithSection,
-                                           encodings=self.site)
+            titleWithSection = url2string(titleWithSection,
+                                          encodings=self.site.encodings())
 
             if not titleWithSection:
                 # just skip empty links.
@@ -909,7 +909,7 @@ class CosmeticChangesToolkit:
     def replaceDeprecatedTemplates(self, text):
         """Replace deprecated templates."""
         exceptions = ['comment', 'math', 'nowiki', 'pre']
-        builder = _MultiTemplateMatchBuilder(self.site)
+        builder = MultiTemplateMatchBuilder(self.site)
 
         if self.site.family.name in deprecatedTemplates \
            and self.site.code in deprecatedTemplates[self.site.family.name]:
