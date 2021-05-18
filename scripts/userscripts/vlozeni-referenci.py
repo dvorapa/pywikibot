@@ -31,7 +31,7 @@ The following parameters are supported:
 #
 from __future__ import absolute_import, unicode_literals
 
-import pywikibot, re
+import pywikibot, re, codecs
 from pywikibot import pagegenerators, textlib
 
 from pywikibot.bot import (
@@ -142,7 +142,7 @@ class BasicBot(
         #                            regexy                            #
         ################################################################
 
-        # self.getOption('parametr')
+        # self.opt.parametr nebo self.opt['parametr']
         # self.current_page.title()
         # with open('soubor.txt', 'a') as soubor:
         #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
@@ -153,7 +153,7 @@ class BasicBot(
         sekce = r'== Reference ==' + reference
         sekce3 = r'=== Reference ===' + reference
         if re.search(r'\{\{ *[Pp]řeklad[^\}]*\}\}', text):
-            text = textlib.replaceExcept(text, r'(\{\{ *[Pp]řeklad[^\}]*\}\})', r'\1' + reference, self.vyjimky)
+            text = textlib.replaceExcept(text, r'(\{\{ *[Pp]řeklad[^\}]*\}\})', r'\1' + reference, self.vyjimky, count=1)
         elif re.search(r'== *[Rr]eference *==', text):
             text = textlib.replaceExcept(text, r'(=+ *[Rr]eference *=+)', r'\1' + reference, self.vyjimky)
         elif re.search(r'== *[Pp]oznámky *=+\s*\<references +group[^\>]*\>', text):
@@ -169,28 +169,28 @@ class BasicBot(
             else:
                 text = textlib.replaceExcept(text, r'(== *(?:[Ll]iteratura|[Ss]ouvisející články|[Ee]xterní odkazy) *==)', sekce + r'\n\n\1', self.vyjimky, count=1)
         elif re.search(r'\{\{ *[Pp]ahýl *\}\}', text):
-            text = textlib.replaceExcept(text, r'(\{\{ *[Pp]ahýl *\}\})', sekce + r'\n\n\1', self.vyjimky)
+            text = textlib.replaceExcept(text, r'(\{\{ *[Pp]ahýl *\}\})', r'\n' + sekce + r'\n\n\1', self.vyjimky)
         else:
             sablony = re.findall(r'\{\{ *([^\|\}]*)(?:\|[^\}]*|)\}\}', text)
             for sablona in sablony:
                 if re.search(r'\{\{ *[Nn]avbox', pywikibot.Page(self.site, r'Šablona:' + sablona).text):
-                    text = textlib.replaceExcept(text, r'(\{\{ *' + sablona + r')', sekce + r'\n\n\1', self.vyjimky)
+                    text = textlib.replaceExcept(text, r'(\{\{ *' + sablona + r')', r'\n' + sekce + r'\n\n\1', self.vyjimky)
                     break
             else:
-                if re.search(r'\{\{ *(?:[Pp]ortály|[Aa]utoritní[ _]data|DEFAULTSORT)', text):
-                    text = textlib.replaceExcept(text, r'(\{\{ *(?:[Pp]ortály|[Aa]utoritní[ _]data|DEFAULTSORT))', sekce + r'\n\n\1', self.vyjimky, count=1)
+                if re.search(r'\{\{ *(?:[Pp]ortály|[Aa]utoritní[ _]data|DEFAULTSORT|[Rr]ozcestník)', text):
+                    text = textlib.replaceExcept(text, r'(\{\{ *(?:[Pp]ortály|[Aa]utoritní[ _]data|DEFAULTSORT|[Rr]ozcestník))', r'\n' + sekce + r'\n\n\1', self.vyjimky, count=1)
                 elif re.search(r'\[\[ *' + r'|'.join(self.site.namespaces[14]) + r' *:', text):
                     text = textlib.replaceExcept(text, r'(\[\[ *' + 
 r'|'.join(self.site.namespaces[14]) + r' *:)', sekce + r'\n\n\1', 
 self.vyjimky, count=1)
                 else:
-                    text += r'\n\n' + sekce
+                    text += codecs.decode(r'\n\n' + sekce, 'unicode_escape')
 
         ################################################################
 
         # if summary option is None, it takes the default i18n summary from
         # i18n subdirectory with summary_key as summary key.
-        self.put_current(text, summary=self.getOption('summary') if self.getOption('summary') else 'Robot: ' + self.shrnuti)
+        self.put_current(text, summary=self.opt.summary if self.opt.summary else 'Robot: ' + self.shrnuti)
 
 
 def main(*args):

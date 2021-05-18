@@ -36,7 +36,7 @@ from pywikibot import pagegenerators, textlib
 
 from pywikibot.bot import (
     SingleSiteBot, ExistingPageBot, NoRedirectPageBot, AutomaticTWSummaryBot)
-from pywikibot.exceptions import InvalidTitle
+from pywikibot.exceptions import InvalidTitleError
 from pywikibot.tools import issue_deprecation_warning
 
 # This is required for the text that is shown when you run this script
@@ -144,7 +144,7 @@ class BasicBot(
         #                            regexy                            #
         ################################################################
 
-        # self.getOption('parametr')
+        # self.opt.parametr nebo self.opt['parametr']
         # self.current_page.title()
         # with open('soubor.txt', 'a') as soubor:
         #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
@@ -177,7 +177,7 @@ class BasicBot(
                     if re.search(r'\{\{ *[Nn]avbox', pywikibot.Page(self.site, r'Šablona:' + sablona).text):
                         text = textlib.replaceExcept(text, r'(\{\{ *' + sablona + r')', sekce + r'\n\n\1', self.vyjimky)
                         break
-                except InvalidTitle:
+                except InvalidTitleError:
                     continue
             else:
                 if re.search(r'\{\{ *(?:[Pp]ortály|[Aa]utoritní[ _]data|DEFAULTSORT)', text):
@@ -191,7 +191,7 @@ class BasicBot(
 
         # if summary option is None, it takes the default i18n summary from
         # i18n subdirectory with summary_key as summary key.
-        self.put_current(text, summary=self.getOption('summary') if self.getOption('summary') else 'Robot: ' + self.shrnuti)
+        self.put_current(text, summary=self.opt.summary if self.opt.summary else 'Robot: ' + self.shrnuti)
 
 
 def main(*args):
