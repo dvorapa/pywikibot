@@ -79,7 +79,7 @@ class BasicBot(
         """
         # Add your own options to the bot and set their defaults
         # -always option is predefined by BaseBot class
-        self.availableOptions.update({
+        self.available_options.update({
             'replace': False,  # delete old text and write the new text
             'summary': None,  # your own bot summary
             'text': 'Test',  # add this text from option. 'Test' is default
@@ -126,7 +126,7 @@ class BasicBot(
         # self.opt.parametr
         # self.current_page.title()
         # with open('soubor.txt', 'a') as soubor:
-        #     soubor.write('# ' + self.current_page.title(asLink=True) + '\n')
+        #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
         # text = textlib.replaceExcept(text, r'', r'', self.vyjimky)
         for proptext in self.proptexty:
             text = text.replace(proptext, '')

@@ -78,7 +78,7 @@ class BasicBot(
         """
         # Add your own options to the bot and set their defaults
         # -always option is predefined by BaseBot class
-        self.availableOptions.update({
+        self.available_options.update({
             'replace': False,  # delete old text and write the new text
             'summary': None,  # your own bot summary
             'text': 'Test',  # add this text from option. 'Test' is default
@@ -127,7 +127,7 @@ class BasicBot(
         the user about this setting.
 
         The constuctor of the super class ignores it because it is not
-        part of self.availableOptions.
+        part of self.available_options.
 
         @note: You should ommit this method in your own application.
 
@@ -300,7 +300,7 @@ class BasicBot(
                         nalezene = [s + '/šablona, odkaz, tabulka nebo tag/' for s in nalezene]
                         nalezene += re.findall(r'(?=\|((?:\s*=|\s*[0-9]+\s*=)?[^\|\}\=]*)[\|\}])', part)
                         nalezene = [s.strip().replace('\n', '↵') for s in nalezene]
-                        self.seznam += '# ' + self.current_page.title(asLink=True) + '\t' + blockTemplate[-1] + '\t' + '; '.join(nalezene) + '\n'
+                        self.seznam += '# ' + self.current_page.title(as_link=True) + '\t' + blockTemplate[-1] + '\t' + '; '.join(nalezene) + '\n'
 
                 if part[-2:] == '}}' and inTemplate[-1] > 0:
                     if inTemplate[-1] == 2:
