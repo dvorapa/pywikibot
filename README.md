@@ -5,8 +5,8 @@ Python bot for Czech Wikipedia based on [Pywikibot](https://www.mediawiki.org/wi
 ## Usage
 
 Copy one of the following templates from dvorapabot-local branch and adjust it to your needs:
-- userscripts/[2020.py](https://raw.githubusercontent.com/dvorapa/pywikibot/dvorapabot-local/scripts/userscripts/2020.py) – general template for scripts
-- userscripts/[2020-infoboxy.py](https://raw.githubusercontent.com/dvorapa/pywikibot/dvorapabot-local/scripts/userscripts/2020-infoboxy.py) – general template for scripts working with infoboxes
+- userscripts/[2021.py](https://raw.githubusercontent.com/dvorapa/pywikibot/dvorapabot-local/scripts/userscripts/2021.py) – general template for scripts
+- userscripts/[2021-infoboxy.py](https://raw.githubusercontent.com/dvorapa/pywikibot/dvorapabot-local/scripts/userscripts/2021-infoboxy.py) – general template for scripts working with infoboxes
 
 ## Branches
 
