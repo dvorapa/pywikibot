@@ -143,8 +143,8 @@ class BasicBot(
         #                            regexy                            #
         ################################################################
 
-        #text += self.getOption('text')
-        #if self.getOption('replace'):
+        #text += self.opt.text
+        #if self.opt.replace:
         #self.current_page.title()
         #with open('soubor.txt', 'a') as soubor:
         #    soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
@@ -157,7 +157,7 @@ class BasicBot(
         text = textlib.replaceExcept(text, r'(?i)\s*\[\[ *Kategorie:[^\]]+\]\]\s*', r'\n', exceptions)
         text = textlib.replaceExcept(text, r'(?i)\s*\[\[ *Kategorie:[^\]]+\]\]\s*', r'\n', exceptions)
         text = textlib.replaceExcept(text, r'(?i)\s*\[\[ *Kategorie:[^\]]+\]\]\s*', r'\n', exceptions)
-        self.put_current(text, summary='Robot: ' + (self.getOption('summary') if self.getOption('summary') else shrnuti))
+        self.put_current(text, summary='Robot: ' + (self.opt.summary if self.opt.summary else shrnuti))
         
         site = pywikibot.Site()
         self.current_page = pywikibot.Page(site, self.current_page.title() + '/doc')
@@ -169,7 +169,7 @@ class BasicBot(
 
         # if summary option is None, it takes the default i18n summary from
         # i18n subdirectory with summary_key as summary key.
-        self.put_current(text, summary='Robot: ' + (self.getOption('summary') if self.getOption('summary') else shrnuti))
+        self.put_current(text, summary='Robot: ' + (self.opt.summary if self.opt.summary else shrnuti))
 
 
 def main(*args):

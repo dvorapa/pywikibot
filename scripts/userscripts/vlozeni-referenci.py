@@ -36,6 +36,7 @@ from pywikibot import pagegenerators, textlib
 
 from pywikibot.bot import (
     SingleSiteBot, ExistingPageBot, NoRedirectPageBot, AutomaticTWSummaryBot)
+from pywikibot.exceptions import InvalidTitleError
 from pywikibot.tools import issue_deprecation_warning
 
 # This is required for the text that is shown when you run this script
@@ -137,6 +138,8 @@ class BasicBot(
     def treat_page(self):
         """Load the given page, do some changes, and save it."""
         text = self.current_page.text
+        if re.search(r'\<\s*references[\s\/]*\>', text):
+            return False
 
         ################################################################
         #                            regexy                            #
@@ -147,8 +150,6 @@ class BasicBot(
         # with open('soubor.txt', 'a') as soubor:
         #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
         # text = textlib.replaceExcept(text, r'', r'', self.vyjimky)
-        if re.search(r'\<\s*references[\s\/]*\>', text):
-            return False
         reference = r'\n<references />'
         sekce = r'== Reference ==' + reference
         sekce3 = r'=== Reference ===' + reference
@@ -173,9 +174,12 @@ class BasicBot(
         else:
             sablony = re.findall(r'\{\{ *([^\|\}]*)(?:\|[^\}]*|)\}\}', text)
             for sablona in sablony:
-                if re.search(r'\{\{ *[Nn]avbox', pywikibot.Page(self.site, r'Šablona:' + sablona).text):
-                    text = textlib.replaceExcept(text, r'(\{\{ *' + sablona + r')', r'\n' + sekce + r'\n\n\1', self.vyjimky)
-                    break
+                try:
+                    if re.search(r'\{\{ *[Nn]avbox', pywikibot.Page(self.site, r'Šablona:' + sablona).text):
+                        text = textlib.replaceExcept(text, r'(\{\{ *' + sablona + r')', r'\n' + sekce + r'\n\n\1', self.vyjimky)
+                        break
+                except InvalidTitleError:
+                    continue
             else:
                 if re.search(r'\{\{ *(?:[Pp]ortály|[Aa]utoritní[ _]data|DEFAULTSORT|[Rr]ozcestník)', text):
                     text = textlib.replaceExcept(text, r'(\{\{ *(?:[Pp]ortály|[Aa]utoritní[ _]data|DEFAULTSORT|[Rr]ozcestník))', r'\n' + sekce + r'\n\n\1', self.vyjimky, count=1)

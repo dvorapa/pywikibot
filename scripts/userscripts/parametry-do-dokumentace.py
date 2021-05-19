@@ -138,7 +138,7 @@ class BasicBot(
         #                            regexy                            #
         ################################################################
 
-        # self.getOption('parametr')
+        # self.opt.parametr
         # with open('soubor.txt', 'a') as soubor:
         #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
         # text = textlib.replaceExcept(text, r'', r'', exceptions)
@@ -151,7 +151,7 @@ class BasicBot(
             else:
                 text += '<noinclude>{{Dokumentace}}</noinclude>'
         parametry = str(text)
-        self.put_current(text, summary='Robot: ' + (self.getOption('summary') if self.getOption('summary') else shrnuti))
+        self.put_current(text, summary='Robot: ' + (self.opt.summary if self.opt.summary else shrnuti))
 
 
         parametry = parametry.replace('{{{', '\n{{{')
@@ -199,7 +199,7 @@ class BasicBot(
             text = re.sub(r'\<((source|syntaxhighlight|pre|code)[^\>]*)\>\s*(\<nowiki\>)?\{(\<nowiki *\/\>)?\{(\<\/nowiki>)? *' + re.compile(infobox).pattern + r'[^\<]*?\<\/\2\>', r'<\1>{{' + infobox + r'\n' + parametry + r'\n}}</\2>', text, count=1)
             shrnuti = 'aktualizace dokumentace'
         pywikibot.output(text)
-        self.put_current(text, summary='Robot: ' + (self.getOption('summary') if self.getOption('summary') else shrnuti))
+        self.put_current(text, summary='Robot: ' + (self.opt.summary if self.opt.summary else shrnuti))
 
         ################################################################
 

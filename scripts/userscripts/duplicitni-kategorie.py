@@ -164,7 +164,7 @@ class BasicBot(
 
         # if summary option is None, it takes the default i18n summary from
         # i18n subdirectory with summary_key as summary key.
-        self.put_current(text, summary='Robot: ' + (self.getOption('summary') if self.getOption('summary') else shrnuti))
+        self.put_current(text, summary='Robot: ' + (self.opt.summary if self.opt.summary else shrnuti))
 
 
 def main(*args):
