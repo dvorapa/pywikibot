@@ -163,10 +163,6 @@ class BasicBot(
 
         ################################################################
 
-        # if summary option is None, it takes the default i18n summary from
-        # i18n subdirectory with summary_key as summary key.
-        #self.put_current(text, summary=self.opt.summary)
-
 
 def main(*args: Tuple[str, ...]) -> None:
     """
@@ -210,11 +206,11 @@ def main(*args: Tuple[str, ...]) -> None:
         bot.run()  # guess what it does
         page = Page(bot.site, 'Wikipedie:Údržbové seznamy/Neexistující kotvy/seznam')
         page.text = '# ' + ']]\n# '.join(bot.seznam) + ']]'
-        shrnuti = 'Robot: aktualizace'
-        page.save(summary=bot.opt.summary or shrnuti)
+        shrnuti = bot.opt.summary or 'Robot: aktualizace'
+        page.save(summary=shrnuti)
         page2 = Page(bot.site, 'Wikipedie:Údržbové seznamy/Neexistující kotvy/seznam2')
         page2.text = '# ' + ']]\n# '.join(bot.seznam2) + ']]'
-        page2.save(summary=bot.opt.summary or shrnuti)
+        page2.save(summary=shrnuti)
     else:
         pywikibot.bot.suggest_help(missing_generator=True)
 
