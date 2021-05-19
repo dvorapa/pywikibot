@@ -80,7 +80,7 @@ class BasicBot(
         """
         # Add your own options to the bot and set their defaults
         # -always option is predefined by BaseBot class
-        self.availableOptions.update({
+        self.available_options.update({
             'replace': False,  # delete old text and write the new text
             'summary': None,  # your own bot summary
             'text': 'Test',  # add this text from option. 'Test' is default
@@ -105,7 +105,7 @@ class BasicBot(
         the user about this setting.
 
         The constuctor of the super class ignores it because it is not
-        part of self.availableOptions.
+        part of self.available_options.
 
         @note: You should ommit this method in your own application.
 
