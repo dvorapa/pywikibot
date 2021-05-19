@@ -101,7 +101,7 @@ class BasicBot(
         ################################################################
 
         shrnuti = '-nevhodný text z automaticky vygenerované reference'
-        self.shrnuti = self.getOption('summary') or 'Robot: ' + shrnuti
+        self.shrnuti = self.opt.summary or 'Robot: ' + shrnuti
 
         ################################################################
 
@@ -123,7 +123,7 @@ class BasicBot(
         #                            změny                             #
         ################################################################
 
-        # self.getOption('parametr')
+        # self.opt.parametr
         # self.current_page.title()
         # with open('soubor.txt', 'a') as soubor:
         #     soubor.write('# ' + self.current_page.title(asLink=True) + '\n')

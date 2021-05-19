@@ -262,7 +262,7 @@ class BasicBot(
                 elif part[-1:] == '>' and inTag[-1]:
                     inTag.pop()
             text = ''.join(newPageParts)
-            self.put_current(text, summary=self.getOption('summary') if self.getOption('summary') else 'Robot: ' + self.shrnuti)
+            self.put_current(text, summary=self.opt.summary if self.opt.summary else 'Robot: ' + self.shrnuti)
         elif self.step == 3:
             text = textlib.replaceExcept(text, r'\{\{', r'ßßß{{', self.vyjimky)
             text = textlib.replaceExcept(text, r'\}\}', r'}}ßßß', self.vyjimky)
@@ -367,7 +367,7 @@ def main(*args):
         bot3.run()
         page = pywikibot.Page(pywikibot.Site('cs'), 'Wikipedie:Údržbové seznamy/Nepojmenované parametry infoboxů/seznam')
         page.text = bot3.seznam.strip()
-        page.save(summary=bot3.getOption('summary') if bot3.getOption('summary') else 'Robot: aktualizace')
+        page.save(summary=bot3.opt.summary if bot3.opt.summary else 'Robot: aktualizace')
         return True
     else:
         pywikibot.bot.suggest_help(missing_generator=True)

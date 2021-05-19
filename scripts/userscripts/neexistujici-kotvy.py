@@ -148,7 +148,7 @@ class BasicBot(
         #                            regexy                            #
         ################################################################
 
-        # self.getOption('parametr')
+        # self.opt.parametr
         # self.current_page.title()
         # with open('soubor.txt', 'a') as soubor:
         #     soubor.write('# ' + self.current_page.title(asLink=True) + '\n')
@@ -212,7 +212,7 @@ class BasicBot(
 
         # if summary option is None, it takes the default i18n summary from
         # i18n subdirectory with summary_key as summary key.
-        #self.put_current(text, summary=self.getOption('summary') if self.getOption('summary') else 'Robot: ' + self.shrnuti)
+        #self.put_current(text, summary=self.opt.summary if self.opt.summary else 'Robot: ' + self.shrnuti)
 
 
 def main(*args):
@@ -261,10 +261,10 @@ def main(*args):
         bot.run()  # guess what it does
         page = pywikibot.Page(pywikibot.Site('cs'), 'Wikipedie:Údržbové seznamy/Neexistující kotvy/seznam')
         page.text = bot.seznam.strip()
-        page.save(summary=bot.getOption('summary') if bot.getOption('summary') else 'Robot: ' + bot.shrnuti)
+        page.save(summary=bot.opt.summary if bot.opt.summary else 'Robot: ' + bot.shrnuti)
         page2 = pywikibot.Page(pywikibot.Site('cs'), 'Wikipedie:Údržbové seznamy/Neexistující kotvy/seznam2')
         page2.text = bot.seznam2.strip()
-        page2.save(summary=bot.getOption('summary') if bot.getOption('summary') else 'Robot: ' + bot.shrnuti)
+        page2.save(summary=bot.opt.summary if bot.opt.summary else 'Robot: ' + bot.shrnuti)
         return True
     else:
         pywikibot.bot.suggest_help(missing_generator=True)
