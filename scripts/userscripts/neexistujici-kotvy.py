@@ -36,7 +36,7 @@ from pywikibot.bot import (
     SingleSiteBot,
 )
 from pywikibot.textlib import replaceExcept
-from pywikibot.exceptions import SiteDefinitionError
+from pywikibot.exceptions import SiteDefinitionError, InvalidTitleError
 from urllib import parse
 
 
@@ -116,7 +116,7 @@ class BasicBot(
             test_stranka = Page(self.site, cil)
             try:
                 test_str_existuje = test_stranka.exists()
-            except SiteDefinitionError:
+            except (SiteDefinitionError, InvalidTitleError):
                 continue
             if test_stranka.isRedirectPage():
                 test_stranka = test_stranka.getRedirectTarget()
