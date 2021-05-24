@@ -49,7 +49,12 @@ from pywikibot.bot import (
     NoRedirectPageBot,
     SingleSiteBot,
 )
+from pywikibot.exceptions import NoPageError
 from pywikibot.textlib import replaceExcept
+from datetime import date
+from pathlib import Path
+from requests import get
+from time import sleep
 
 
 # This is required for the text that is shown when you run this script
@@ -100,13 +105,20 @@ class BasicBot(
         #                           shrnutí                            #
         ################################################################
 
-        shrnuti = ''
+        shrnuti = 'aktualizace symbolů nebezpečí GHS z PubChem'
+
+        ################################################################
+
+        self.ensite = pywikibot.Site('en')
+        self.date = date.today().isoformat()
+        self.running = False
+        self.last = pywikibot.Page(self.site, 'Fluoren')
 
         ################################################################
 
         self.shrnuti = self.opt.summary or 'Robot: ' + shrnuti
 
-        infobox = self.opt.ref
+        infobox = self.opt.ref or 'Šablona:Infobox - chemická sloučenina'
         if re.match(r'[Šš]ablona:', infobox):
             infobox = infobox[8:]
         infobox = re.escape(infobox)
@@ -118,7 +130,82 @@ class BasicBot(
 
     def treat_page(self) -> None:
         """Load the given page, do some changes, and save it."""
-        text = self.current_page.text
+        stranka = self.current_page
+        if not self.running:
+            if stranka != self.last:
+                return False
+            else:
+                self.running = True
+        elif self.running:
+            self.last = stranka
+        try:
+            item = stranka.data_item()
+        except NoPageError:
+            return False
+
+        try:
+            enname = item.getSitelink(self.ensite)
+            print(enname)
+            sleep(5)
+            cid_json = get('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{enname}/JSON'.format(enname=enname)).json()
+            cid = cid_json['PC_Compounds'][0]['id']['id']['cid']
+        except (KeyError, NoPageError):
+            cid = stranka.get_best_claim(prop='P662')
+            if cid is not None:
+                cid = cid._formatValue()
+            else:
+                try:
+                    inchi = stranka.get_best_claim(prop='P234')
+                    if inchi is None:
+                        raise KeyError
+                    sleep(5)
+                    cid_json = get('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchi/{inchi}/JSON'.format(inchi=inchi)).json()
+                    cid = cid_json['PC_Compounds'][0]['id']['id']['cid']
+                except KeyError:
+                    try:
+                        inchikey = stranka.get_best_claim(prop='P235')
+                        if inchikey is None:
+                            raise KeyError
+                        sleep(5)
+                        cid_json = get('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/{inchikey}/JSON'.format(inchikey=inchikey)).json()
+                        cid = cid_json['PC_Compounds'][0]['id']['id']['cid']
+                    except KeyError:
+                        try:
+                            smiles = stranka.get_best_claim(prop='P233')
+                            if smiles is None:
+                                raise KeyError
+                            sleep(5)
+                            cid_json = get('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/{smiles}/JSON'.format(smiles=smiles)).json()
+                            cid = cid_json['PC_Compounds'][0]['id']['id']['cid']
+                        except KeyError:
+                            return False
+        print(cid)
+
+        sleep(5)
+        ghs_json = get('https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/{cid}/JSON?heading=GHS+Classification'.format(cid=cid)).json()
+        try:
+            ghs_list = ghs_json['Record']['Section'][0]['Section'][0]['Section'][0]['Information'][0]['Value']['StringWithMarkup'][0]['Markup']
+        except KeyError:
+            return False
+        ghs = []
+        for ghs_entry in ghs_list:
+            ghs.append('{{' + Path(ghs_entry['URL']).stem + '}}')
+        ghs = ''.join(sorted(ghs))
+        print(ghs)
+
+        signal = ghs_json['Record']['Section'][0]['Section'][0]['Section'][0]['Information'][1]['Value']['StringWithMarkup'][0]['String']
+        if signal == 'Danger':
+            signal='{{Nebezpečí}}'
+        elif signal == 'Warning':
+            signal='{{Varování}}'
+        else:
+            print('>>> Neznámé signální slovo <<<')
+        print(signal)
+
+        enname = ghs_json['Record']['RecordTitle']
+        print(enname)
+
+        text = stranka.text
         vyjimky = self.vyjimky
 
         text = replaceExcept(text, r'\{\{', r'ßßß{{', vyjimky)
@@ -168,12 +255,19 @@ class BasicBot(
                     ################################################################
 
                     # self.opt.parametr nebo self.opt['parametr']
-                    # self.current_page.title()
+                    # stranka.title()
                     # with open('soubor.txt', 'a') as soubor:
-                    #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
-                    # part2 = replaceExcept(part2, r'', r'', vyjimky)
-                    # part2 = replaceExcept(part2, r'\s*\|\s*\s*=[^\|\}]*(?=\s*[\|\}])', r'', vyjimky)
+                    #     soubor.write('# ' + stranka.title(as_link=True) + '\n')
                     # part2 = replaceExcept(part2, r'\|\s*\s*=', r'|  =', vyjimky)
+                    part2 = replaceExcept(part2, r'\|\s*symboly[ _]nebezpečí\s*=[^\|\}]*(?=\s*[\|\}])', r'', vyjimky)
+
+                    pattern = re.compile(r'\|\s*symboly[ _]nebezpečí[ _]GHS\s*=[^\|\}]*?(?=\s*[\|\}])')
+                    line = r'| symboly nebezpečí GHS = {ghs}<ref name=pubchem_cid_{cid}>{{{{Citace elektronického periodika | titul = {enname} | periodikum = pubchem.ncbi.nlm.nih.gov | vydavatel = PubChem | url = https://pubchem.ncbi.nlm.nih.gov/compound/{cid} | jazyk = en | datum přístupu = {date} }}}}</ref><br>{signal}<ref name=pubchem_cid_{cid} />'
+                    line = line.format(cid=cid, enname=enname, ghs=ghs, date=self.date, signal=signal)
+                    if pattern.search(part2):
+                        part2 = pattern.sub(line, part2)
+                    else:
+                        part2 = replaceExcept(part2, r'\}\}', r' ' + line + r'\n}}', vyjimky)
 
                     ################################################################
                     newPageParts.append(part2.replace('ßßß', '|').replace('ẞẞẞ', '}}'))
