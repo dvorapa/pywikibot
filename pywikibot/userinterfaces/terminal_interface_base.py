@@ -401,7 +401,7 @@ class UI(ABUIC):
                 for option in options:
                     if isinstance(option, OutputOption) \
                        and option.before_question:
-                        self.stream_output(option.out)
+                        self.stream_output(option.out + '\n')
                 output = Option.formatted(question, options, default)
                 if force:
                     self.stream_output(output + '\n')
@@ -523,6 +523,7 @@ class TerminalHandler(logging.StreamHandler):
 
     def emit(self, record):
         """Emit the record formatted to the output."""
+        self.flush()
         if record.name == 'py.warnings':
             # Each warning appears twice
             # the second time it has a 'message'
