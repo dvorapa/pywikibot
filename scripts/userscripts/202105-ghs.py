@@ -112,7 +112,7 @@ class BasicBot(
         self.ensite = pywikibot.Site('en')
         self.date = date.today().isoformat()
         self.running = False
-        self.last = pywikibot.Page(self.site, 'Fluoren')
+        self.last = pywikibot.Page(self.site, 'Methylentrifenylfosforan')
 
         ################################################################
 
@@ -123,7 +123,7 @@ class BasicBot(
             infobox = infobox[8:]
         infobox = re.escape(infobox)
         infobox = infobox.replace(r'\ ', r'[ _]')
-        self.infobox = r'\{\{\s*[' + infobox[0].upper() + infobox[0].lower() + r']' + infobox[1:] + '(?=\s*[\|\}\<])'
+        self.infobox = r'\{\{\s*[' + infobox[0].upper() + infobox[0].lower() + r']' + infobox[1:] + r' *(?:\||\}\}|<!\-\-|\n)'
 
         # assign the generator to the bot
         self.generator = generator
@@ -263,7 +263,11 @@ class BasicBot(
 
                     pattern = re.compile(r'\|\s*symboly[ _]nebezpečí[ _]GHS\s*=[^\|\}]*?(?=\s*[\|\}])')
                     line = r'| symboly nebezpečí GHS = {ghs}<ref name=pubchem_cid_{cid}>{{{{Citace elektronického periodika | titul = {enname} | periodikum = pubchem.ncbi.nlm.nih.gov | vydavatel = PubChem | url = https://pubchem.ncbi.nlm.nih.gov/compound/{cid} | jazyk = en | datum přístupu = {date} }}}}</ref><br>{signal}<ref name=pubchem_cid_{cid} />'
-                    line = line.format(cid=cid, enname=enname, ghs=ghs, date=self.date, signal=signal)
+                    if self.opt.ref == 'Šablona:Infobox - chemická sloučenina':
+                        date = '2021-05-24'
+                    else:
+                        date = self.date
+                    line = line.format(cid=cid, enname=enname, ghs=ghs, date=date, signal=signal)
                     if pattern.search(part2):
                         part2 = pattern.sub(line, part2)
                     else:

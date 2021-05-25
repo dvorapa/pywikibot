@@ -111,7 +111,7 @@ class BasicBot(
             infobox = infobox[8:]
         infobox = re.escape(infobox)
         infobox = infobox.replace(r'\ ', r'[ _]')
-        self.infobox = r'\{\{\s*[' + infobox[0].upper() + infobox[0].lower() + r']' + infobox[1:] + '(?=\s*[\|\}\<])'
+        self.infobox = r'\{\{\s*[' + infobox[0].upper() + infobox[0].lower() + r']' + infobox[1:] + r' *(?:\||\}\}|<!\-\-|\n)'
 
         # assign the generator to the bot
         self.generator = generator
