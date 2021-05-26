@@ -111,7 +111,7 @@ class BasicBot(
 
         self.ensite = pywikibot.Site('en')
         self.date = date.today().isoformat()
-        self.running = False
+        self.running = True
         self.last = pywikibot.Page(self.site, 'Methylentrifenylfosforan')
 
         ################################################################
