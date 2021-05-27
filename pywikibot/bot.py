@@ -346,11 +346,19 @@ def init_handlers(strm=None):
 
     # if user has enabled file logging, configure file handler
     if module_name in config.log or '*' in config.log:
+        # get PID
+        throttle = pywikibot.Site().throttle  # initialize a Throttle object
+        pid = throttle.get_pid(module_name)  # get the global PID if needed
+        pid = str(pid) + '-' if pid > 1 else ''
+
         if config.logfilename:
+            # keep config.logfilename unchanged
             logfile = config.datafilepath('logs', config.logfilename)
         else:
-            logfile = config.datafilepath('logs', '{}-bot.log'
-                                          .format(module_name))
+            # add PID to logfle name
+            logfile = config.datafilepath('logs', '{}-{}bot.log'
+                                          .format(module_name, pid))
+
         file_handler = RotatingFileHandler(filename=logfile,
                                            maxBytes=1024 * config.logfilesize,
                                            backupCount=config.logfilecount,
@@ -1668,37 +1676,6 @@ class MultipleSitesBot(BaseBot):
     The bot should accommodate for that case and not store site specific
     information on only one site.
     """
-
-    def __init__(self, **kwargs):
-        """Initializer."""
-        self._site = None
-        super().__init__(**kwargs)
-
-    @property
-    @deprecated("the page's site property", since='20150615',
-                future_warning=True)
-    def site(self):
-        """
-        Return the site if it's set and ValueError otherwise.
-
-        The site is only defined while in treat and it is preferred to use
-        the page's site instead.
-        """
-        if self._site is None:
-            raise ValueError('Requesting the site not while in treat is not '
-                             'allowed.')
-        return self._site
-
-    def run(self):
-        """Reset the bot's site after run."""
-        super().run()
-        self._site = None
-
-    def init_page(self, item):
-        """Define the site for this page."""
-        page = super().init_page(item)
-        self._site = page.site
-        return page
 
 
 class ConfigParserBot(BaseBot):
