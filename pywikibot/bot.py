@@ -5,7 +5,9 @@ This module supports several different bot classes which could be used in
 conjunction. Each bot should subclass at least one of these four classes:
 
 * L{BaseBot}: Basic bot class in case where the site is handled differently,
-  like working on two sites in parallel.
+  like working on multiple sites in parallel. No site attribute is provided.
+  Instead site of the current page should be used. This class should
+  normally not be used directly.
 
 * L{SingleSiteBot}: Bot class which should only be run on a single site. They
   usually store site specific content and thus can't be easily run when the
@@ -13,10 +15,8 @@ conjunction. Each bot should subclass at least one of these four classes:
   can also be changed. If the generator returns a page of a different site
   it'll skip that page.
 
-* L{MultipleSitesBot}: Bot class which supports to be run on multiple sites
-  without the need to manually initialize it every time. It is not possible to
-  set the C{site} property and it's deprecated to request it. Instead site of
-  the current page should be used. And out of C{run} that sit isn't defined.
+* L{MultipleSitesBot}: An alias of L{BaseBot}. Should not be used if any
+  other bot class is used.
 
 * L{ConfigParserBot}: Bot class which supports reading options from a
   scripts.ini configuration file. That file consists of sections, led by a
@@ -302,6 +302,9 @@ def init_handlers(strm=None):
 
     Accordingly, do **not** use print statements in bot code; instead,
     use pywikibot.output function.
+
+    *New in version 6.2:* different logfiles are uses if multiple
+    processes of the same script are are running.
 
     @param strm: Output stream. If None, re-uses the last stream if one
         was defined, otherwise uses sys.stderr
@@ -1675,6 +1678,8 @@ class MultipleSitesBot(BaseBot):
 
     The bot should accommodate for that case and not store site specific
     information on only one site.
+
+    *New in version 6.2:* site attribute has been dropped.
     """
 
 
@@ -1694,11 +1699,11 @@ class ConfigParserBot(BaseBot):
         [shell] ; Shell options
         always: true
 
-    The option values are interpreted in this order::
+    The option values are interpreted in this order:
 
-    - `available_options` default setting
-    - `script.ini options` settings
-    - command line arguments
+    1. `available_options` default setting
+    2. `script.ini options` settings
+    3. command line arguments
 
     *New in version 3.0.*
     """
