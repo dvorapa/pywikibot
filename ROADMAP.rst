@@ -1,7 +1,7 @@
 Current release changes
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-* mwparserfromhell or wikitextparser MediaWiki markup parser is mandatory (T106763)
+* (no changes yet)
 
 Deprecations
 ^^^^^^^^^^^^
@@ -17,5 +17,4 @@ Deprecations
 * 6.1.0: textlib.unescape() function will be removed in favour of html.unescape()
 * 6.0.1: Site.undeletepage() and Site.undelete_file_versions() will be removed in favour of Site.undelete() method
 * 6.0.1: Site.deletepage() and Site.deleteoldimage() will be removed in favour of Site.delete() method
-* 6.0.1: DataSite.createNewItemFromPage() method will be removed in favour of ImagePage.fromPage() (T98663)
 * 5.0.0: Methods deprecated for 5 years or longer will be removed
