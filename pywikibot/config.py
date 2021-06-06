@@ -72,7 +72,8 @@ for env_name in (
     if new_env_name not in environ:
         environ[new_env_name] = env_value
     issue_deprecation_warning(
-        env_name + ' environment variable', new_env_name, 0, since='20180803')
+        env_name + ' environment variable', new_env_name, 0, since='20180803',
+        future_warning=True)
 
 
 # This frozen set should contain all imported modules/variables, so it must
@@ -688,7 +689,7 @@ put_throttle = 10  # type: Union[int, float]
 noisysleep = 3.0
 
 # Defer bot edits during periods of database server lag. For details, see
-# https://www.mediawiki.org/wiki/Maxlag_parameter
+# https://www.mediawiki.org/wiki/Manual:Maxlag_parameter
 # You can set this variable to a number of seconds, or to None (or 0) to
 # disable this behavior. Higher values are more aggressive in seeking
 # access to the wiki.
