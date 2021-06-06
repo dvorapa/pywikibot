@@ -1248,10 +1248,10 @@ class BasePage(ComparableMixin):
                       .format(family, self.site.lang))
         # cc depends on page directly and via several other imports
         from pywikibot.cosmetic_changes import (
-            CANCEL_MATCH,
+            CANCEL,
             CosmeticChangesToolkit,
         )
-        cc_toolkit = CosmeticChangesToolkit(self, ignore=CANCEL_MATCH)
+        cc_toolkit = CosmeticChangesToolkit(self, ignore=CANCEL.MATCH)
         self.text = cc_toolkit.change(old)
 
         if summary and old.strip().replace(
@@ -1281,7 +1281,7 @@ class BasePage(ComparableMixin):
                   **kwargs)
 
     @deprecated('put(asynchronous=True) or save(asynchronous=True)',
-                since='20180501')
+                since='20180501', future_warning=True)
     @deprecated_args(comment='summary', watchArticle='watch',
                      minorEdit='minor')
     def put_async(self, newtext, summary=None, watch=None, minor=True,
@@ -2263,7 +2263,7 @@ class FilePage(Page):
     def _load_file_revisions(self, imageinfo):
         for file_rev in imageinfo:
             # filemissing in API response indicates most fields are missing
-            # see https://gerrit.wikimedia.org/r/#/c/mediawiki/core/+/533482/
+            # see https://gerrit.wikimedia.org/r/c/mediawiki/core/+/533482/
             if 'filemissing' in file_rev:
                 pywikibot.warning("File '{}' contains missing revisions"
                                   .format(self.title()))
@@ -4148,7 +4148,7 @@ class ItemPage(WikibasePage):
 # alias for backwards compatibility
 ItemPage.concept_url = redirect_func(
     ItemPage.concept_uri, old_name='concept_url', class_name='ItemPage',
-    since='20170222')
+    since='20170222', future_warning=True)
 
 
 class Property:
@@ -4532,7 +4532,7 @@ class Claim(Property):
         source = OrderedDict()
 
         # Before #84516 Wikibase did not implement snaks-order.
-        # https://gerrit.wikimedia.org/r/#/c/84516/
+        # https://gerrit.wikimedia.org/r/c/84516/
         if 'snaks-order' in data:
             prop_list = data['snaks-order']
         else:
