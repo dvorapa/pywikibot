@@ -10,7 +10,8 @@ from unittest.mock import Mock, patch
 import pywikibot
 import pywikibot.pagegenerators
 
-from scripts.add_text import add_text, get_text, parse
+from scripts.add_text import parse
+
 from tests.aspects import TestCase
 
 
@@ -33,15 +34,15 @@ class TestAdding(TestCase):
     def test_parse(self):
         """Basic argument parsing."""
         args = parse(['-text:"hello world"'], self.generator_factory)
-        self.assertEqual('"hello world"', args.text)
-        self.assertFalse(args.up)
-        self.assertTrue(args.reorder)
+        self.assertEqual('"hello world"', args['text'])
+        self.assertFalse(args['up'])
+        self.assertTrue(args['reorder'])
 
         args = parse(['-text:hello', '-up', '-noreorder'],
                      self.generator_factory)
-        self.assertEqual('hello', args.text)
-        self.assertTrue(args.up)
-        self.assertFalse(args.reorder)
+        self.assertEqual('hello', args['text'])
+        self.assertTrue(args['up'])
+        self.assertFalse(args['reorder'])
 
     @patch('pywikibot.handle_args', Mock(side_effect=lambda args: args))
     def test_unrecognized_argument(self):
@@ -76,30 +77,8 @@ class TestAdding(TestCase):
         input_mock.return_value = 'hello world'
 
         args = parse(['-text'], self.generator_factory)
-        self.assertEqual('hello world', args.text)
+        self.assertEqual('hello world', args['text'])
         input_mock.assert_called_with('What text do you want to add?')
-
-    def test_basic(self):
-        """Test adding text."""
-        (_, newtext, _) = add_text(
-            self.page, 'bar', putText=False,
-            oldTextGiven='foo\n{{linkfa}}')
-        self.assertEqual(
-            'foo\n{{linkfa}}\nbar',
-            newtext)
-
-    def test_with_category(self):
-        """Test adding text before categories."""
-        (_, newtext, _) = add_text(
-            self.page, 'bar', putText=False,
-            oldTextGiven='foo\n[[Category:Foo]]')
-        self.assertEqual(
-            'foo\nbar\n\n[[Category:Foo]]',
-            newtext)
-
-    def test_get_text(self):
-        """Test get_text with given text."""
-        self.assertEqual(get_text(self.page, 'foo', False), 'foo')
 
 
 if __name__ == '__main__':  # pragma: no cover
