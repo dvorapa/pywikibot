@@ -83,7 +83,7 @@ __all__ = (
     'FilePage', 'handle_args', 'html2unicode', 'input', 'input_choice',
     'input_yn', 'InterwikiRedirectPage', 'InvalidTitle', 'IsNotRedirectPage',
     'IsRedirectPage', 'ItemPage', 'Link', 'LockedNoPage', 'LockedPage', 'log',
-    'NoCreateError', 'NoMoveTarget', 'NoPage', 'NoUsername',
+    'MediaInfo', 'NoCreateError', 'NoMoveTarget', 'NoPage', 'NoUsername',
     'NoWikibaseEntity', 'OtherPageSaveError', 'output', 'Page',
     'PageCreatedConflict', 'PageDeletedConflict', 'PageRelatedError',
     'PageSaveRelatedError', 'PropertyPage', 'SectionError', 'Server414Error',
@@ -1216,6 +1216,7 @@ from pywikibot.page import (  # noqa: E402
     FilePage,
     ItemPage,
     Link,
+    MediaInfo,
     Page,
     PropertyPage,
     SiteLink,
@@ -1348,10 +1349,9 @@ page_put_queue = Queue(_config.max_queue_size)
 # queue to signal that async_manager is working on a request. See T147178.
 page_put_queue_busy = Queue(_config.max_queue_size)
 # set up the background thread
-_putthread = threading.Thread(target=async_manager)
-# identification for debugging purposes
-_putthread.setName('Put-Thread')
-_putthread.setDaemon(True)
+_putthread = threading.Thread(target=async_manager,
+                              name='Put-Thread',  # for debugging purposes
+                              daemon=True)
 
 wrapper = _ModuleDeprecationWrapper(__name__)
 wrapper.add_deprecated_attr('config2', replacement_name='pywikibot.config',
