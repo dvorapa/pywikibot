@@ -27,9 +27,10 @@ class Option(ABC):
     A basic option for input_choice.
 
     The following methods need to be implemented:
-    * format(default=None)
-    * result(value)
-    * test(value)
+
+    - format(default=None)
+    - result(value)
+    - test(value)
 
     The methods ``test`` and ``handled`` are in such a relationship that
     when ``handled`` returns itself that ``test`` must return True for
@@ -182,12 +183,13 @@ class OutputProxyOption(OutputOption, StandardOption):
 
     @property
     def out(self) -> str:
-        """Return te contents."""
+        """Return the contents."""
         if not hasattr(self._outputter, 'out'):
             issue_deprecation_warning('{} without "out" property'
                                       .format(self.__class__.__name__),
                                       since='6.2.0')
-            return self._outputter.output()
+            self._outputter.output()
+            return ''
         return self._outputter.out
 
 
@@ -242,9 +244,9 @@ class ContextOption(OutputOption, StandardOption):
         self.end = end
 
     def result(self, value: str) -> Any:
-        """Add the delta to the context and output it."""
+        """Add the delta to the context."""
         self.context += self.delta
-        super().result(value)
+        return None
 
     @property
     def out(self) -> str:
