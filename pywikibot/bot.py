@@ -366,14 +366,16 @@ def init_handlers(strm=None):
 
     # if user has enabled file logging, configure file handler
     if module_name in config.log or '*' in config.log:
-        if pywikibot.Site.__doc__ == 'TEST':  # set by aspects.DisableSiteMixin
-            pid = ''
-        else:
-            # get PID
-            throttle = pywikibot.Site().throttle  # initialize a Throttle obj
-            pid = throttle.get_pid(module_name)  # get the global PID if needed
-            pid = str(pid) + '-' if pid > 1 else ''
-
+        pid = ''
+        if pywikibot.Site.__doc__ != 'TEST':  # set by aspects.DisableSiteMixin
+            try:  # T286848
+                site = pywikibot.Site()
+            except ValueError:
+                pass
+            else:  # get PID
+                throttle = site.throttle  # initialize a Throttle obj
+                pid = throttle.get_pid(module_name)  # get the global PID
+                pid = str(pid) + '-' if pid > 1 else ''
         if config.logfilename:
             # keep config.logfilename unchanged
             logfile = config.datafilepath('logs', config.logfilename)
@@ -520,8 +522,8 @@ def input_choice(question: str, answers, default: Optional[str] = None,
     :param question: The question asked without trailing spaces.
     :param answers: The valid answers each containing a full length answer and
         a shortcut. Each value must be unique.
-    :type answers: iterable containing a sequence of length two or instances of
-        ChoiceException
+    :type answers: iterable containing a sequence of length two or
+        instances of :py:class:`pywikibot.bot.Option`
     :param default: The result if no answer was entered. It must not be in the
         valid answers and can be disabled by setting it to None. If it should
         be linked with the valid answers it must be its shortcut.
