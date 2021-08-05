@@ -1,15 +1,15 @@
 Current release changes
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-* Add support for Lingua Libre family (T286303)
-* Catch invalid titles in Category.isCategoryRedirect()
-* L10N updates
-* Provide structured data on Commons (T213904, T223820)
+* (no changes yet)
 
 
 Deprecations
 ^^^^^^^^^^^^
 
+* 6.6.0: Support of Python 3.5.0 - 3.5.2 will be dropped with Pywikibot 7 (T286867)
+* 6.5.0: OutputOption.output() method will be removed in favour of OutputOption.out property
+* 6.5.0: tools.RotatingFileHandler will be removed in favour of logging.handlers.RotatingFileHandler
 * 6.4.0: Pywikibot `began using semantic versioning
   <https://www.mediawiki.org/wiki/Manual:Pywikibot/Development/Guidelines#Deprecation_Policy>`_,
   all deprecated code will be removed in Pywikibot version 7.0.0.
