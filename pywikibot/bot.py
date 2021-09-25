@@ -177,14 +177,15 @@ from pywikibot.tools import (
     deprecated_args,
     issue_deprecation_warning,
     remove_last_args,
-    suppress_warnings,
 )
 from pywikibot.tools._logging import LoggingFormatter
 from pywikibot.tools.formatter import color_format
 
-ANSWER_TYPE = Iterable[Union[
+ANSWER = Union[
     Tuple[str, str],
-    'pywikibot.bot_choice.Option']]
+    'pywikibot.bot_choice.Option']
+
+ANSWER_TYPE = Union[Iterable[ANSWER], 'pywikibot.bot_choice.Option']
 
 # TODO: We should change this to the following after T286867...
 
@@ -561,7 +562,7 @@ def input_choice(question: str,
                  default: Optional[str] = None,
                  return_shortcut: bool = True,
                  automatic_quit: bool = True,
-                 force: bool = False) -> Union[int, str]:
+                 force: bool = False) -> Any:
     """
     Ask the user the question and return one of the valid answers.
 
@@ -1192,12 +1193,6 @@ class OptionHandler:
         """
         self.set_options(**kwargs)
 
-    @property  # type: ignore[misc]
-    @deprecated('available_options', since='20201006')
-    def availableOptions(self) -> Dict[str, Any]:
-        """DEPRECATED. Options that are available."""
-        return self.available_options
-
     @deprecated('set_options', since='20201006')
     def setOptions(self, **options: Any) -> None:  # pragma: no cover
         """DEPRECATED. Set the instance options."""
@@ -1205,15 +1200,6 @@ class OptionHandler:
 
     def set_options(self, **options: Any) -> None:
         """Set the instance options."""
-        warning = 'pywikibot.bot.OptionHandler.availableOptions'
-        with suppress_warnings(warning.replace('.', r'\.') + ' is deprecated',
-                               category=FutureWarning):
-            old_options = self.availableOptions is not self.available_options
-        if old_options:  # old options were set and not updated
-            self.available_options = self.availableOptions
-            issue_deprecation_warning(warning, 'available_options',
-                                      since='20201006')
-
         valid_options = set(self.available_options)
         received_options = set(options)
 
