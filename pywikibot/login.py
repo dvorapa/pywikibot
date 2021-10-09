@@ -19,11 +19,9 @@ from pywikibot.backports import Dict, Tuple
 from pywikibot.comms import http
 from pywikibot.exceptions import APIError, NoUsernameError
 from pywikibot.tools import (
-    ModuleDeprecationWrapper,
-    deprecated_args,
     file_mode_checker,
+    ModuleDeprecationWrapper,
     normalize_username,
-    remove_last_args,
 )
 
 
@@ -89,7 +87,6 @@ class LoginManager:
 
     """Site login manager."""
 
-    @deprecated_args(username='user', verbose=True, sysop=True)
     def __init__(self, password: Optional[str] = None,
                  site: OPT_SITE_TYPE = None,
                  user: Optional[str] = None) -> None:
@@ -190,7 +187,6 @@ class LoginManager:
         # THIS IS OVERRIDDEN IN data/api.py
         raise NotImplementedError
 
-    @remove_last_args(['data'])
     def storecookiedata(self) -> None:
         """Store cookie data."""
         http.cookie_jar.save(ignore_discard=True)
@@ -369,7 +365,6 @@ class OauthLoginManager(LoginManager):
     # NOTE: Currently OauthLoginManager use mwoauth directly to complete OAuth
     # authentication process
 
-    @deprecated_args(sysop=True)
     def __init__(self, password: Optional[str] = None,
                  site: OPT_SITE_TYPE = None,
                  user: Optional[str] = None) -> None:
