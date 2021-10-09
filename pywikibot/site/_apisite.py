@@ -73,13 +73,10 @@ from pywikibot.site._tokenwallet import TokenWallet
 from pywikibot.tools import (
     MediaWikiVersion,
     compute_file_hash,
-    deprecate_arg,
     deprecated,
-    deprecated_args,
     issue_deprecation_warning,
     merge_unique_dicts,
     normalize_username,
-    remove_last_args,
 )
 
 
@@ -109,7 +106,6 @@ class APISite(
     Do not instantiate directly; use :py:obj:`pywikibot.Site` function.
     """
 
-    @remove_last_args(['sysop'])
     def __init__(self, code, fam=None, user=None):
         """Initializer."""
         super().__init__(code, fam, user)
@@ -215,7 +211,6 @@ class APISite(
                         return pywikibot.Site(url=site['url'] + '/w/index.php')
         raise ValueError('Cannot parse a site out of {}.'.format(dbname))
 
-    @deprecated_args(step=True)
     def _generator(self, gen_class, type_arg: Optional[str] = None,
                    namespaces=None, total: Optional[int] = None, **args):
         """Convenience method that returns an API generator.
@@ -284,7 +279,6 @@ class APISite(
         return self._request_class({'parameters': kwargs}).create_simple(
             self, **kwargs)
 
-    @remove_last_args(['sysop'])
     def logged_in(self):
         """Verify the bot is logged into the site as the expected user.
 
@@ -521,7 +515,6 @@ class APISite(
             self._globaluserinfo['registration'] = iso_ts
         return self._globaluserinfo
 
-    @remove_last_args(['sysop'])
     def is_blocked(self):
         """
         Return True when logged in user is blocked.
@@ -605,7 +598,6 @@ class APISite(
                                            start=start, end=end,
                                            reverse=reverse, is_ts=is_ts))
 
-    @remove_last_args(['sysop'])
     def has_right(self, right):
         """Return true if and only if the user has a specific right.
 
@@ -617,7 +609,6 @@ class APISite(
         """
         return right.lower() in self.userinfo['rights']
 
-    @remove_last_args(['sysop'])
     def has_group(self, group):
         """Return true if and only if the user is a member of specified group.
 
@@ -627,7 +618,6 @@ class APISite(
         """
         return group.lower() in self.userinfo['groups']
 
-    @remove_last_args(['sysop'])
     def messages(self):
         """Return true if the user has new messages, and false otherwise."""
         return 'messages' in self.userinfo
@@ -670,7 +660,6 @@ class APISite(
 
         return OrderedDict((key, _mw_msg_cache[amlang][key]) for key in keys)
 
-    @deprecated_args(forceReload=True)
     def mediawiki_message(self, key, lang=None) -> str:
         """Fetch the text for a MediaWiki message.
 
@@ -762,7 +751,6 @@ class APISite(
         return msgs['comma-separator'].join(
             args[:-2] + [concat.join(args[-2:])])
 
-    @deprecated_args(string='text')
     def expand_text(self, text: str, title=None, includecomments=None) -> str:
         """Parse the given text for preprocessing and rendering.
 
@@ -830,7 +818,6 @@ class APISite(
             return self._magicwords[word]
         return [word]
 
-    @remove_last_args(('default', ))
     def redirect(self):
         """Return the localized #REDIRECT keyword."""
         # return the magic word without the preceding '#' character
@@ -858,12 +845,10 @@ class APISite(
             pattern = None
         return super().redirectRegex(pattern)
 
-    @remove_last_args(('default', ))
     def pagenamecodes(self):
         """Return list of localized PAGENAME tags for the site."""
         return self.getmagicwords('pagename')
 
-    @remove_last_args(('default', ))
     def pagename2codes(self):
         """Return list of localized PAGENAMEE tags for the site."""
         return self.getmagicwords('pagenamee')
@@ -2205,7 +2190,6 @@ class APISite(
         return set(self.siteinfo.get('restrictions')['levels'])
 
     @need_right('protect')
-    @deprecate_arg('summary', 'reason')
     def protect(self, page, protections: dict,
                 reason: str, expiry=None, **kwargs):
         """(Un)protect a wiki page. Requires administrator status.
@@ -2456,7 +2440,6 @@ class APISite(
             siiprop=props)
         return req.submit()['query']['stashimageinfo'][0]
 
-    @deprecate_arg('imagepage', 'filepage')
     @need_right('upload')
     def upload(self, filepage, *,
                source_filename: Optional[str] = None,
