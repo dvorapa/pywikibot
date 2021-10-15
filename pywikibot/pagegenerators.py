@@ -65,7 +65,6 @@ from pywikibot.tools import (
     filter_unique,
     intersect_generators,
     itergroup,
-    redirect_func,
 )
 
 
@@ -1280,7 +1279,7 @@ class GeneratorFactory:
     def handle_args(self, args: Iterable[str]) -> List[str]:
         """Handle command line arguments and return the rest as a list.
 
-        *New in version 6.0.*
+        .. versionadded:: 6.0
         """
         return [arg for arg in args if not self.handle_arg(arg)]
 
@@ -1293,7 +1292,8 @@ class GeneratorFactory:
         can try parsing the argument. Call getCombinedGenerator() after all
         arguments have been parsed to get the final output generator.
 
-        *Renamed in version 6.0.*
+        .. versionadded:: 6.0
+           renamed from ``handleArg``
 
         :param arg: Pywikibot argument consisting of -name:value
         :return: True if the argument supplied was recognised by the factory
@@ -3097,14 +3097,6 @@ class PetScanPageGenerator:
                                   int(raw_page['namespace']))
             yield page
 
-
-DuplicateFilterPageGenerator = redirect_func(
-    filter_unique, old_name='DuplicateFilterPageGenerator', since='20180715')
-PreloadingItemGenerator = redirect_func(PreloadingEntityGenerator,
-                                        old_name='PreloadingItemGenerator',
-                                        since='20170314')
-TextfilePageGenerator = redirect_func(
-    TextIOPageGenerator, old_name='TextfilePageGenerator', since='20210611')
 
 if __name__ == '__main__':  # pragma: no cover
     pywikibot.output('Pagegenerators cannot be run as script - are you '
