@@ -74,7 +74,6 @@ from pywikibot.tools import (
     is_ip_address,
     issue_deprecation_warning,
     ModuleDeprecationWrapper,
-    redirect_func,
 )
 
 
@@ -1764,7 +1763,7 @@ class BasePage(ComparableMixin):
     def has_deleted_revisions(self) -> bool:
         """Return True if the page has deleted revisions.
 
-        *New in version 4.2.*
+        .. versionadded:: 4.2
         """
         if not hasattr(self, '_has_deleted_revisions'):
             gen = self.site.deletedrevs(self, total=1, prop=['ids'])
@@ -2175,7 +2174,7 @@ class Page(BasePage):
         Return the first 'preferred' ranked Claim specified by Wikibase
         property or the first 'normal' one otherwise.
 
-        *New in version 3.0.*
+        .. versionadded:: 3.0
 
         :param prop: property id, "P###"
         :return: Claim object given by Wikibase property number
@@ -2491,7 +2490,7 @@ class FilePage(Page):
         the method returns the associated mediainfo entity. Otherwise,
         it falls back to behavior of BasePage.data_item.
 
-        *New in version 6.5.*
+        .. versionadded:: 6.5
 
         :rtype: pywikibot.page.WikibaseEntity
         """
@@ -3134,7 +3133,7 @@ class User(Page):
     ) -> Iterable[Tuple[Page, Revision]]:
         """Yield tuples describing this user's deleted edits.
 
-        *New in version 5.5.*
+        .. versionadded:: 5.5
 
         :param total: Limit results to this number of pages
         :keyword start: Iterate contributions starting at this Timestamp
@@ -3436,7 +3435,7 @@ class MediaInfo(WikibaseEntity):
 
     """Interface for MediaInfo entities on Commons.
 
-    *New in version 6.5.*
+    .. versionadded:: 6.5
     """
 
     title_pattern = r'M[1-9]\d*'
@@ -4201,12 +4200,6 @@ class ItemPage(WikibasePage):
             self._isredir = self.id != self._content.get('id', self.id)
             return self._isredir
         return super().isRedirectPage()
-
-
-# alias for backwards compatibility
-ItemPage.concept_url = redirect_func(
-    ItemPage.concept_uri, old_name='concept_url', class_name='ItemPage',
-    since='20170222')
 
 
 class Property:
@@ -5625,7 +5618,7 @@ class SiteLink(BaseLink):
 
       - badges: Any badges associated with the sitelink
 
-    *New in version 3.0.*
+    .. versionadded:: 3.0
     """
 
     # Components used for __repr__
