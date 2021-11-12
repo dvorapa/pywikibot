@@ -105,13 +105,14 @@ class BasicBot(
 
         ################################################################
 
-        stranka = pywikibot.Page(self.site, 'Wikipedista:DvorapaBot/propagační reference')
+        wiki = self.site
+        stranka = pywikibot.Page(wiki, 'Wikipedista:DvorapaBot/propagační reference')
         self.proptexty = stranka.text.strip('\n').split('\n')
 
         # assign the generator to the bot
         generator = itertools.chain()
         for proptext in self.proptexty:
-            gen = pagegenerators.SearchPageGenerator('"' + proptext + '"', namespaces = [0])
+            gen = wiki.search('"' + proptext + '"', namespaces = [0])
             generator = itertools.chain(generator, gen)
         self.generator = generator
 
