@@ -473,7 +473,7 @@ class InvalidPageError(PageLoadRelatedError):
     .. versionadded:: 6.2
     """
 
-    message = 'Page %s is invalid.'
+    message = 'Page {} is invalid.'
 
 
 class InvalidTitleError(Error):
@@ -549,14 +549,12 @@ class AbuseFilterDisallowedError(PageSaveRelatedError):
 
     """Page save failed because the AbuseFilter disallowed it."""
 
-    message = ('Edit to page %(title)s disallowed by the AbuseFilter.\n'
-               '%(info)s')
+    message = ('Edit to page {title} disallowed by the AbuseFilter.\n'
+               '{info}')
 
-    def __init__(self, page: 'pywikibot.page.Page', info: str,
-                 other: str) -> None:
+    def __init__(self, page: 'pywikibot.page.Page', info: str) -> None:
         """Initializer."""
         self.info = info
-        self.other = other
         super().__init__(page)
 
 
