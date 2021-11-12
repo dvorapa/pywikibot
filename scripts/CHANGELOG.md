@@ -1,7 +1,10 @@
-# Schripts Changelog
+# Scripts Changelog
 
 ## 7.0.0
 *In development*
+
+### general
+*  Provide ConfigParserBot for several scripts (T223778)
 
 ### add_text
 * Provide -create and -createonly options (T291354)
@@ -19,6 +22,9 @@
 
 ### commonscat
 * Ignore InvalidTitleError in CommonscatBot.findCommonscatLink (T291783)
+
+### cosmetic_changes
+* Ignore InvalidTitleError in CosmeticChangesBot.treat_page (T293612)
 
 ### djvutext
 * pass site arg only once (T292367)
@@ -85,7 +91,7 @@
 * Enable multiple sites (T57083)
 * Use new textlib.add_text function
 
-### cosmetic_changeds
+### cosmetic_changes
 * set -ignore option to CANCEL.MATCH by default (T108446)
 
 ### fixing_redirects

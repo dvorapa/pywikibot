@@ -73,7 +73,6 @@ from pywikibot.tools import (
     first_upper,
     is_ip_address,
     issue_deprecation_warning,
-    ModuleDeprecationWrapper,
 )
 
 
@@ -1133,15 +1132,20 @@ class BasePage(ComparableMixin):
 
     def save(self,
              summary: Optional[str] = None,
-             watch: Union[str, bool, None] = None,
+             watch: Optional[str] = None,
              minor: bool = True,
              botflag: Optional[bool] = None,
              force: bool = False,
              asynchronous: bool = False,
-             callback=None, apply_cosmetic_changes=None,
-             quiet: bool = False, **kwargs):
+             callback=None,
+             apply_cosmetic_changes: Optional[bool] = None,
+             quiet: bool = False,
+             **kwargs):
         """
         Save the current contents of page's text to the wiki.
+
+        .. versionchanged:: 7.0
+           boolean watch parameter is deprecated
 
         :param summary: The edit summary for the modification (optional, but
             most wikis strongly encourage its use)
@@ -1152,11 +1156,6 @@ class BasePage(ComparableMixin):
             * preferences: use the preference settings (Default)
             * nochange: don't change the watchlist
             If None (default), follow bot account's default settings
-
-            For backward compatibility watch parameter may also be boolean:
-            if True, add or if False, remove this Page to/from bot
-            user's watchlist.
-        :type watch: str, bool (deprecated) or None
         :param minor: if True, mark this edit as minor
         :param botflag: if True, mark this edit as made by a bot (default:
             True if user has bot status, False if not)
@@ -1171,7 +1170,6 @@ class BasePage(ComparableMixin):
             successful.
         :param apply_cosmetic_changes: Overwrites the cosmetic_changes
             configuration value to this value unless it's None.
-        :type apply_cosmetic_changes: bool or None
         :param quiet: enable/disable successful save operation message;
             defaults to False.
             In asynchronous mode, if True, it is up to the calling bot to
@@ -1179,10 +1177,14 @@ class BasePage(ComparableMixin):
         """
         if not summary:
             summary = config.default_edit_summary
-        if watch is True:
-            watch = 'watch'
-        elif watch is False:
-            watch = 'unwatch'
+
+        if isinstance(watch, bool):
+            issue_deprecation_warning(
+                'boolean watch parameter',
+                '"watch", "unwatch", "preferences" or "nochange" value',
+                since='7.0.0')
+            watch = ('unwatch', 'watch')[watch]
+
         if not force and not self.botMayEdit():
             raise OtherPageSaveError(
                 self, 'Editing restricted by {{bots}}, {{nobots}} '
@@ -1266,23 +1268,6 @@ class BasePage(ComparableMixin):
         self.save(summary=summary, watch=watch, minor=minor, botflag=botflag,
                   force=force, asynchronous=asynchronous, callback=callback,
                   **kwargs)
-
-    @deprecated('put(asynchronous=True) or save(asynchronous=True)',
-                since='20180501')
-    def put_async(self, newtext, summary=None, watch=None, minor=True,
-                  botflag=None, force=False, callback=None,
-                  **kwargs):  # pragma: no cover
-        """
-        Put page on queue to be saved to wiki asynchronously.
-
-        Asynchronous version of put (takes the same arguments), which places
-        pages on a queue to be saved by a daemon thread. All arguments are
-        the same as for .put(). This version is maintained solely for
-        backwards-compatibility.
-        """
-        self.put(newtext, summary=summary, watch=watch,
-                 minor=minor, botflag=botflag, force=force,
-                 asynchronous=True, callback=callback, **kwargs)
 
     def watch(self, unwatch: bool = False) -> bool:
         """
@@ -2398,20 +2383,6 @@ class FilePage(Page):
             will only upload in chunks, if the chunk size is positive but lower
             than the file size.
         :type chunk_size: int
-        :keyword _file_key: Reuses an already uploaded file using the filekey.
-            If None (default) it will upload the file.
-        :type _file_key: str or None
-        :keyword _offset: When file_key is not None this can be an integer to
-            continue a previously canceled chunked upload. If False it treats
-            that as a finished upload. If True it requests the stash info from
-            the server to determine the offset. By default starts at 0.
-        :type _offset: int or bool
-        :keyword _verify_stash: Requests the SHA1 and file size uploaded and
-            compares it to the local file. Also verifies that _offset is
-            matching the file size if the _offset is an int. If _offset is
-            False if verifies that the file size match with the local file. If
-            None it'll verifies the stash when a file key and offset is given.
-        :type _verify_stash: bool or None
         :keyword report_success: If the upload was successful it'll print a
             success message and if ignore_warnings is set to False it'll
             raise an UploadError if a warning occurred. If it's
@@ -5250,6 +5221,8 @@ class Link(BaseLink):
         else:
             self._anchor = None
 
+        self._text = self._text.strip()
+
         # Convert URL-encoded characters to unicode
         self._text = pywikibot.tools.chars.url2string(
             self._text, encodings=self._source.encodings())
@@ -5268,9 +5241,11 @@ class Link(BaseLink):
                 '{!r} contains illegal char {!r}'.format(t, '\ufffd'))
 
         # Cleanup whitespace
+        sep = self._source.family.title_delimiter_and_aliases[0]
         t = re.sub(
-            '[_ \xa0\u1680\u180E\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]+',
-            ' ', t)
+            '[{}\xa0\u1680\u180E\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]+'
+            .format(self._source.family.title_delimiter_and_aliases),
+            sep, t)
         # Strip spaces at both ends
         t = t.strip()
         # Remove left-to-right and right-to-left markers.
@@ -5818,14 +5793,3 @@ def url2unicode(title: str, encodings='utf-8') -> str:
         )
 
     return pywikibot.tools.chars.url2string(title, encodings)
-
-
-wrapper = ModuleDeprecationWrapper(__name__)
-wrapper.add_deprecated_attr(
-    'UnicodeToAsciiHtml',
-    replacement_name='pywikibot.tools.chars.string_to_ascii_html',
-    since='6.2.0')
-wrapper.add_deprecated_attr(
-    'unicode2html',
-    replacement_name='pywikibot.tools.chars.string2html',
-    since='6.2.0')

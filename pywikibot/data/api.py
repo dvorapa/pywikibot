@@ -42,7 +42,7 @@ from pywikibot.exceptions import (
 from pywikibot.family import SubdomainFamily
 from pywikibot.login import LoginStatus
 from pywikibot.textlib import removeHTMLParts
-from pywikibot.tools import PYTHON_VERSION, ModuleDeprecationWrapper, itergroup
+from pywikibot.tools import PYTHON_VERSION, itergroup
 from pywikibot.tools.formatter import color_format
 
 
@@ -1430,7 +1430,7 @@ class Request(MutableMapping):
 
         :param params: HTTP request params
         :param mime_params: HTTP request parts which must be sent in the body
-        :type mime_params: dict of (content, keytype, headers)
+        :type mime_params: dict of (content, keytype, headers)  # noqa: DAR103
         :return: HTTP request headers and body
         """
         # construct a MIME message containing all API key/values
@@ -2477,7 +2477,7 @@ class QueryGenerator(_RequestWrapper):
 
     def _handle_query_limit(self, prev_limit, new_limit, had_data):
         """Handle query limit."""
-        if self.query_limit is None:
+        if self.query_limit is None or self.limited_module is None:
             return prev_limit, new_limit
 
         prev_limit = new_limit
@@ -3168,15 +3168,3 @@ def update_page(page, pagedict: dict, props=None):
         page._lintinfo.pop('pageid')
         page._lintinfo.pop('title')
         page._lintinfo.pop('ns')
-
-
-wrapper = ModuleDeprecationWrapper(__name__)
-wrapper.add_deprecated_attr(
-    'APIError', replacement_name='pywikibot.exceptions.APIError',
-    since='20210423')
-wrapper.add_deprecated_attr(
-    'UploadWarning', replacement_name='pywikibot.exceptions.UploadError',
-    since='20210423')
-wrapper.add_deprecated_attr(
-    'APIMWException', replacement_name='pywikibot.exceptions.APIMWError',
-    since='20210423')

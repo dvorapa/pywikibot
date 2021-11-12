@@ -21,7 +21,7 @@ import pywikibot
 from pywikibot import config
 from pywikibot.backports import Dict, List, Tuple
 from pywikibot.exceptions import FamilyMaintenanceWarning, UnknownFamilyError
-from pywikibot.tools import classproperty, deprecated, ModuleDeprecationWrapper
+from pywikibot.tools import classproperty, deprecated
 
 
 logger = logging.getLogger('pywiki.wiki.family')
@@ -101,17 +101,17 @@ class Family:
         'my', 'nah', 'na', 'fj', 'nl', 'nds-nl', 'cr', 'ne', 'new', 'nia',
         'ja', 'nqo', 'nap', 'ce', 'frr', 'pih', 'no', 'nb', 'nn', 'nrm', 'nov',
         'ii', 'oc', 'mhr', 'or', 'om', 'ng', 'hz', 'uz', 'pa', 'pi', 'pfl',
-        'pag', 'pnb', 'pap', 'ps', 'jam', 'koi', 'km', 'pcd', 'pms', 'tpi',
-        'nds', 'pl', 'pnt', 'pt', 'aa', 'kaa', 'crh', 'ty', 'ksh', 'ro', 'rmy',
-        'rm', 'qu', 'rue', 'ru', 'sah', 'szy', 'se', 'sm', 'sa', 'sg', 'sat',
-        'skr', 'sc', 'sco', 'trv', 'stq', 'st', 'nso', 'tn', 'sq', 'scn', 'si',
-        'simple', 'sd', 'ss', 'sk', 'sl', 'cu', 'szl', 'so', 'ckb', 'srn',
-        'sr', 'sh', 'su', 'fi', 'sv', 'shi', 'tl', 'shn', 'ta', 'kab',
-        'roa-tara', 'tt', 'tay', 'te', 'tet', 'th', 'ti', 'tg', 'to', 'chr',
-        'chy', 've', 'tcy', 'tr', 'azb', 'tk', 'tw', 'tyv', 'din', 'udm',
-        'bug', 'uk', 'ur', 'ug', 'za', 'vec', 'vep', 'vi', 'vo', 'fiu-vro',
-        'wa', 'zh-classical', 'vls', 'war', 'wo', 'wuu', 'ts', 'yi', 'yo',
-        'zh-yue', 'diq', 'zea', 'bat-smg', 'zh', 'zh-tw', 'zh-cn',
+        'pag', 'ami', 'pnb', 'pap', 'ps', 'jam', 'koi', 'km', 'pcd', 'pms',
+        'pwn', 'tpi', 'nds', 'pl', 'pnt', 'pt', 'aa', 'kaa', 'crh', 'ty',
+        'ksh', 'ro', 'rmy', 'rm', 'qu', 'rue', 'ru', 'sah', 'szy', 'se', 'sm',
+        'sa', 'sg', 'sat', 'skr', 'sc', 'sco', 'trv', 'stq', 'st', 'nso', 'tn',
+        'sq', 'scn', 'si', 'simple', 'sd', 'ss', 'sk', 'sl', 'cu', 'szl', 'so',
+        'ckb', 'srn', 'sr', 'sh', 'su', 'fi', 'sv', 'shi', 'tl', 'shn', 'ta',
+        'kab', 'roa-tara', 'tt', 'tay', 'te', 'tet', 'th', 'ti', 'tg', 'to',
+        'chr', 'chy', 've', 'tcy', 'tr', 'azb', 'tk', 'tw', 'tyv', 'din',
+        'udm', 'bug', 'uk', 'ur', 'ug', 'za', 'vec', 'vep', 'vi', 'vo',
+        'fiu-vro', 'wa', 'zh-classical', 'vls', 'war', 'wo', 'wuu', 'ts', 'yi',
+        'yo', 'zh-yue', 'diq', 'zea', 'bat-smg', 'zh', 'zh-tw', 'zh-cn',
     ]
 
     # The revised sorting order by first word from meta
@@ -138,17 +138,17 @@ class Family:
         'mwl', 'koi', 'mdf', 'mo', 'mn', 'mus', 'my', 'nah', 'fj', 'nl',
         'nds-nl', 'cr', 'ne', 'new', 'ja', 'nqo', 'nap', 'ce', 'frr', 'pih',
         'no', 'nb', 'nn', 'nrm', 'nov', 'ii', 'oc', 'mhr', 'or', 'om', 'ng',
-        'hz', 'uz', 'pa', 'pi', 'pfl', 'pag', 'pnb', 'pap', 'ps', 'jam', 'km',
-        'pcd', 'pms', 'nds', 'pl', 'pnt', 'pt', 'aa', 'kaa', 'crh', 'ty',
-        'ksh', 'ro', 'rmy', 'rm', 'qu', 'ru', 'rue', 'sah', 'szy', 'se', 'sa',
-        'sg', 'sat', 'skr', 'sc', 'sco', 'trv', 'stq', 'st', 'nso', 'tn', 'sq',
-        'scn', 'si', 'simple', 'sd', 'ss', 'sk', 'sl', 'cu', 'szl', 'so',
-        'ckb', 'srn', 'sr', 'sh', 'fi', 'sv', 'shi', 'tl', 'ta', 'kab', 'kbp',
-        'roa-tara', 'tt', 'tay', 'te', 'tet', 'th', 'vi', 'ti', 'tg', 'tpi',
-        'chr', 'chy', 've', 'tcy', 'tr', 'azb', 'tk', 'tw', 'tyv', 'din',
-        'udm', 'uk', 'ur', 'ug', 'za', 'vec', 'vep', 'vo', 'fiu-vro', 'wa',
-        'zh-classical', 'vls', 'war', 'wo', 'wuu', 'ts', 'yi', 'yo', 'zh-yue',
-        'diq', 'zea', 'bat-smg', 'zh', 'zh-tw', 'zh-cn',
+        'hz', 'uz', 'pa', 'pi', 'pfl', 'pag', 'ami', 'pnb', 'pap', 'ps', 'jam',
+        'km', 'pcd', 'pms', 'pwn', 'nds', 'pl', 'pnt', 'pt', 'aa', 'kaa',
+        'crh', 'ty', 'ksh', 'ro', 'rmy', 'rm', 'qu', 'ru', 'rue', 'sah', 'szy',
+        'se', 'sa', 'sg', 'sat', 'skr', 'sc', 'sco', 'trv', 'stq', 'st', 'nso',
+        'tn', 'sq', 'scn', 'si', 'simple', 'sd', 'ss', 'sk', 'sl', 'cu', 'szl',
+        'so', 'ckb', 'srn', 'sr', 'sh', 'fi', 'sv', 'shi', 'tl', 'ta', 'kab',
+        'kbp', 'roa-tara', 'tt', 'tay', 'te', 'tet', 'th', 'vi', 'ti', 'tg',
+        'tpi', 'chr', 'chy', 've', 'tcy', 'tr', 'azb', 'tk', 'tw', 'tyv',
+        'din', 'udm', 'uk', 'ur', 'ug', 'za', 'vec', 'vep', 'vo', 'fiu-vro',
+        'wa', 'zh-classical', 'vls', 'war', 'wo', 'wuu', 'ts', 'yi', 'yo',
+        'zh-yue', 'diq', 'zea', 'bat-smg', 'zh', 'zh-tw', 'zh-cn',
     ]
 
     # Order for fy: alphabetical by code, but y counts as i
@@ -167,6 +167,7 @@ class Family:
         'ab': '[a-zабвгҕдежзӡикқҟлмнопҧрстҭуфхҳцҵчҷҽҿшыҩџьә]*',
         'als': '[äöüßa-z]*',
         'alt': '[a-zабвгдеёжзийклмнопрстуфхцчшщъыьэюя]*',
+        'ami': '',
         'an': '[a-záéíóúñ]*',
         'ar': '[a-zء-يؐ-ًؚ-ٰٟۖ-ۜ۟-۪ۤۧۨ-ۭ]*',
         'ary': '[a-zء-يؐ-ًؚ-ٰٟۖ-ۜ۟-۪ۤۧۨ-ۭ]*',
@@ -302,6 +303,7 @@ class Family:
         'pnt': '[a-zαβγδεζηθικλμνξοπρστυφχψωςΑΒΓΔΕΖΗΘ'
                'ΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίόύώϊϋΐΰΆΈΉΊΌΎΏΪΫ]*',
         'pt': '[áâãàéêẽçíòóôõq̃úüűũa-z]*',
+        'pwn': '',
         'qu': '[a-záéíóúñ]*',
         'rmy': '[a-zăâîşţșțĂÂÎŞŢȘȚ]*',
         'ro': '[a-zăâîşţșțĂÂÎŞŢȘȚ]*',
@@ -540,6 +542,21 @@ class Family:
     # site. This value can specify this last one with (lang, family) tuple.
     shared_urlshortner_wiki = None  # type: Optional[Tuple[str, str]]
 
+    title_delimiter_and_aliases = ' _'
+    """Titles usually are delimited by a space and the alias is replaced
+    to this delimiter; e.g. "Main page" is the title with spaces as
+    delimiters but "Main_page" also works. Other families may have
+    different settings.
+
+    .. note:: The first character is used as delimiter, the others are
+       aliases.
+
+    .. warning:: This attribute is used within ``re.sub()`` method. Use
+       escape sequence if necessary
+
+    .. versionadded:: 7.0
+    """
+
     _families = {}
 
     @staticmethod
@@ -647,11 +664,6 @@ class Family:
                 if newtitle not in cr_template_tuple:
                     cr_set.add(newtitle)
         self._catredirtemplates[code] = list(cr_template_tuple) + list(cr_set)
-
-    @deprecated('site.category_redirects()', since='20170608')
-    def get_cr_templates(self, code, fallback):
-        """DEPRECATED: Build list of category redirect templates."""
-        self._get_cr_templates(code, fallback)
 
     def get_edit_restricted_templates(self, code):
         """Return tuple of edit restricted templates.
@@ -1251,8 +1263,3 @@ def AutoFamily(name: str, url: str):
 
     AutoFamily = type('AutoFamily', (SingleSiteFamily,), locals())
     return AutoFamily()
-
-
-wrapper = ModuleDeprecationWrapper(__name__)
-wrapper.add_deprecated_attr('WikiaFamily', replacement=FandomFamily,
-                            since='20190420')

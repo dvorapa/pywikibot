@@ -98,8 +98,11 @@ import sys
 import time
 import warnings
 import webbrowser
+
+from collections import Counter
 from collections.abc import Generator
 from contextlib import closing
+from functools import wraps
 from importlib import import_module
 from pathlib import Path
 from textwrap import fill
@@ -320,11 +323,11 @@ def handler_namer(name: str) -> str:
 def init_handlers() -> None:
     """Initialize logging system for terminal-based bots.
 
-    This function must be called before using pywikibot.output(); and must
-    be called again if the destination stream is changed.
+    This function must be called before using any input/output methods;
+    and must be called again if ui handler is changed..
 
-    Note: this function is called by handle_args(), so it should normally
-    not need to be called explicitly
+    Note: this function is called by any user input and output function,
+    so it should normally not need to be called explicitly.
 
     All user output is routed through the logging module.
     Each type of output is handled by an appropriate handler object.
@@ -532,7 +535,19 @@ add_init_routine(init_handlers)
 
 # User input functions
 
+def initialize_handlers(function):
+    """Make sure logging system has been initialized.
 
+    .. versionadded:: 7.0
+    """
+    @wraps(function)
+    def wrapper(*args, **kwargs):
+        init_handlers()
+        return function(*args, **kwargs)
+    return wrapper
+
+
+@initialize_handlers
 def input(question: str,
           password: bool = False,
           default: Optional[str] = '',
@@ -546,15 +561,11 @@ def input(question: str,
         an answer.
     :param force: Automatically use the default
     """
-    # make sure logging system has been initialized
-    if not _handlers_initialized:
-        init_handlers()
-
     assert ui is not None
-    data = ui.input(question, password=password, default=default, force=force)
-    return data
+    return ui.input(question, password=password, default=default, force=force)
 
 
+@initialize_handlers
 def input_choice(question: str,
                  answers: ANSWER_TYPE,
                  default: Optional[str] = None,
@@ -579,10 +590,6 @@ def input_choice(question: str,
         selected, it does not return the shortcut and the default is not a
         valid shortcut.
     """
-    # make sure logging system has been initialized
-    if not _handlers_initialized:
-        init_handlers()
-
     assert ui is not None
     return ui.input_choice(question, answers, default, return_shortcut,
                            automatic_quit=automatic_quit, force=force)
@@ -619,6 +626,7 @@ def input_yn(question: str,
                         automatic_quit=automatic_quit, force=force) == 'y'
 
 
+@initialize_handlers
 def input_list_choice(question: str,
                       answers: ANSWER_TYPE,
                       default: Union[int, str, None] = None,
@@ -633,9 +641,6 @@ def input_list_choice(question: str,
     :param force: Automatically use the default
     :return: The selected answer.
     """
-    if not _handlers_initialized:
-        init_handlers()
-
     assert ui is not None
     return ui.input_list_choice(question, answers, default=default,
                                 force=force)
@@ -1130,10 +1135,6 @@ class _OptionDict(dict):
             super().__setattr__(name, value)
 
 
-_DEPRECATION_MSG = 'Optionhandler.opt.option attribute ' \
-                   'or Optionhandler.opt[option] item'
-
-
 class OptionHandler:
 
     """Class to get and set options.
@@ -1191,11 +1192,6 @@ class OptionHandler:
         """
         self.set_options(**kwargs)
 
-    @deprecated('set_options', since='20201006')
-    def setOptions(self, **options: Any) -> None:  # pragma: no cover
-        """DEPRECATED. Set the instance options."""
-        self.set_options(**options)
-
     def set_options(self, **options: Any) -> None:
         """Set the instance options."""
         valid_options = set(self.available_options)
@@ -1209,16 +1205,6 @@ class OptionHandler:
         for opt in received_options - valid_options:
             pywikibot.warning('{} is not a valid option. It was ignored.'
                               .format(opt))
-
-    @deprecated(_DEPRECATION_MSG, since='20201006')
-    def getOption(self, option: str) -> Any:  # pragma: no cover
-        """DEPRECATED. Get the current value of an option.
-
-        :param option: key defined in OptionHandler.available_options
-        :raise pywikibot.exceptions.Error: No valid option is given with
-            option parameter
-        """
-        return self.opt[option]
 
 
 class BaseBot(OptionHandler):
@@ -1242,6 +1228,10 @@ class BaseBot(OptionHandler):
     treat() or run(), NotImplementedError is raised.
 
     For bot options handling refer OptionHandler class above.
+
+    .. versionchanged:: 7.0
+       A counter attribute is provided which is a collections.Counter;
+       The default counters are 'read', 'write' and 'skip'.
     """
 
     # Handler configuration.
@@ -1275,11 +1265,39 @@ class BaseBot(OptionHandler):
         self.available_options.update(self.update_options)
         super().__init__(**kwargs)
 
-        self._treat_counter = 0
-        self._save_counter = 0
-        self._skip_counter = 0
+        self.counter = Counter()
         self._generator_completed = False
         self.treat_page_type = pywikibot.page.BasePage  # default type
+
+    @property
+    @deprecated("self.counter['read']", since='7.0.0')
+    def _treat_counter(self):
+        return self.counter['read']
+
+    @_treat_counter.setter
+    @deprecated("self.counter['read']", since='7.0.0')
+    def _treat_counter(self, value):
+        self.counter['read'] = value
+
+    @property
+    @deprecated("self.counter['write']", since='7.0.0')
+    def _save_counter(self):
+        return self.counter['write']
+
+    @_save_counter.setter
+    @deprecated("self.counter['write']", since='7.0.0')
+    def _save_counter(self, value):
+        self.counter['write'] = value
+
+    @property
+    @deprecated("self.counter['skip']", since='7.0.0')
+    def _skip_counter(self):
+        return self.counter['skip']
+
+    @_skip_counter.setter
+    @deprecated("self.counter['skip']", since='7.0.0')
+    def _skip_counter(self, value):
+        self.counter['skip'] = value
 
     @property
     def current_page(self) -> 'pywikibot.page.BasePage':
@@ -1404,7 +1422,7 @@ class BaseBot(OptionHandler):
 
         try:
             func(*args, **kwargs)
-            self._save_counter += 1
+            self.counter['save'] += 1
         except PageSaveRelatedError as e:
             if not ignore_save_related_errors:
                 raise
@@ -1460,12 +1478,10 @@ class BaseBot(OptionHandler):
         # wait until pending threads finished but don't close the queue
         pywikibot.stopme()
 
-        pywikibot.output('\n{} pages read'
-                         '\n{} pages written'
-                         '\n{} pages skipped'
-                         .format(self._treat_counter,
-                                 self._save_counter,
-                                 self._skip_counter))
+        pywikibot.output('\n{read} pages read'
+                         '\n{write} pages written'
+                         '\n{skip} pages skipped'
+                         .format_map(self.counter))
 
         if hasattr(self, '_start_ts'):
             write_delta = pywikibot.Timestamp.now() - self._start_ts
@@ -1477,12 +1493,14 @@ class BaseBot(OptionHandler):
             else:
                 pywikibot.output('Execution time: {} seconds'
                                  .format(write_delta.seconds))
-            if self._treat_counter:
+
+            if self.counter['read']:
                 pywikibot.output('Read operation time: {:.1f} seconds'
-                                 .format(read_seconds / self._treat_counter))
-            if self._save_counter:
-                pywikibot.output('Write operation time: {:.1f} seconds'
-                                 .format(write_seconds / self._save_counter))
+                                 .format(read_seconds / self.counter['read']))
+            if self.counter['write']:
+                pywikibot.output(
+                    'Write operation time: {:.1f} seconds'
+                    .format(write_seconds / self.counter['write']))
 
         # exc_info contains exception from self.run() while terminating
         exc_info = sys.exc_info()
@@ -1557,15 +1575,7 @@ class BaseBot(OptionHandler):
         try:
             for item in self.generator:
                 # preprocessing of the page
-                initialized_page = self.init_page(item)
-                if initialized_page is None:
-                    issue_deprecation_warning(
-                        'Returning None from init_page() method',
-                        'return a pywikibot.page.BasePage object',
-                        since='20200406')
-                    page = item
-                else:
-                    page = initialized_page
+                page = self.init_page(item)
 
                 # validate page type
                 if not isinstance(page, self.treat_page_type):
@@ -1574,12 +1584,12 @@ class BaseBot(OptionHandler):
                                             page.__class__.__name__))
 
                 if self.skip_page(page):
-                    self._skip_counter += 1
+                    self.counter['skip'] += 1
                     continue
 
                 # Process the page
                 self.treat(page)
-                self._treat_counter += 1
+                self.counter['read'] += 1
 
             self._generator_completed = True
         except QuitKeyboardInterrupt:
