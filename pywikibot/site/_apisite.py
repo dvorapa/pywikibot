@@ -1641,11 +1641,7 @@ class APISite(
                                 exception.format_map(errdata)
                             ) from None
                         if issubclass(exception, AbuseFilterDisallowedError):
-                            errdata = {
-                                'info': err.info,
-                                'other': err.other,
-                            }
-                            raise exception(page, **errdata) from None
+                            raise exception(page, info=err.info) from None
                         if issubclass(exception, SpamblacklistError):
                             urls = ', '.join(err.other[err.code]['matches'])
                             raise exception(page, url=urls) from None
@@ -2453,10 +2449,10 @@ class APISite(
                ignore_warnings=False,
                chunk_size: int = 0,
                asynchronous: bool = False,
+               report_success: Optional[bool] = None,
                _file_key: Optional[str] = None,
                _offset: Union[bool, int] = 0,
-               _verify_stash: Optional[bool] = None,
-               report_success: Optional[bool] = None) -> bool:
+               _verify_stash: Optional[bool] = None) -> bool:
         """
         Upload a file to the wiki.
 
@@ -2496,22 +2492,25 @@ class APISite(
             but lower than the file size.
         :param asynchronous: Make potentially large file operations
             asynchronous on the server side when possible.
-        :param _file_key: Reuses an already uploaded file using the filekey. If
-            None (default) it will upload the file.
-        :param _offset: When file_key is not None this can be an integer to
-            continue a previously canceled chunked upload. If False it treats
-            that as a finished upload. If True it requests the stash info from
-            the server to determine the offset. By default starts at 0.
-        :param _verify_stash: Requests the SHA1 and file size uploaded and
-            compares it to the local file. Also verifies that _offset is
-            matching the file size if the _offset is an int. If _offset is
-            False if verifies that the file size match with the local file. If
-            None it'll verifies the stash when a file key and offset is given.
         :param report_success: If the upload was successful it'll print a
             success message and if ignore_warnings is set to False it'll
             raise an UploadError if a warning occurred. If it's None
             (default) it'll be True if ignore_warnings is a bool and False
             otherwise. If it's True or None ignore_warnings must be a bool.
+        :param _file_key: Private parameter for upload recurion. Reuses
+            an already uploaded file using the filekey. If None (default)
+            it will upload the file.
+        :param _offset: Private parameter for upload recurion. When
+            file_key is not None this can be an integer to continue a
+            previously canceled chunked upload. If False it treats that
+            as a finished upload. If True it requests the stash info from
+            the server to determine the offset. By default starts at 0.
+        :param _verify_stash: Private parameter for upload recurion.
+            Requests the SHA1 and file size uploaded and compares it to
+            the local file. Also verifies that _offset is matching the
+            file size if the _offset is an int. If _offset is False if
+            verifies that the file size match with the local file. If
+            None it'll verifies the stash when a file key and offset is given.
         :return: It returns True if the upload was successful and False
             otherwise.
         """
@@ -2854,7 +2853,7 @@ class APISite(
                 try:
                     result = final_request.submit()
                     self._uploaddisabled = False
-                except api.APIError as error:
+                except APIError as error:
                     # TODO: catch and process foreseeable errors
                     if error.code == 'uploaddisabled':
                         self._uploaddisabled = True
@@ -2867,26 +2866,35 @@ class APISite(
 
             if result['result'] == 'Warning':
                 assert 'warnings' in result and not ignore_all_warnings
-                if 'filekey' in result:
-                    _file_key = result['filekey']
-                elif 'sessionkey' in result:
-                    # TODO: Probably needs to be reflected in the API call
-                    # above
-                    _file_key = result['sessionkey']
-                    pywikibot.warning('Using sessionkey instead of filekey.')
+
+                if source_filename:
+                    if 'filekey' in result:
+                        _file_key = result['filekey']
+                    elif 'sessionkey' in result:
+                        # TODO: Probably needs to be reflected in the API call
+                        # above
+                        _file_key = result['sessionkey']
+                        pywikibot.warning(
+                            'Using sessionkey instead of filekey.')
+                    else:
+                        _file_key = None
+                        pywikibot.warning('No filekey defined.')
                 else:
                     _file_key = None
-                    pywikibot.warning('No filekey defined.')
 
                 if not report_success:
-                    result.setdefault('offset', True)
+                    if source_filename:
+                        offset = result.setdefault('offset', True)
+                    else:
+                        offset = False
+
                     if ignore_warnings(create_warnings_list(result)):
                         return self.upload(
                             filepage, source_filename=source_filename,
                             source_url=source_url, comment=comment,
                             text=text, watch=watch, ignore_warnings=True,
                             chunk_size=chunk_size, asynchronous=asynchronous,
-                            _file_key=_file_key, _offset=result['offset'],
+                            _file_key=_file_key, _offset=offset,
                             report_success=False)
                     return False
 
