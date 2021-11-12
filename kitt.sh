@@ -27,19 +27,19 @@ if [ "$1" == "clone" ]; then
 	git branch -u origin
 elif [ "$1" == "pull" ]; then
 	git checkout master
-	git pull update master
+	git pull --rebase=false update master
 else
 	echo "-bash: command not found"
 	exit 127
 fi
 
-git pull --no-edit
+git pull --rebase=false --no-edit
 
 # ta druhá
 for branch in dvorapa-test dvorapabot-remote dvorapabot-local; do
 	git checkout $branch
 	if [ "$1" == "pull" ]; then
-		git pull update $branch
+		git pull --rebase=false update $branch
 	fi
 	git merge master --no-edit
 done
