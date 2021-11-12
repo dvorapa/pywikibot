@@ -18,12 +18,19 @@ pdfinfo is needed for parsing pdf titles.
 
 The following parameters are supported:
 
--limit:n          Stops after n edits
-
 -xml:dump.xml     Should be used instead of a simple page fetching method
                   from pagegenerators.py for performance and load issues
 
 -xmlstart         Page to start with when using an XML dump
+
+This script is a :py:obj:`ConfigParserBot <pywikibot.bot.ConfigParserBot>`.
+The following options can be set within a settings file which is scripts.ini
+by default::
+
+-always          Doesn't ask every time whether the bot should make the change.
+                 Do it always.
+
+-limit:n          Stops after n edits
 
 -ignorepdf        Do not handle PDF files (handy if you use Windows and
                   can't get pdfinfo)
@@ -57,7 +64,12 @@ from textwrap import shorten
 import pywikibot
 from pywikibot import comms, config, i18n, pagegenerators, textlib
 from pywikibot.backports import removeprefix
-from pywikibot.bot import ExistingPageBot, NoRedirectPageBot, SingleSiteBot
+from pywikibot.bot import (
+    ConfigParserBot,
+    ExistingPageBot,
+    NoRedirectPageBot,
+    SingleSiteBot,
+)
 from pywikibot.exceptions import (
     FatalServerError,
     Server414Error,
@@ -412,9 +424,16 @@ class DuplicateReferences:
         return text
 
 
-class ReferencesRobot(SingleSiteBot, ExistingPageBot, NoRedirectPageBot):
+class ReferencesRobot(SingleSiteBot,
+                      ConfigParserBot,
+                      ExistingPageBot,
+                      NoRedirectPageBot):
 
-    """References bot."""
+    """References bot.
+
+    .. versionchanged:: 7.0
+       ReferencesRobot is a ConfigParserBot
+    """
 
     update_options = {
         'ignorepdf': False,
@@ -713,15 +732,15 @@ class ReferencesRobot(SingleSiteBot, ExistingPageBot, NoRedirectPageBot):
                      ignore_save_related_errors=True,
                      ignore_server_errors=True)
 
-        if not self._save_counter:
+        if not self.counter['write']:
             return
 
-        if self.opt.limit and self._save_counter >= self.opt.limit:
+        if self.opt.limit and self.counter['write'] >= self.opt.limit:
             pywikibot.output('Edited {} pages, stopping.'
                              .format(self.opt.limit))
             self.generator.close()
 
-        if self.site_stop_page and self._save_counter % 20 == 0:
+        if self.site_stop_page and self.counter['write'] % 20 == 0:
             self.stop_page = pywikibot.Page(self.site, self.site_stop_page)
             if self.stop_page.exists():
                 pywikibot.output(color_format(
