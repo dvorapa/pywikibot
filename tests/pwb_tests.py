@@ -75,6 +75,19 @@ class TestPwb(PwbTestCase):
         self.assertEqual('Häuser', vpwb['stdout'].strip())
         self.assertEqual('Häuser', vpwb['stderr'].strip())
 
+    @unittest.expectedFailure  # T254435
+    def test_argv(self):
+        """Test argv of pywikibot.
+
+        Make sure that argv passed to the script is not contaminated by
+        global options given to pwb.py wrapper.
+        """
+        script_path = join_pwb_tests_path('print_argv.py')
+        without_global_args = execute_pwb([script_path, '-help'])
+        with_no_global_args = execute_pwb(['-maxlag:5', script_path, '-help'])
+        self.assertEqual(without_global_args['stdout'],
+                         with_no_global_args['stdout'])
+
     def test_script_found(self):
         """Test pwb.py script call which is found."""
         stdout = io.StringIO(execute_pwb(['pwb'])['stdout'])
@@ -114,12 +127,15 @@ class TestPwb(PwbTestCase):
             'The most similar scripts are:',
             '1 - interwikidata',
             '2 - interwiki',
+            '3 - illustrate_wikidata',
         ]
         stderr = io.StringIO(
             execute_pwb(['inter_wikidata'], data_in='q')['stderr'])
         for line in result:
             with self.subTest(line=line):
                 self.assertEqual(stderr.readline().strip(), line)
+        remaining = stderr.readlines()
+        self.assertLength(remaining, 3)  # always 3 lines remaining after list
 
 
 if __name__ == '__main__':  # pragma: no cover
