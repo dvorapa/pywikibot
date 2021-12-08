@@ -65,7 +65,30 @@ OSWIN32 = (sys.platform == 'win32')
 pywikibot.bot.set_interface('buffer')
 
 
-class TestCaseBase(unittest.TestCase):
+class TestTimerMixin(unittest.TestCase):
+
+    """Time each test and report excessive durations."""
+
+    # Number of seconds each test may consume
+    # before a note is added after the test.
+    test_duration_warning_interval = 10
+
+    def setUp(self):
+        """Set up test."""
+        self.test_start = time.time()
+        super().setUp()
+
+    def tearDown(self):
+        """Tear down test."""
+        super().tearDown()
+        self.test_completed = time.time()
+        duration = self.test_completed - self.test_start
+        if duration > self.test_duration_warning_interval:
+            unittest_print(' {0:.3f}s'.format(duration), end=' ')
+            sys.stdout.flush()
+
+
+class TestCaseBase(TestTimerMixin):
 
     """Base class for all tests."""
 
@@ -266,31 +289,6 @@ class TestCaseBase(unittest.TestCase):
         msg = kwargs.pop('msg', None)
         return AssertAPIErrorContextManager(
             code, info, msg, self).handle(callable_obj, args, kwargs)
-
-
-class TestTimerMixin(TestCaseBase):
-
-    """Time each test and report excessive durations."""
-
-    # Number of seconds each test may consume
-    # before a note is added after the test.
-    test_duration_warning_interval = 10
-
-    def setUp(self):
-        """Set up test."""
-        super().setUp()
-        self.test_start = time.time()
-
-    def tearDown(self):
-        """Tear down test."""
-        self.test_completed = time.time()
-        duration = self.test_completed - self.test_start
-
-        if duration > self.test_duration_warning_interval:
-            unittest_print(' {0:.3f}s'.format(duration), end=' ')
-            sys.stdout.flush()
-
-        super().tearDown()
 
 
 def require_modules(*required_modules):
@@ -835,7 +833,7 @@ class MetaTestCaseClass(type):
             dct[test_name].__doc__ = doc
 
 
-class TestCase(TestTimerMixin, TestCaseBase, metaclass=MetaTestCaseClass):
+class TestCase(TestCaseBase, metaclass=MetaTestCaseClass):
 
     """Run tests on pre-defined sites."""
 
@@ -866,10 +864,11 @@ class TestCase(TestTimerMixin, TestCaseBase, metaclass=MetaTestCaseClass):
             interface = DrySite
 
         for data in cls.sites.values():
+            prod_only = os.environ.get('PYWIKIBOT_TEST_PROD_ONLY', '0') == '1'
             if (data.get('code') in ('test', 'mediawiki')
-                    and 'PYWIKIBOT_TEST_PROD_ONLY' in os.environ and not dry):
+                    and prod_only and not dry):
                 raise unittest.SkipTest(
-                    'Site code "{}" and PYWIKIBOT_TEST_PROD_ONLY is set.'
+                    'Site code {!r} and PYWIKIBOT_TEST_PROD_ONLY is set.'
                     .format(data['code']))
 
             if 'site' not in data and 'code' in data and 'family' in data:
@@ -1372,7 +1371,8 @@ class RecentChangesTestCase(WikimediaDefaultSiteTestCase):
     def setUpClass(cls):
         """Set up test class."""
         if os.environ.get('PYWIKIBOT_TEST_NO_RC', '0') == '1':
-            raise unittest.SkipTest('RecentChanges tests disabled.')
+            raise unittest.SkipTest(
+                'PYWIKIBOT_TEST_NO_RC is set; RecentChanges tests disabled.')
 
         super().setUpClass()
 
@@ -1405,7 +1405,6 @@ class DeprecationTestCase(DebugOnlyTestCase, TestCase):
         unittest.case._AssertRaisesContext,
         TestCase.assertRaises,
         TestCase.assertRaisesRegex,
-        TestCase.assertRaisesRegexp,
     ]
 
     # Require no instead string
