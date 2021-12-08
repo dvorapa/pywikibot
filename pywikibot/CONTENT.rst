@@ -115,7 +115,11 @@ The contents of the package
     +----------------------------+------------------------------------------------------+
     | scripts                    | Framework helper scripts and entry points            |
     +============================+======================================================+
-    | pwb.py                     | code entry wrapper script (site-package only)        |
+    | generate_family_file.py    | Creates a new family file                            |
+    +----------------------------+------------------------------------------------------+
+    | generate_user_files.py     | Creates user-config.py or user-fixes.py              |
+    +----------------------------+------------------------------------------------------+
+    | pwb.py                     | Code entry wrapper script (site-package only)        |
     +----------------------------+------------------------------------------------------+
     | version.py                 | Outputs Pywikibot's revision number, Python's        |
     |                            | version and OS used.                                 |
