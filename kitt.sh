@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e 
+set -o pipefail
 
 if [ "$1" == "pull" ]; then
 	current=$(git rev-parse --abbrev-ref HEAD)
