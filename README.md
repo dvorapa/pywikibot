@@ -30,4 +30,4 @@ Please fill in an issue or a pull request on project's [GitHub page](https://git
 
 ## License
 
-[MIT License](https://github.com/dvorapa/pywikibot/blob/master/LICENSE)
+[MIT](https://github.com/dvorapa/pywikibot/blob/master/LICENSE)
