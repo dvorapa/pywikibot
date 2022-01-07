@@ -387,12 +387,18 @@ class APISite(
             del self.userinfo  # force reloading
 
             # load userinfo
-            assert self.userinfo['name'] == self.username(), \
-                '{} != {}'.format(self.userinfo['name'], self.username())
+            if self.userinfo['name'] == self.username():
+                self._loginstatus = _LoginStatus.AS_USER
+                return
 
-            self._loginstatus = _LoginStatus.AS_USER
-        else:
-            self._loginstatus = _LoginStatus.NOT_LOGGED_IN  # failure
+            pywikibot.error('{} != {} after {}.login() and successfull '
+                            '{}.login()'
+                            .format(self.userinfo['name'],
+                                    self.username(),
+                                    type(self).__name__,
+                                    type(login_manager).__name__))
+
+        self._loginstatus = _LoginStatus.NOT_LOGGED_IN  # failure
 
     def _relogin(self):
         """Force a login sequence without logging out, using the current user.
@@ -1218,11 +1224,6 @@ class APISite(
                                         'metadata', 'archivename'],
                                 **args)
         self._update_page(page, query, verify_imageinfo=True)
-
-    @deprecated('page.exists()', since='20180218')
-    def page_exists(self, page):
-        """Return True if and only if page is an existing page on site."""
-        return page.pageid > 0
 
     def page_restrictions(self, page):
         """Return a dictionary reflecting page protections."""

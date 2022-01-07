@@ -1,6 +1,6 @@
 """Objects representing obsolete MediaWiki sites."""
 #
-# (C) Pywikibot team, 2019-2021
+# (C) Pywikibot team, 2019-2022
 #
 # Distributed under the terms of the MIT license.
 #
@@ -29,7 +29,7 @@ class ClosedSite(APISite):
 
     def page_restrictions(self, page):
         """Return a dictionary reflecting page protections."""
-        if not self.page_exists(page):
+        if not page.exists():
             raise NoPageError(page)
         if not hasattr(page, '_protection'):
             page._protection = {'edit': ('steward', 'infinity'),
@@ -52,7 +52,3 @@ class ClosedSite(APISite):
     def newpages(self, **kwargs):
         """An error instead of pointless API call."""
         self._closed_error('No new pages can be returned.')
-
-    def newfiles(self, **kwargs):
-        """An error instead of pointless API call."""
-        self._closed_error('No new files can be returned.')
