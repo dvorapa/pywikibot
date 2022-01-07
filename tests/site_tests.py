@@ -1,6 +1,6 @@
 """Tests for the site module."""
 #
-# (C) Pywikibot team, 2008-2021
+# (C) Pywikibot team, 2008-2022
 #
 # Distributed under the terms of the MIT license.
 #
@@ -269,9 +269,6 @@ class TestSiteObject(DefaultSiteTestCase):
         """Test ApiSite methods for getting page-specific info."""
         mysite = self.get_site()
         mainpage = self.get_mainpage()
-        with suppress_warnings('pywikibot.site._apisite.APISite.page_exists',
-                               FutureWarning):
-            self.assertIsInstance(mysite.page_exists(mainpage), bool)
         self.assertIsInstance(mysite.page_restrictions(mainpage), dict)
         self.assertIsInstance(mysite.page_can_be_edited(mainpage), bool)
         self.assertIsInstance(mysite.page_isredirect(mainpage), bool)
@@ -672,22 +669,6 @@ class TestSiteGenerators(DefaultSiteTestCase):
             self.assertIsInstance(impage, pywikibot.FilePage)
             self.assertTrue(impage.exists())
             self.assertLessEqual(impage.latest_file_info['size'], 2000)
-
-    def test_newfiles(self):
-        """Test the site.newfiles() method."""
-        my_site = self.get_site()
-        with suppress_warnings(category=FutureWarning):
-            gen = my_site.newfiles(total=10)
-        the_list = list(gen)
-        self.assertLessEqual(len(the_list), 10)
-        self.assertTrue(all(isinstance(tup, tuple) and len(tup) == 4
-                            for tup in the_list))
-        self.assertTrue(all(isinstance(tup[0], pywikibot.FilePage)
-                            for tup in the_list))
-        self.assertTrue(all(isinstance(tup[1], pywikibot.Timestamp)
-                            for tup in the_list))
-        self.assertTrue(all(isinstance(tup[2], str) for tup in the_list))
-        self.assertTrue(all(isinstance(tup[3], str) for tup in the_list))
 
     def test_querypage(self):
         """Test the site.querypage() method."""
