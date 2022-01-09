@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 """
 Correct all redirect links in featured pages or only one page of each wiki.
 
@@ -202,14 +202,10 @@ class FixingRedirectBot(SingleSiteBot, ExistingPageBot, NoRedirectPageBot,
                        for p in self.current_page.linkedPages()}
             for future in as_completed(futures):
                 page, target = future.result()
-                if not target:
-                    continue
-                newtext = self.replace_links(newtext, page, target)
+                if target:
+                    newtext = self.replace_links(newtext, page, target)
 
-        if not futures:
-            pywikibot.output('Nothing left to do.')
-        else:
-            self.put_current(newtext)
+        self.put_current(newtext)
 
 
 def main(*args: str) -> None:
