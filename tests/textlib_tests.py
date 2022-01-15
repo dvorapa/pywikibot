@@ -12,6 +12,7 @@ import re
 import unittest
 from collections import OrderedDict
 from contextlib import suppress
+from unittest import mock
 
 import pywikibot
 from pywikibot import textlib
@@ -20,7 +21,6 @@ from pywikibot.exceptions import UnknownSiteError
 from pywikibot.site._interwikimap import _IWEntry
 from pywikibot.textlib import MultiTemplateMatchBuilder, extract_sections
 from pywikibot.tools import has_module
-from tests import mock
 from tests.aspects import (
     DefaultDrySiteTestCase,
     SiteAttributeTestCase,
@@ -656,6 +656,23 @@ class TestDisabledParts(DefaultDrySiteTestCase):
             with self.subTest(test=test):
                 self.assertEqual(
                     textlib.removeDisabledParts(pattern, tags=[test]), '')
+
+    def test_remove_disabled_parts_include(self):
+        """Test removeDisabledParts function with the include argument."""
+        text = 'text <nowiki>tag</nowiki> text'
+        self.assertEqual(
+            textlib.removeDisabledParts(text, include=['nowiki']), text)
+
+    def test_remove_disabled_parts_order(self):
+        """Test the order of the replacements in removeDisabledParts."""
+        text = 'text <ref>This is a reference.</ref> text'
+        regex = re.compile('</?ref>')
+        self.assertEqual(
+            textlib.removeDisabledParts(text, tags=['ref', regex]),
+            'text  text')
+        self.assertEqual(
+            textlib.removeDisabledParts(text, tags=[regex, 'ref']),
+            'text This is a reference. text')
 
 
 class TestReplaceLinks(TestCase):
