@@ -2,16 +2,18 @@
 # with a variety of Python versions. For more information see:
 # https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: Pywikibot CI
+name: Login CI
 
 on:
-  push:
+  workflow_run:
+    workflows: [ "Pywikibot CI" ]
     branches: [ master, stable ]
-  pull_request:
-    branches: [ master ]
+    types:
+      - completed
 
 env:
   PYWIKIBOT_TESTS_RUNNING: 1
+  PYWIKIBOT_LOGIN_LOGOUT: 1
   PYWIKIBOT_USERNAME: Pywikibot-test
 
 jobs:
@@ -21,7 +23,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 9
+      max-parallel: 1
 
       matrix:
         python-version: ["pypy3", "3.5", "3.6", "3.7", "3.8", "3.9", "3.10"]
@@ -75,9 +77,9 @@ jobs:
         python -m pip install --upgrade pip
         pip --version
         pip install -U setuptools
-        if [ -f dev-requirements.txt ]; then pip install -r dev-requirements.txt; fi
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install wikitextparser
+        pip install requests
+        pip install mwparserfromhell
+        pip install coverage
         python -c "import setuptools; print('setuptools:', setuptools.__version__)"
 
     - name: Generate family files
@@ -91,7 +93,7 @@ jobs:
 
     - name: Generate user files
       run: |
-        if [ ${{matrix.site}} != false ]; then
+        if [ ${{matrix.site}} != 'False' ]; then
           python -Werror::UserWarning -m pwb generate_user_files -site:${{matrix.site}} -user:${{ env.PYWIKIBOT_USERNAME }} -v -debug;
         else
           python -Werror::UserWarning -m pwb generate_user_files -family:${{matrix.family}} -lang:${{matrix.code}} -user:${{ env.PYWIKIBOT_USERNAME }} -v -debug;
@@ -116,4 +118,4 @@ jobs:
         PYWIKIBOT_TEST_PROD_ONLY: ${{ matrix.test_prod_only && 1 || 0 }}
       run: |
         python pwb.py version
-        coverage run -m unittest discover -vv -p \"*_tests.py\"
+        coverage run -m unittest -vv tests/site_login_logout_tests.py
