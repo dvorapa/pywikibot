@@ -13,7 +13,7 @@ from pywikibot import Site, config
 from pywikibot.exceptions import InvalidTitleError, SiteDefinitionError
 from pywikibot.page import Link, Page, SiteLink
 from pywikibot.site import Namespace
-from tests.aspects import AlteredDefaultSiteTestCase as LinkTestCase
+from tests.aspects import AlteredDefaultSiteTestCase
 from tests.aspects import (
     DefaultDrySiteTestCase,
     TestCase,
@@ -232,20 +232,30 @@ class Issue10254TestCase(DefaultDrySiteTestCase):
 
 # ---- The first set of tests are explicit links, starting with a ':'.
 
+class LinkTestCase(AlteredDefaultSiteTestCase):
 
-class TestPartiallyQualifiedExplicitLinkSameSiteParser(LinkTestCase):
+    """Cached API test for link tests."""
 
-    """Link tests."""
+    cache = True
+
+
+class LinkTestWikiEn(LinkTestCase):
+
+    """Link tests on wikipedia:en."""
 
     family = 'wikipedia'
     code = 'en'
-    cached = True
 
     def setUp(self):
         """Setup tests."""
         super().setUp()
         config.mylang = 'en'
         config.family = 'wikipedia'
+
+
+class TestPartiallyQualifiedExplicitLinkSameSiteParser(LinkTestWikiEn):
+
+    """Link tests."""
 
     def test_partially_qualified_NS0_code(self):
         """Test ':wikipedia:Main Page' on enwp is namespace 4."""
@@ -280,19 +290,9 @@ class TestPartiallyQualifiedExplicitLinkSameSiteParser(LinkTestCase):
         self.assertEqual(link.namespace, 1)
 
 
-class TestPartiallyQualifiedExplicitLinkDifferentCodeParser(LinkTestCase):
+class TestPartiallyQualifiedExplicitLinkDifferentCodeParser(LinkTestWikiEn):
 
     """Link tests."""
-
-    family = 'wikipedia'
-    code = 'en'
-    cached = True
-
-    def setUp(self):
-        """Setup tests."""
-        super().setUp()
-        config.mylang = 'en'
-        config.family = 'wikipedia'
 
     def test_partially_qualified_NS0_family(self):
         """Test ':en:Main Page' on dewp is namespace 0."""
@@ -317,7 +317,6 @@ class TestPartiallyQualifiedExplicitLinkDifferentFamilyParser(LinkTestCase):
 
     family = 'wikipedia'
     code = 'en'
-    cached = True
 
     def setUp(self):
         """Setup tests."""
@@ -348,7 +347,6 @@ class TestFullyQualifiedSameNamespaceFamilyParser(LinkTestCase):
 
     family = 'wikipedia'
     code = 'en'
-    cached = True
 
     def test_namespace_vs_family(self):
         """Test namespace is selected before family."""
@@ -366,19 +364,9 @@ class TestFullyQualifiedSameNamespaceFamilyParser(LinkTestCase):
         self.assertEqual(link.namespace, 4)
 
 
-class TestFullyQualifiedExplicitLinkSameFamilyParser(LinkTestCase):
+class TestFullyQualifiedExplicitLinkSameFamilyParser(LinkTestWikiEn):
 
     """Link tests."""
-
-    family = 'wikipedia'
-    code = 'en'
-    cached = True
-
-    def setUp(self):
-        """Setup tests."""
-        super().setUp()
-        config.mylang = 'en'
-        config.family = 'wikipedia'
 
     def test_fully_qualified_NS0_code(self):
         """Test ':en:wikipedia:Main Page' on enwp is namespace 4."""
@@ -411,7 +399,6 @@ class TestFullyQualifiedLinkDifferentFamilyParser(LinkTestCase):
             'code': 'en'
         }
     }
-    cached = True
 
     PATTERN = '{colon}{first}:{second}:{title}'
 
@@ -472,7 +459,6 @@ class TestFullyQualifiedExplicitLinkNoLangConfigFamilyParser(LinkTestCase):
             'code': 'en'
         }
     }
-    cached = True
 
     def setUp(self):
         """Setup tests."""
@@ -531,7 +517,6 @@ class TestFullyQualifiedNoLangFamilyExplicitLinkParser(LinkTestCase):
             'code': 'test'
         },
     }
-    cached = True
 
     def setUp(self):
         """Setup tests."""
@@ -579,7 +564,6 @@ class TestFullyQualifiedOneSiteFamilyExplicitLinkParser(LinkTestCase):
 
     family = 'species'
     code = 'species'
-    cached = True
 
     def setUp(self):
         """Setup tests."""
@@ -607,19 +591,9 @@ class TestFullyQualifiedOneSiteFamilyExplicitLinkParser(LinkTestCase):
 # ---- Tests of a Link without colons, which shouldn't be interwikis, follow.
 
 
-class TestPartiallyQualifiedImplicitLinkSameSiteParser(LinkTestCase):
+class TestPartiallyQualifiedImplicitLinkSameSiteParser(LinkTestWikiEn):
 
     """Test partially qualified links to same site."""
-
-    family = 'wikipedia'
-    code = 'en'
-    cached = True
-
-    def setUp(self):
-        """Setup tests."""
-        super().setUp()
-        config.mylang = 'en'
-        config.family = 'wikipedia'
 
     def test_partially_qualified_NS0_code(self):
         """Test 'wikipedia:Main Page' on enwp is namespace 4."""
@@ -654,19 +628,9 @@ class TestPartiallyQualifiedImplicitLinkSameSiteParser(LinkTestCase):
         self.assertEqual(link.namespace, 1)
 
 
-class TestPartiallyQualifiedImplicitLinkDifferentCodeParser(LinkTestCase):
+class TestPartiallyQualifiedImplicitLinkDifferentCodeParser(LinkTestWikiEn):
 
     """Test partially qualified links to different code."""
-
-    family = 'wikipedia'
-    code = 'en'
-    cached = True
-
-    def setUp(self):
-        """Setup tests."""
-        super().setUp()
-        config.mylang = 'en'
-        config.family = 'wikipedia'
 
     def test_partially_qualified_NS0_family(self):
         """Test 'en:Main Page' on dewp is namespace 0."""
@@ -691,7 +655,6 @@ class TestPartiallyQualifiedImplicitLinkDifferentFamilyParser(LinkTestCase):
 
     family = 'wikipedia'
     code = 'en'
-    cached = True
 
     def setUp(self):
         """Setup tests."""
@@ -716,19 +679,9 @@ class TestPartiallyQualifiedImplicitLinkDifferentFamilyParser(LinkTestCase):
         self.assertEqual(link.namespace, 1)
 
 
-class TestFullyQualifiedImplicitLinkSameFamilyParser(LinkTestCase):
+class TestFullyQualifiedImplicitLinkSameFamilyParser(LinkTestWikiEn):
 
     """Link tests."""
-
-    family = 'wikipedia'
-    code = 'en'
-    cached = True
-
-    def setUp(self):
-        """Setup tests."""
-        super().setUp()
-        config.mylang = 'en'
-        config.family = 'wikipedia'
 
     def test_fully_qualified_NS0_code(self):
         """Test 'en:wikipedia:Main Page' on enwp is namespace 4."""
@@ -761,7 +714,6 @@ class TestFullyQualifiedImplicitLinkNoLangConfigFamilyParser(LinkTestCase):
             'code': 'en'
         }
     }
-    cached = True
 
     def setUp(self):
         """Setup tests."""
@@ -808,7 +760,6 @@ class TestFullyQualifiedNoLangFamilyImplicitLinkParser(LinkTestCase):
 
     family = 'wikidata'
     code = 'test'
-    cached = True
 
     def setUp(self):
         """Setup tests."""
@@ -847,7 +798,6 @@ class TestFullyQualifiedOneSiteFamilyImplicitLinkParser(LinkTestCase):
 
     family = 'species'
     code = 'species'
-    cached = True
 
     def setUp(self):
         """Setup tests."""
