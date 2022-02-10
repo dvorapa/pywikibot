@@ -36,12 +36,6 @@ To create a new distribution:
 import os
 import sys
 
-from pkg_resources import parse_version, safe_version
-from setuptools import setup
-
-
-PYTHON_VERSION = sys.version_info[:3]
-
 VERSIONS_REQUIRED_MESSAGE = """
 Pywikibot is not available on:
 {version}
@@ -49,10 +43,15 @@ Pywikibot is not available on:
 This version of Pywikibot only supports Python 3.5.3+.
 """
 
+try:
+    from setuptools import setup
+except SyntaxError:
+    raise RuntimeError(VERSIONS_REQUIRED_MESSAGE.format(version=sys.version))
+
 
 def python_is_supported():
     """Check that Python is supported."""
-    return PYTHON_VERSION >= (3, 5, 3)
+    return sys.version_info[:3] >= (3, 5, 3)
 
 
 if not python_is_supported():  # pragma: no cover
@@ -167,6 +166,7 @@ def get_validated_version():  # pragma: no cover
         return version
 
     # validate version for sdist
+    from pkg_resources import parse_version, safe_version
     from contextlib import suppress
     from subprocess import PIPE, run
     try:
