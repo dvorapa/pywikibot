@@ -896,8 +896,9 @@ class TestSiteGenerators(DefaultSiteTestCase):
         if not self.site.data_repository():
             self.skipTest('Site is not using a Wikibase repository')
         upgen = self.site.unconnected_pages(total=3)
-        self.assertDictEqual(
-            upgen.request._params, {
+        self.assertEqual(
+            upgen.request._params,
+            {
                 'gqppage': ['UnconnectedPages'],
                 'prop': ['info', 'imageinfo', 'categoryinfo'],
                 'inprop': ['protection'],
@@ -905,7 +906,9 @@ class TestSiteGenerators(DefaultSiteTestCase):
                 'iiprop': ['timestamp', 'user', 'comment', 'url', 'size',
                            'sha1', 'metadata'],
                 'generator': ['querypage'], 'action': ['query'],
-                'indexpageids': [True], 'continue': [True]})
+                'indexpageids': [True], 'continue': [True]
+            }
+        )
         self.assertLessEqual(len(tuple(upgen)), 3)
 
     def test_assert_valid_iter_params(self):
@@ -3566,30 +3569,6 @@ class TestCategoryFromWikibase(DefaultSiteTestCase):
         site = pywikibot.Site('pdc', 'wikipedia')
         page = site.page_from_repository(self.ITEM)
         self.assertIsNone(page)
-
-
-class TestClearCookies(TestCase):
-    """Test cookies are cleared after logout."""
-
-    login = True
-
-    family = 'wikisource'
-    code = 'zh'
-
-    def test_clear_cookies(self):
-        """Test cookies are cleared (T224712)."""
-        site = self.get_site()
-        site.login()
-        site2 = pywikibot.Site('mul', 'wikisource', user=site.username())
-        site2.login()
-        site.logout()
-
-        raised = False
-        try:
-            site.login()
-        except Exception as e:
-            raised = e
-        self.assertFalse(raised)
 
 
 if __name__ == '__main__':  # pragma: no cover
