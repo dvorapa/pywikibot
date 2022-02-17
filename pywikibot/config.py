@@ -50,8 +50,15 @@ from warnings import warn
 from zipfile import ZipFile, is_zipfile
 
 from pywikibot.__metadata__ import __version__ as pwb_version
-from pywikibot.backports import (DefaultDict, Dict, FrozenSet, List, Mapping,
-                                 Tuple, removesuffix)
+from pywikibot.backports import (
+    DefaultDict,
+    Dict,
+    FrozenSet,
+    List,
+    Mapping,
+    Tuple,
+    removesuffix,
+)
 from pywikibot.logging import error, output, warning
 from pywikibot.tools import deprecated
 
@@ -330,10 +337,8 @@ def get_base_dir(test_directory: Optional[str] = None) -> str:
                 elif win_version in (6, 10):
                     sub_dir = ['AppData', 'Roaming']
                 else:
-                    raise WindowsError(  # type: ignore[name-defined]
-                        'Windows version {} not supported yet.'
-                        .format(win_version)
-                    )
+                    raise OSError('Windows version {} not supported yet.'
+                                  .format(win_version))
                 base_dir_cand.extend([[home] + sub_dir + ['Pywikibot'],
                                      [home] + sub_dir + ['pywikibot']])
             else:
@@ -911,7 +916,7 @@ def _win32_extension_command(extension: str) -> Optional[str]:
             # Remove any trailing character, which should be a quote or space
             # and then remove all whitespace.
             return cmd[:-1].strip()
-    except WindowsError as e:  # type: ignore[name-defined]
+    except OSError as e:
         # Catch any key lookup errors
         output('Unable to detect program for file extension "{}": {!r}'
                .format(extension, e))
