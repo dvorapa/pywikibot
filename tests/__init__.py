@@ -103,6 +103,7 @@ library_test_modules = {
     'interwiki_graph',
     'interwiki_link',
     'interwikimap',
+    'l10n',  # pywikibot-i18n repository runs it too
     'link',
     'linter',
     'logentries',
@@ -171,10 +172,10 @@ script_test_modules = {
 
 disabled_test_modules = {
     'tests',  # tests of the tests package
-    'l10n',  # pywikibot-i18n repository runs it
     'site_login_logout',  # separate Login CI action
 }
 
+# remove "# pragma: no cover" below if this set is not empty
 disabled_tests = {}  # type: Dict[str, List[str]]
 
 
@@ -236,7 +237,7 @@ def collector(loader=unittest.loader.defaultTestLoader):
 
     for module in modules:
         module_class_name = 'tests.' + module + '_tests'
-        if module in disabled_tests:
+        if module in disabled_tests:  # pragma: no cover
             discovered = loader.loadTestsFromName(module_class_name)
             enabled_tests = []
             for cls in discovered:
