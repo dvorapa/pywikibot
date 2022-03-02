@@ -105,7 +105,7 @@ class APISite(
     Do not instantiate directly; use :py:obj:`pywikibot.Site` function.
     """
 
-    def __init__(self, code, fam=None, user=None):
+    def __init__(self, code, fam=None, user=None) -> None:
         """Initializer."""
         super().__init__(code, fam, user)
         self._globaluserinfo = {}
@@ -123,7 +123,7 @@ class APISite(
         del new['_interwikimap']
         return new
 
-    def __setstate__(self, attrs):
+    def __setstate__(self, attrs) -> None:
         """Restore things removed in __getstate__."""
         super().__setstate__(attrs)
         self._interwikimap = _InterwikiMap(self)
@@ -279,7 +279,7 @@ class APISite(
         return self._request_class({'parameters': kwargs}).create_simple(
             self, **kwargs)
 
-    def logged_in(self):
+    def logged_in(self) -> bool:
         """Verify the bot is logged into the site as the expected user.
 
         The expected usernames are those provided as the user parameter
@@ -399,7 +399,7 @@ class APISite(
 
         self._loginstatus = _LoginStatus.NOT_LOGGED_IN  # failure
 
-    def _relogin(self):
+    def _relogin(self) -> None:
         """Force a login sequence without logging out, using the current user.
 
         This is an internal function which is used to re-login when
@@ -410,7 +410,7 @@ class APISite(
         self._loginstatus = _LoginStatus.NOT_LOGGED_IN
         self.login()
 
-    def logout(self):
+    def logout(self) -> None:
         """
         Logout of the site and load details for the logged out user.
 
@@ -487,7 +487,7 @@ class APISite(
         return self._userinfo
 
     @userinfo.deleter
-    def userinfo(self):
+    def userinfo(self) -> None:
         """Delete cached userinfo.
 
         ..versionadded:: 5.5
@@ -557,7 +557,7 @@ class APISite(
         return self.get_globaluserinfo()
 
     @globaluserinfo.deleter
-    def globaluserinfo(self):
+    def globaluserinfo(self) -> None:
         """Delete cached globaluserinfo of current user.
 
         ..versionadded:: 7.0
@@ -652,7 +652,7 @@ class APISite(
 
     @staticmethod
     def assert_valid_iter_params(msg_prefix, start, end, reverse,
-                                 is_ts=True):
+                                 is_ts=True) -> None:
         """Validate iterating API parameters.
 
         :param msg_prefix: The calling method name
@@ -763,7 +763,7 @@ class APISite(
         """
         return self.has_all_mediawiki_messages([key], lang=lang)
 
-    def has_all_mediawiki_messages(self, keys, lang=None):
+    def has_all_mediawiki_messages(self, keys, lang=None) -> bool:
         """Confirm that the site defines a set of MediaWiki messages.
 
         :param keys: names of MediaWiki messages
@@ -970,7 +970,7 @@ class APISite(
 
         return _namespaces
 
-    def has_extension(self, name):
+    def has_extension(self, name) -> bool:
         """Determine whether extension `name` is loaded.
 
         :param name: The extension to check for, case sensitive
@@ -1168,7 +1168,7 @@ class APISite(
                 raise PageRelatedError(
                     page, 'loadimageinfo: Query on {} returned no imageinfo')
 
-    def loadpageinfo(self, page, preload=False):
+    def loadpageinfo(self, page, preload=False) -> None:
         """Load page info from api and store in page attributes.
 
         :see: https://www.mediawiki.org/wiki/API:Info
@@ -1184,7 +1184,7 @@ class APISite(
                                 inprop=inprop)
         self._update_page(page, query)
 
-    def loadpageprops(self, page):
+    def loadpageprops(self, page) -> None:
         """Load page props for the given page."""
         title = page.title(with_section=False)
         query = self._generator(api.PropertyGenerator,
@@ -1194,7 +1194,7 @@ class APISite(
         self._update_page(page, query)
 
     def loadimageinfo(self, page, history=False,
-                      url_width=None, url_height=None, url_param=None):
+                      url_width=None, url_height=None, url_param=None) -> None:
         """Load image info from api and save in page attributes.
 
         Parameters correspond to iiprops in:
@@ -1230,7 +1230,7 @@ class APISite(
             self.loadpageinfo(page)
         return page._protection
 
-    def page_can_be_edited(self, page, action='edit'):
+    def page_can_be_edited(self, page, action: str = 'edit') -> bool:
         """Determine if the page can be modified.
 
         Return True if the bot has the permission of needed restriction level
@@ -1452,7 +1452,7 @@ class APISite(
         parsed_text = data['parse']['text']['*']
         return parsed_text
 
-    def getcategoryinfo(self, category):
+    def getcategoryinfo(self, category) -> None:
         """Retrieve data on contents of category.
 
         :see: https://www.mediawiki.org/wiki/API:Categoryinfo
@@ -1485,7 +1485,7 @@ class APISite(
 
     @need_right('deleterevision')
     def deleterevs(self, targettype: str, ids, *,
-                   hide=None, show=None, reason='', target=None):
+                   hide=None, show=None, reason: str = '', target=None):
         """Delete or undelete specified page revisions, file versions or logs.
 
         :see: https://www.mediawiki.org/wiki/API:Revisiondelete
