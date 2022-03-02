@@ -394,8 +394,13 @@ class ReferringPageGeneratorWithIgnore:
 
     """Referring Page generator, with an ignore manager."""
 
-    def __init__(self, page, primary=False, minimum=0, main_only=False
-                 ) -> None:
+    def __init__(
+        self,
+        page,
+        primary=False,
+        minimum: int = 0,
+        main_only=False
+    ) -> None:
         """Initializer.
 
         :type page: pywikibot.Page
@@ -632,7 +637,7 @@ class DisambiguationRobot(SingleSiteBot):
         self.summary = None
         self.dn_template_str = i18n.translate(self.site, dn_template)
 
-    def _clean_args(self, args, kwargs):
+    def _clean_args(self, args, kwargs) -> None:
         """Cleanup positional and keyword arguments.
 
         Replace positional arguments with keyword arguments.
@@ -1189,8 +1194,13 @@ or press enter to quit:""")
             self.opt.pos += links
         return True
 
-    def setSummaryMessage(self, page, new_targets=None, unlink_counter=0,
-                          dn=False) -> None:
+    def setSummaryMessage(
+        self,
+        page,
+        new_targets=None,
+        unlink_counter: int = 0,
+        dn=False
+    ) -> None:
         """Setup i18n summary message."""
         new_targets = new_targets or []
         # make list of new targets
@@ -1255,7 +1265,7 @@ or press enter to quit:""")
                      'to': targets,
                      'count': len(new_targets)})
 
-    def teardown(self):
+    def teardown(self) -> None:
         """Write ignoring pages to a file."""
         self.primaryIgnoreManager.ignore(self.ignores)
 

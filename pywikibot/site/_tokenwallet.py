@@ -15,7 +15,7 @@ class TokenWallet:
 
     """Container for tokens."""
 
-    def __init__(self, site):
+    def __init__(self, site) -> None:
         """Initializer.
 
         :type site: pywikibot.site.APISite
@@ -24,7 +24,7 @@ class TokenWallet:
         self._tokens = {}
         self.failed_cache = set()  # cache unavailable tokens.
 
-    def load_tokens(self, types, all=False):
+    def load_tokens(self, types, all=False) -> None:
         """
         Preload one or multiple tokens.
 
@@ -87,14 +87,14 @@ class TokenWallet:
             "Action '{}' is not allowed for user {} on {} wiki."
             .format(key, self.site.user(), self.site))
 
-    def __contains__(self, key):
+    def __contains__(self, key) -> bool:
         """Return True if the given token name is cached."""
         return key in self._tokens.setdefault(self.site.user(), {})
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return a str representation of the internal tokens dictionary."""
         return self._tokens.__str__()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a representation of the internal tokens dictionary."""
         return self._tokens.__repr__()

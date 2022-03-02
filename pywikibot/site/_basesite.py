@@ -172,7 +172,7 @@ class BaseSite(ComparableMixin):
             del new['_iw_sites']
         return new
 
-    def __setstate__(self, attrs):
+    def __setstate__(self, attrs) -> None:
         """Restore things removed in __getstate__."""
         self.__dict__.update(attrs)
         self._pagemutex = threading.Condition()
@@ -203,7 +203,7 @@ class BaseSite(ComparableMixin):
             raise AttributeError("{} instance has no attribute '{}'"
                                  .format(self.__class__.__name__, attr))
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return string representing this Site's name and code."""
         return self.family.name + ':' + self.code
 
@@ -212,7 +212,7 @@ class BaseSite(ComparableMixin):
         """String representing this Site's name and code."""
         return SelfCallString(self.__str__())
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return internal representation."""
         return '{}("{}", "{}")'.format(
             self.__class__.__name__, self.code, self.family)
@@ -293,7 +293,7 @@ class BaseSite(ComparableMixin):
                 self._pagemutex.wait()
             self._locked_pages.add(title)
 
-    def unlock_page(self, page):
+    def unlock_page(self, page) -> None:
         """
         Unlock page. Call as soon as a write operation has completed.
 
