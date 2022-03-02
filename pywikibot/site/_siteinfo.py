@@ -58,7 +58,7 @@ class Siteinfo(Container):
         ],
     }
 
-    def __init__(self, site):
+    def __init__(self, site) -> None:
         """Initialise it with an empty cache."""
         self._site = site
         self._cache = {}
@@ -95,7 +95,7 @@ class Siteinfo(Container):
         return EMPTY_DEFAULT
 
     @staticmethod
-    def _post_process(prop, data):
+    def _post_process(prop, data) -> None:
         """Do some default handling of data. Directly modifies data."""
         # Be careful with version tests inside this here as it might need to
         # query this method to actually get the version number
@@ -132,7 +132,7 @@ class Siteinfo(Container):
             is the default value.
         :see: https://www.mediawiki.org/wiki/API:Meta#siteinfo_.2F_si
         """
-        def warn_handler(mod, message):
+        def warn_handler(mod, message) -> bool:
             """Return True if the warning is handled."""
             matched = Siteinfo.WARNING_REGEX.match(message)
             if mod == 'siteinfo' and matched:

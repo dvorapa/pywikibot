@@ -75,7 +75,7 @@ class ProofreadPageMixin:
     """APISite mixin for ProofreadPage extension."""
 
     @need_extension('ProofreadPage')
-    def _cache_proofreadinfo(self, expiry=False):
+    def _cache_proofreadinfo(self, expiry=False) -> None:
         """Retrieve proofreadinfo from site and cache response.
 
         Applicable only to sites with ProofreadPage extension installed.
@@ -144,7 +144,7 @@ class GeoDataMixin:
     """APISite mixin for GeoData extension."""
 
     @need_extension('GeoData')
-    def loadcoordinfo(self, page):
+    def loadcoordinfo(self, page) -> None:
         """Load [[mw:Extension:GeoData]] info."""
         title = page.title(with_section=False)
         query = self._generator(api.PropertyGenerator,
@@ -162,7 +162,7 @@ class PageImagesMixin:
     """APISite mixin for PageImages extension."""
 
     @need_extension('PageImages')
-    def loadpageimage(self, page):
+    def loadpageimage(self, page) -> None:
         """
         Load [[mw:Extension:PageImages]] info.
 
@@ -369,9 +369,18 @@ class FlowMixin:
         return data['flow']['view-topiclist']['result']['topiclist']
 
     @need_extension('Flow')
-    def load_topiclist(self, page, content_format: str = 'wikitext', limit=100,
-                       sortby='newest', toconly=False, offset=None,
-                       offset_id=None, reverse=False, include_offset=False):
+    def load_topiclist(
+        self,
+        page,
+        content_format: str = 'wikitext',
+        limit: int = 100,
+        sortby: str = 'newest',
+        toconly=False,
+        offset=None,
+        offset_id=None,
+        reverse=False,
+        include_offset=False
+    ):
         """
         Retrieve the topiclist of a Flow board.
 
@@ -380,9 +389,7 @@ class FlowMixin:
         :param content_format: The content format to request the data in.
             must be either 'wikitext', 'html', or 'fixed-html'
         :param limit: The number of topics to fetch in each request.
-        :type limit: int
-        :param sortby: Algorithm to sort topics by.
-        :type sortby: str (either 'newest' or 'updated')
+        :param sortby: Algorithm to sort topics by ('newest' or 'updated').
         :param toconly: Whether to only include information for the TOC.
         :type toconly: bool
         :param offset: The timestamp to start at (when sortby is 'updated').

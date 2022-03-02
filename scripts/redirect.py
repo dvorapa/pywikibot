@@ -124,7 +124,7 @@ class RedirectGenerator(OptionHandler):
         'xml': None,
     }
 
-    def __init__(self, action, **kwargs):
+    def __init__(self, action, **kwargs) -> None:
         """Initializer."""
         super().__init__(**kwargs)
         self.site = pywikibot.Site()
@@ -229,8 +229,10 @@ class RedirectGenerator(OptionHandler):
         if chunk:
             yield chunk
 
-    def get_redirects_via_api(self, maxlen=8) -> Generator[Tuple[
-            str, Optional[int], str, Optional[str]], None, None]:
+    def get_redirects_via_api(
+        self,
+        maxlen: int = 8
+    ) -> Generator[Tuple[str, Optional[int], str, Optional[str]], None, None]:
         r"""
         Return a generator that yields tuples of data about redirect Pages.
 

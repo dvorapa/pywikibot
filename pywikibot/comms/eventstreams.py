@@ -74,7 +74,7 @@ class EventStreams:
     >>> del stream
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         """Initializer.
 
         :keyword site: a project site object. Used when no url is given
@@ -124,7 +124,7 @@ class EventStreams:
         kwargs.setdefault('timeout', config.socket_timeout)
         self.sse_kwargs = kwargs
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return representation string."""
         kwargs = self.sse_kwargs.copy()
         if self._site != Site():
@@ -158,7 +158,7 @@ class EventStreams:
                                         if self._since else '')))
         return self._url
 
-    def set_maximum_items(self, value: int):
+    def set_maximum_items(self, value: int) -> None:
         """
         Set the maximum number of items to be retrieved from the stream.
 
