@@ -135,7 +135,7 @@ class BasePage(ComparableMixin):
         '_pageimage', '_item', '_lintinfo',
     )
 
-    def __init__(self, source, title='', ns=0):
+    def __init__(self, source, title: str = '', ns=0) -> None:
         """
         Instantiate a Page object.
 
@@ -522,7 +522,7 @@ class BasePage(ComparableMixin):
         return self._revid
 
     @latest_revision_id.deleter
-    def latest_revision_id(self):
+    def latest_revision_id(self) -> None:
         """
         Remove the latest revision id set for this Page.
 
@@ -545,7 +545,7 @@ class BasePage(ComparableMixin):
                 delattr(self, attr)
 
     @latest_revision_id.setter
-    def latest_revision_id(self, value):
+    def latest_revision_id(self, value) -> None:
         """Set the latest revision for this Page."""
         del self.latest_revision_id
         self._revid = value
@@ -595,7 +595,7 @@ class BasePage(ComparableMixin):
         self._text = None if value is None else str(value)
 
     @text.deleter
-    def text(self):
+    def text(self) -> None:
         """Delete the current (edited) wikitext."""
         if hasattr(self, '_text'):
             del self._text
@@ -1288,7 +1288,7 @@ class BasePage(ComparableMixin):
             asynchronous: bool = False,
             callback=None,
             show_diff: bool = False,
-            **kwargs):
+            **kwargs) -> None:
         """
         Save the page with the contents of the first argument as the text.
 
@@ -1319,7 +1319,7 @@ class BasePage(ComparableMixin):
         """
         return self.site.watch(self, unwatch)
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear the cached attributes of the page."""
         self._revisions = {}
         for attr in self._cache_attrs:
@@ -1710,7 +1710,7 @@ class BasePage(ComparableMixin):
         return sum(cnt[user.username] if isinstance(user, User) else cnt[user]
                    for user in contributors)
 
-    def merge_history(self, dest, timestamp=None, reason=None):
+    def merge_history(self, dest, timestamp=None, reason=None) -> None:
         """
         Merge revisions from this page into another page.
 
@@ -1753,7 +1753,7 @@ class BasePage(ComparableMixin):
                reason: Optional[str] = None,
                prompt: bool = True,
                mark: bool = False,
-               automatic_quit: bool = False):
+               automatic_quit: bool = False) -> None:
         """
         Delete the page from the wiki. Requires administrator status.
 
@@ -1875,7 +1875,7 @@ class BasePage(ComparableMixin):
                 .format(timestamp))
         self._deletedRevs[timestamp]['marked'] = undelete
 
-    def undelete(self, reason: Optional[str] = None):
+    def undelete(self, reason: Optional[str] = None) -> None:
         """
         Undelete revisions based on the markers set by previous calls.
 
@@ -1913,7 +1913,7 @@ class BasePage(ComparableMixin):
     def protect(self,
                 reason: Optional[str] = None,
                 protections: Optional[dict] = None,
-                **kwargs):
+                **kwargs) -> None:
         """
         Protect or unprotect a wiki page. Requires administrator status.
 
@@ -2080,7 +2080,7 @@ class Page(BasePage):
 
     """Page: A MediaWiki page."""
 
-    def __init__(self, source, title: str = '', ns=0):
+    def __init__(self, source, title: str = '', ns=0) -> None:
         """Instantiate a Page object."""
         if isinstance(source, pywikibot.site.BaseSite):
             if not title:
@@ -2280,7 +2280,7 @@ class FilePage(Page):
     Supports the same interface as Page, with some added methods.
     """
 
-    def __init__(self, source, title: str = ''):
+    def __init__(self, source, title: str = '') -> None:
         """Initializer."""
         self._file_revisions = {}  # dictionary to cache File history.
         super().__init__(source, title, 6)
@@ -2288,7 +2288,7 @@ class FilePage(Page):
             raise ValueError("'{}' is not in the file namespace!"
                              .format(self.title()))
 
-    def _load_file_revisions(self, imageinfo):
+    def _load_file_revisions(self, imageinfo) -> None:
         for file_rev in imageinfo:
             # filemissing in API response indicates most fields are missing
             # see https://gerrit.wikimedia.org/r/c/mediawiki/core/+/533482/
@@ -2545,7 +2545,7 @@ class Category(Page):
 
     """A page in the Category: namespace."""
 
-    def __init__(self, source, title: str = '', sort_key=None):
+    def __init__(self, source, title: str = '', sort_key=None) -> None:
         """
         Initializer.
 
@@ -2841,7 +2841,7 @@ class User(Page):
     This class also represents the Wiki page User:<username>
     """
 
-    def __init__(self, source, title=''):
+    def __init__(self, source, title: str = '') -> None:
         """
         Initializer for a User object.
 
@@ -3006,7 +3006,7 @@ class User(Page):
         """
         return self.getprops(force).get('rights', [])
 
-    def getUserPage(self, subpage=''):
+    def getUserPage(self, subpage: str = ''):
         """
         Return a Page object relative to this user's main page.
 
@@ -3025,7 +3025,7 @@ class User(Page):
             subpage = '/' + subpage
         return Page(Link(self.title() + subpage, self.site))
 
-    def getUserTalkPage(self, subpage=''):
+    def getUserTalkPage(self, subpage: str = ''):
         """
         Return a Page object relative to this user's main talk page.
 
@@ -3096,7 +3096,7 @@ class User(Page):
 
             raise err
 
-    def unblock(self, reason: Optional[str] = None):
+    def unblock(self, reason: Optional[str] = None) -> None:
         """
         Remove the block for the user.
 
@@ -3262,7 +3262,7 @@ class WikibaseEntity:
 
     DATA_ATTRIBUTES = {}  # type: Dict[str, Any]
 
-    def __init__(self, repo, id_=None):
+    def __init__(self, repo, id_=None) -> None:
         """
         Initializer.
 
@@ -3278,7 +3278,7 @@ class WikibaseEntity:
                 "'{}' is not a valid {} page title"
                 .format(self.id, self.entity_type))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self.id != '-1':
             return 'pywikibot.page.{}({!r}, {!r})'.format(
                 self.__class__.__name__, self.repo, self.id)
@@ -3450,7 +3450,7 @@ class WikibaseEntity:
             data[key] = value
         return data
 
-    def editEntity(self, data=None, **kwargs):
+    def editEntity(self, data=None, **kwargs) -> None:
         """
         Edit an entity using Wikibase wbeditentity API.
 
@@ -3480,7 +3480,7 @@ class WikibaseEntity:
             del self._content
         self.latest_revision_id = updates['entity'].get('lastrevid')
 
-    def concept_uri(self):
+    def concept_uri(self) -> str:
         """
         Return the full concept URI.
 
@@ -3574,7 +3574,7 @@ class WikibasePage(BasePage, WikibaseEntity):
 
     _cache_attrs = BasePage._cache_attrs + ('_content', )
 
-    def __init__(self, site, title='', **kwargs):
+    def __init__(self, site, title: str = '', **kwargs) -> None:
         """
         Initializer.
 
@@ -3754,16 +3754,16 @@ class WikibasePage(BasePage, WikibaseEntity):
         return self._revid
 
     @latest_revision_id.setter
-    def latest_revision_id(self, value):
+    def latest_revision_id(self, value) -> None:
         self._revid = value
 
     @latest_revision_id.deleter
-    def latest_revision_id(self):
+    def latest_revision_id(self) -> None:
         # fixme: this seems too destructive in comparison to the parent
         self.clear_cache()
 
     @allow_asynchronous
-    def editEntity(self, data=None, **kwargs):
+    def editEntity(self, data=None, **kwargs) -> None:
         """
         Edit an entity using Wikibase wbeditentity API.
 
@@ -3788,7 +3788,7 @@ class WikibasePage(BasePage, WikibaseEntity):
         # kept for the decorator
         super().editEntity(data, **kwargs)
 
-    def editLabels(self, labels, **kwargs):
+    def editLabels(self, labels, **kwargs) -> None:
         """
         Edit entity labels.
 
@@ -3800,7 +3800,7 @@ class WikibasePage(BasePage, WikibaseEntity):
         data = {'labels': labels}
         self.editEntity(data, **kwargs)
 
-    def editDescriptions(self, descriptions, **kwargs):
+    def editDescriptions(self, descriptions, **kwargs) -> None:
         """
         Edit entity descriptions.
 
@@ -3812,7 +3812,7 @@ class WikibasePage(BasePage, WikibaseEntity):
         data = {'descriptions': descriptions}
         self.editEntity(data, **kwargs)
 
-    def editAliases(self, aliases, **kwargs):
+    def editAliases(self, aliases, **kwargs) -> None:
         """
         Edit entity aliases.
 
@@ -3858,7 +3858,7 @@ class WikibasePage(BasePage, WikibaseEntity):
         self.repo.addClaim(self, claim, bot=bot, **kwargs)
         claim.on_item = self
 
-    def removeClaims(self, claims, **kwargs):
+    def removeClaims(self, claims, **kwargs) -> None:
         """
         Remove the claims from the entity.
 
@@ -3900,7 +3900,7 @@ class ItemPage(WikibasePage):
         'sitelinks': SiteLinkCollection,
     }
 
-    def __init__(self, site, title=None, ns=None):
+    def __init__(self, site, title=None, ns=None) -> None:
         """
         Initializer.
 
@@ -4169,7 +4169,7 @@ class ItemPage(WikibasePage):
 
         return self.sitelinks[site].canonical_title()
 
-    def setSitelink(self, sitelink, **kwargs):
+    def setSitelink(self, sitelink, **kwargs) -> None:
         """
         Set sitelinks. Calls setSitelinks().
 
@@ -4178,7 +4178,7 @@ class ItemPage(WikibasePage):
         """
         self.setSitelinks([sitelink], **kwargs)
 
-    def removeSitelink(self, site, **kwargs):
+    def removeSitelink(self, site, **kwargs) -> None:
         """
         Remove a sitelink.
 
@@ -4186,7 +4186,7 @@ class ItemPage(WikibasePage):
         """
         self.removeSitelinks([site], **kwargs)
 
-    def removeSitelinks(self, sites, **kwargs):
+    def removeSitelinks(self, sites, **kwargs) -> None:
         """
         Remove sitelinks.
 
@@ -4199,7 +4199,7 @@ class ItemPage(WikibasePage):
             data.append({'site': site, 'title': ''})
         self.setSitelinks(data, **kwargs)
 
-    def setSitelinks(self, sitelinks, **kwargs):
+    def setSitelinks(self, sitelinks, **kwargs) -> None:
         """
         Set sitelinks.
 
@@ -4210,7 +4210,7 @@ class ItemPage(WikibasePage):
         data = {'sitelinks': sitelinks}
         self.editEntity(data, **kwargs)
 
-    def mergeInto(self, item, **kwargs):
+    def mergeInto(self, item, **kwargs) -> None:
         """
         Merge the item into another item.
 
@@ -4306,7 +4306,7 @@ class Property:
                    'musical-notation': 'string',
                    }
 
-    def __init__(self, site, id: str, datatype: Optional[str] = None):
+    def __init__(self, site, id: str, datatype: Optional[str] = None) -> None:
         """
         Initializer.
 
@@ -4365,7 +4365,7 @@ class PropertyPage(WikibasePage, Property):
         'claims': ClaimCollection,
     }
 
-    def __init__(self, source, title=None, datatype=None):
+    def __init__(self, source, title=None, datatype=None) -> None:
         """
         Initializer.
 
@@ -4471,7 +4471,7 @@ class Claim(Property):
     SNAK_TYPES = ('value', 'somevalue', 'novalue')
 
     def __init__(self, site, pid, snak=None, hash=None, is_reference=False,
-                 is_qualifier=False, rank='normal', **kwargs):
+                 is_qualifier=False, rank: str = 'normal', **kwargs) -> None:
         """
         Initializer.
 
@@ -4506,7 +4506,7 @@ class Claim(Property):
         return self._on_item
 
     @on_item.setter
-    def on_item(self, item):
+    def on_item(self, item) -> None:
         self._on_item = item
         for values in self.qualifiers.values():
             for qualifier in values:
@@ -4516,7 +4516,7 @@ class Claim(Property):
                 for source in values:
                     source.on_item = item
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return the representation string."""
         return '{cls_name}.fromJSON({}, {})'.format(
             repr(self.repo), self.toJSON(), cls_name=type(self).__name__)
@@ -4531,7 +4531,7 @@ class Claim(Property):
         return not self.__eq__(other)
 
     @staticmethod
-    def _claim_mapping_same(this, other):
+    def _claim_mapping_same(this, other) -> bool:
         if len(this) != len(other):
             return False
         my_values = list(chain.from_iterable(this.values()))
@@ -4547,7 +4547,7 @@ class Claim(Property):
         return True
 
     def same_as(self, other, ignore_rank=True, ignore_quals=False,
-                ignore_refs=True):
+                ignore_refs=True) -> bool:
         """Check if two claims are same."""
         if ignore_rank:
             attributes = ['id', 'snaktype', 'target']
@@ -4738,14 +4738,19 @@ class Claim(Property):
                              .format(value, value_class))
         self.target = value
 
-    def changeTarget(self, value=None, snaktype='value', **kwargs):
+    def changeTarget(
+        self,
+        value=None,
+        snaktype: str = 'value',
+        **kwargs
+    ) -> None:
         """
         Set the target value in the data repository.
 
         :param value: The new target value.
         :type value: object
-        :param snaktype: The new snak type.
-        :type snaktype: str ('value', 'somevalue', or 'novalue')
+        :param snaktype: The new snak type ('value', 'somevalue', or
+            'novalue').
         """
         if value:
             self.setTarget(value)
@@ -4791,7 +4796,7 @@ class Claim(Property):
         """Return the rank of the Claim."""
         return self.rank
 
-    def setRank(self, rank):
+    def setRank(self, rank) -> None:
         """Set the rank of the Claim."""
         self.rank = rank
 
@@ -4800,7 +4805,7 @@ class Claim(Property):
         self.rank = rank
         return self.repo.save_claim(self, **kwargs)
 
-    def changeSnakType(self, value=None, **kwargs):
+    def changeSnakType(self, value=None, **kwargs) -> None:
         """
         Save the new snak value.
 
@@ -4814,7 +4819,7 @@ class Claim(Property):
         """Return a list of sources, each being a list of Claims."""
         return self.sources
 
-    def addSource(self, claim, **kwargs):
+    def addSource(self, claim, **kwargs) -> None:
         """
         Add the claim as a source.
 
@@ -4846,7 +4851,7 @@ class Claim(Property):
             source[claim.getID()].append(claim)
         self.sources.append(source)
 
-    def removeSource(self, source, **kwargs):
+    def removeSource(self, source, **kwargs) -> None:
         """
         Remove the source. Call removeSources().
 
@@ -4855,7 +4860,7 @@ class Claim(Property):
         """
         self.removeSources([source], **kwargs)
 
-    def removeSources(self, sources, **kwargs):
+    def removeSources(self, sources, **kwargs) -> None:
         """
         Remove the sources.
 
@@ -4888,7 +4893,7 @@ class Claim(Property):
         else:
             self.qualifiers[qualifier.getID()] = [qualifier]
 
-    def removeQualifier(self, qualifier, **kwargs):
+    def removeQualifier(self, qualifier, **kwargs) -> None:
         """
         Remove the qualifier. Call removeQualifiers().
 
@@ -4897,7 +4902,7 @@ class Claim(Property):
         """
         self.removeQualifiers([qualifier], **kwargs)
 
-    def removeQualifiers(self, qualifiers, **kwargs):
+    def removeQualifiers(self, qualifiers, **kwargs) -> None:
         """
         Remove the qualifiers.
 
@@ -5024,7 +5029,7 @@ class FileInfo:
     Note: timestamp will be casted to pywikibot.Timestamp.
     """
 
-    def __init__(self, file_revision):
+    def __init__(self, file_revision) -> None:
         """Initiate the class using the dict from L{APISite.loadimageinfo}."""
         self.__dict__.update(file_revision)
         self.timestamp = pywikibot.Timestamp.fromISOformat(self.timestamp)
@@ -5033,7 +5038,7 @@ class FileInfo:
         """Give access to class values by key."""
         return getattr(self, key)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a more complete string representation."""
         return repr(self.__dict__)
 
@@ -5058,7 +5063,7 @@ class BaseLink(ComparableMixin):
     # Components used for __repr__
     _items = ('title', 'namespace', '_sitekey')
 
-    def __init__(self, title: str, namespace=None, site=None):
+    def __init__(self, title: str, namespace=None, site=None) -> None:
         """
         Initializer.
 
@@ -5087,7 +5092,7 @@ class BaseLink(ComparableMixin):
         else:
             self._sitekey = site
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a more complete string representation."""
         assert isinstance(self._items, tuple)
         assert all(isinstance(item, (bytes, str)) for item in self._items)
@@ -5181,7 +5186,7 @@ class BaseLink(ComparableMixin):
             return '{}:{}'.format(name, self.title)
         return self.title
 
-    def astext(self, onsite=None):
+    def astext(self, onsite=None) -> str:
         """
         Return a text representation of the link.
 
@@ -5270,7 +5275,7 @@ class Link(BaseLink):
         '|&#x[0-9A-Fa-f]+;'
     )
 
-    def __init__(self, text, source=None, default_namespace=0):
+    def __init__(self, text, source=None, default_namespace=0) -> None:
         """
         Initializer.
 
@@ -5688,7 +5693,7 @@ class SiteLink(BaseLink):
     # Components used for __repr__
     _items = ('_sitekey', '_rawtitle', 'badges')
 
-    def __init__(self, title, site=None, badges=None):
+    def __init__(self, title, site=None, badges=None) -> None:
         """
         Initializer.
 

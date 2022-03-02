@@ -12,16 +12,13 @@ from collections import Counter
 import pywikibot
 
 
-def _call_cmd(args, lib='djvulibre') -> tuple:
+def _call_cmd(args, lib: str = 'djvulibre') -> tuple:
     """
     Tiny wrapper around subprocess.Popen().
 
     :param args: same as Popen()
     :type args: str or typing.Sequence[string]
-
     :param lib: library to be logged in logging messages
-    :type lib: str
-
     :return: returns a tuple (res, stdoutdata), where
         res is True if dp.returncode != 0 else False
     """
@@ -56,7 +53,7 @@ class DjVuFile:
 
     """
 
-    def __init__(self, file: str):
+    def __init__(self, file: str) -> None:
         """
         Initializer.
 
@@ -243,7 +240,7 @@ class DjVuFile:
         return self._remove_control_chars(stdoutdata)
 
     @check_page_number
-    def whiten_page(self, n):
+    def whiten_page(self, n) -> bool:
         """Replace page 'n' of djvu file with a blank page.
 
         :param n: page n of djvu file
@@ -294,7 +291,7 @@ class DjVuFile:
         return True
 
     @check_page_number
-    def delete_page(self, n):
+    def delete_page(self, n) -> bool:
         """Delete page 'n' of djvu file.
 
         :param n: page n of djvu file

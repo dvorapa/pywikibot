@@ -91,7 +91,7 @@ set environment variables.""".format(new_base=new_base), width=76)
     return False
 
 
-def file_exists(filename):
+def file_exists(filename) -> bool:
     """Return whether the file exists and print a message if it exists."""
     if os.path.exists(filename):
         pywikibot.output('{1} already exists in the target directory "{0}".'
@@ -406,7 +406,7 @@ def ask_for_dir_change(force):
     return userfile, passfile
 
 
-def main(*args: str):
+def main(*args: str) -> None:
     """
     Process command line arguments and generate user-config.
 
