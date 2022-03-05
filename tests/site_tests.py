@@ -1890,7 +1890,7 @@ class SiteSysopTestCase(DefaultSiteTestCase):
 
     """Test site method using a sysop account."""
 
-    sysop = True
+    rights = 'delete'
 
     def test_methods(self):
         """Test sysop related methods."""
@@ -1900,6 +1900,7 @@ class SiteSysopTestCase(DefaultSiteTestCase):
         self.assertFalse(mysite.has_right('nonexistent_right'))
         self.assertIsInstance(mysite.has_group('bots'), bool)
         self.assertFalse(mysite.has_group('nonexistent_group'))
+        self.assertTrue(mysite.has_right(self.rights))
 
     def test_deletedrevs(self):
         """Test the site.deletedrevs() method."""
@@ -2067,13 +2068,13 @@ class SiteSysopTestCase(DefaultSiteTestCase):
 
 class TestSiteSysopWrite(TestCase):
 
-    """Test site sysop methods that require writing."""
+    """Test site methods that require writing rights."""
 
     family = 'wikipedia'
     code = 'test'
 
     write = True
-    sysop = True
+    rights = 'delete,deleterevision,protect'
 
     def test_protect(self):
         """Test the site.protect() method."""
@@ -2351,6 +2352,14 @@ class TestUserList(DefaultSiteTestCase):
 class SiteRandomTestCase(DefaultSiteTestCase):
 
     """Test random methods of a site."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Skip test on beta due to T282602."""
+        super().setUpClass()
+        site = cls.get_site()
+        if site.family.name in ('wpbeta', 'wsbeta'):
+            cls.skipTest('Skipping test on {} due to T282602'.format(site))
 
     def test_unlimited_small_step(self):
         """Test site.randompages() continuation.
