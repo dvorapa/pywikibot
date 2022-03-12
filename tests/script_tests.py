@@ -243,16 +243,7 @@ class TestScriptMeta(MetaTestCaseClass):
 
                 err_result = result['stderr']
                 out_result = result['stdout']
-
-                stderr_sleep, stderr_other = [], []
-                for line in err_result.splitlines():
-                    if line.startswith('Sleeping for '):
-                        stderr_sleep.append(line)
-                    else:
-                        stderr_other.append(line)
-
-                if stderr_sleep:
-                    unittest_print('\n'.join(stderr_sleep))
+                stderr_other = err_result.splitlines()
 
                 if result['exit_code'] == -9:
                     unittest_print(' killed', end='  ')
@@ -422,7 +413,6 @@ class TestScriptGenerator(DefaultSiteTestCase, PwbTestCase,
         'interwiki',
         'listpages',
         'movepages',
-        'newitem',
         'pagefromfile',
         'protect',
         'redirect',
@@ -435,10 +425,11 @@ class TestScriptGenerator(DefaultSiteTestCase, PwbTestCase,
     }
 
     _allowed_failures = [
+        'newitem',
     ]
 
     _arguments = '-simulate -page:Foo -always'
-    _results = ("Working on 'Foo'", 'Script terminated successfully')
+    _results = ("Working on 'Foo", 'Script terminated successfully')
     _skip_results = {}
     _timeout = True
 
