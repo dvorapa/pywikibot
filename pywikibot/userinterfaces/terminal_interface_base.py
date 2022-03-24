@@ -71,10 +71,15 @@ class UI(ABUIC):
 
         This caches the std-streams locally so any attempts to
         monkey-patch the streams later will not work.
+
+        .. versionchanged:: 7.1
+           memorize original streams
         """
-        self.stdin = sys.stdin
-        self.stdout = sys.stdout
-        self.stderr = sys.stderr
+        # for Windows GUI they can be None under some conditions
+        self.stdin = sys.__stdin__ or sys.stdin
+        self.stdout = sys.__stdout__ or sys.stdout
+        self.stderr = sys.__stderr__ or sys.stderr
+
         self.argv = sys.argv
         self.encoding = config.console_encoding
         self.transliteration_target = config.transliteration_target
@@ -145,9 +150,37 @@ class UI(ABUIC):
         """
         return cls.split_col_pat.search(color).groups()
 
-    def _write(self, text, target_stream) -> None:
-        """Optionally encode and write the text to the target stream."""
-        target_stream.write(text)
+    def _write(self, text: str, target_stream) -> None:
+        """Write the text to the target stream.
+
+        sys.stderr and sys.stdout are frozen upon initialization to
+        original streams (which are stored in the sys module as
+        `sys.__stderr__` and `sys.__stdout__`). This works fine except
+        when using `redirect_stderr` or `redirect_stdout` context
+        managers, where values of global `sys.stderr` and `sys.stdout`
+        are temporarily changed to a redirecting `StringIO` stream, in
+        which case writing to the frozen streams (which are still set to
+        `sys.__stderr__` / `sys.__stdout__`) will not write to the
+        redirecting stream as expected. So, we check the target stream
+        against the frozen streams, and then write to the (potentially
+        redirected) `sys.stderr` or `sys.stdout` stream.
+
+        .. versionchanged:: 7.1
+           instead of writing to `target_stream`, dispatch to
+           `sys.stderr` or `sys.stdout`.
+        """
+        if target_stream == self.stderr:
+            sys.stderr.write(text)
+        elif target_stream == self.stdout:
+            sys.stdout.write(text)
+        else:
+            try:
+                out, err = self.stdout.name, self.stderr.name
+            except AttributeError:
+                out, err = self.stdout, self.stderr
+            raise OSError(
+                'Target stream {} is neither stdin ({}) nor stderr ({})'
+                .format(target_stream.name, out, err))
 
     def support_color(self, target_stream) -> bool:
         """Return whether the target stream does support colors."""
@@ -190,7 +223,12 @@ class UI(ABUIC):
 
             if current_color != next_color and colorized:
                 # set the new color, but only if they change
+                # flush first to enable color change on Windows (T283808)
+                target_stream.flush()
                 self.encounter_color(color_stack[-1], target_stream)
+
+        # finally flush stream to show the text, required for Windows (T303373)
+        target_stream.flush()
 
     def output(self, text, targetStream=None) -> None:
         """Forward text to cache and flush if output is not locked.
