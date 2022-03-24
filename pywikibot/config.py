@@ -431,8 +431,9 @@ def register_families_folder(folder_path: str,
     # find the parent zip folder
     path = Path(folder_path)
     if not is_zipfile(path):
-        for path in path.parents:
+        for parent in path.parents:
             if is_zipfile(path):
+                path = parent
                 break
         else:
             raise NotADirectoryError('20', 'Not a directory', folder_path)
@@ -1126,7 +1127,7 @@ for file_path in user_families_paths:
 #
 # When called as main program, list all configuration variables
 #
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     _all = True
     for _arg in sys.argv[1:]:
         if _arg == 'modified':
