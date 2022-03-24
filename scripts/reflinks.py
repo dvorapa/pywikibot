@@ -42,7 +42,7 @@ The following generators and filters are supported:
 
 &params;
 """
-# (C) Pywikibot team, 2008-2021
+# (C) Pywikibot team, 2008-2022
 #
 # Distributed under the terms of the MIT license.
 #
@@ -58,10 +58,11 @@ from enum import IntEnum
 from functools import partial
 from http import HTTPStatus
 from textwrap import shorten
+from typing import Optional
 
 import pywikibot
 from pywikibot import comms, config, i18n, pagegenerators, textlib
-from pywikibot.backports import removeprefix
+from pywikibot.backports import Match, removeprefix
 from pywikibot.bot import (
     ConfigParserBot,
     ExistingPageBot,
@@ -494,12 +495,14 @@ class ReferencesRobot(SingleSiteBot,
         self.MIME = re.compile(
             r'application/(?:xhtml\+xml|xml)|text/(?:ht|x)ml')
 
-    def httpError(self, err_num, link, pagetitleaslink) -> None:
+    @staticmethod
+    def httpError(err_num, link, pagetitleaslink) -> None:
         """Log HTTP Error."""
         pywikibot.stdout('HTTP error ({}) for {} on {}'
                          .format(err_num, link, pagetitleaslink))
 
-    def getPDFTitle(self, ref, response) -> None:
+    @staticmethod
+    def getPDFTitle(ref, response) -> None:
         """Use pdfinfo to retrieve title from a PDF."""
         # pdfinfo is Unix-only
         pywikibot.output('Reading PDF file...')
@@ -522,6 +525,8 @@ class ReferencesRobot(SingleSiteBot,
             pywikibot.exception()
         else:
             for aline in pdfinfo_out.splitlines():
+                if isinstance(aline, bytes):
+                    aline = aline.decode()
                 if aline.lower().startswith('title'):
                     ref.title = ' '.join(aline.split()[1:])
                     if ref.title:
@@ -550,6 +555,19 @@ class ReferencesRobot(SingleSiteBot,
             pywikibot.warning("You can't edit page {page}" .format(page=page))
             return True
         return super().skip_page(page)
+
+    @staticmethod
+    def charset(enc: Match) -> Optional[str]:
+        """Find an encoding type."""
+        if enc:
+            # Use encoding if found. Else use chardet apparent encoding
+            encoding = enc.group('enc').strip('"\' ').lower()
+            naked = re.sub(r'[ _\-]', '', encoding)
+            # Convert to python correct encoding names
+            if naked == 'xeucjp':
+                encoding = 'euc_jp'
+            return encoding
+        return None
 
     def treat(self, page) -> None:
         """Process one page."""
@@ -657,21 +675,26 @@ class ReferencesRobot(SingleSiteBot,
             if content_type:
                 # use charset from http header
                 s = self.CHARSET.search(content_type)
+
             if meta_content:
-                tag = meta_content.group().decode()
+                tag = None
+                encoding = self.charset(s)
+                encodings = [encoding] if encoding else []
+                encodings += list(page.site.encodings())
+                for enc in encodings:
+                    with suppress(UnicodeDecodeError):
+                        tag = meta_content.group().decode(enc)
+                        break
+
                 # Prefer the contentType from the HTTP header :
-                if not content_type:
+                if not content_type and tag:
                     content_type = tag
                 if not s:
                     # use charset from html
                     s = self.CHARSET.search(tag)
-            if s:
-                # Use encoding if found. Else use chardet apparent encoding
-                encoding = s.group('enc').strip('"\' ').lower()
-                naked = re.sub(r'[ _\-]', '', encoding)
-                # Convert to python correct encoding names
-                if naked == 'xeucjp':
-                    encoding = 'euc_jp'
+
+            encoding = self.charset(s)
+            if encoding:
                 r.encoding = encoding
 
             if not content_type:
