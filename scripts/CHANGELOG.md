@@ -1,14 +1,18 @@
 # Scripts Changelog
 
-
 ## 7.1.0
 *In development*
+
+
+## 7.2.0
+*26 March 2022*
 
 ### fixing_redirects
 * -always option was enabled
 
 ### reflinks
-* Decode pdfinfo if it is bytes content (:phab:`:phab:`T303731``)
+* Solve UnicodeDecodeError in ReferencesRobot.treat() (:phab:`T304288`)
+* Decode pdfinfo if it is bytes content (:phab:`T303731`)
 
 
 ## 7.0.0
