@@ -723,6 +723,102 @@ class CosmeticChangesToolkit:
                                      exceptions, site=self.site)
         return text
 
+    def beautifyInfoboxes(self, text: str) -> str:
+        """Format infoboxes and block templates."""
+        exceptions = ['nowiki']
+
+        def prepare(text):
+            return r'[' + text[0].upper() + text[0].lower() + r']' + re.escape(text[1:]).replace('\ ', '[ _]')
+        def match(templates, part):
+            if not templates:
+                return False
+            return re.match(r'\{\{\s*(?:' + '|'.join([prepare(i) for i in templates]) + ')', part)
+
+        text = textlib.replaceExcept(text, r'\{\{', r'ßßß{{', exceptions)
+        text = textlib.replaceExcept(text, r'\}\}', r'}}ßßß', exceptions)
+        text = textlib.replaceExcept(text, r'(\[+)', r'ßßß\1', exceptions)
+        text = textlib.replaceExcept(text, r'(\]{1,2})', r'\1ßßß', exceptions)
+        text = textlib.replaceExcept(text, r'\{\|', r'ßßß{|', exceptions)
+        text = textlib.replaceExcept(text, r'\|\}([^\}])', r'|}ßßß\1', exceptions)
+        text = textlib.replaceExcept(text, r'\<', r'ßßß<', exceptions)
+        text = textlib.replaceExcept(text, r'\>', r'>ßßß', exceptions)
+        pageParts = text.strip('ß').split('ßßß')
+
+        inTemplate = [0]
+        inLink = [False]
+        inTable = [False]
+        inTag = [False]
+        lines_after = [r'\n']
+        initial_spaces = [r'\n ']
+        newPageParts = []
+
+        no_line_after = ['Infobox - chemický prvek/Nestabilní izotop', 'Infobox - chemický prvek/Stabilní izotop']
+        one_line_after = ['Infobox ', 'NFPA 704', 'Studenti píší Wikipedii', 'Taxobox', 'Singly', 'Kosmické těleso-dceřiné těleso', 'Kosmické těleso-teleskop']
+        two_lines_after = []
+        lines_after_as_is = ['Citace ']
+        block_templates = no_line_after + one_line_after + two_lines_after + lines_after_as_is
+        skip_templates = ['Infobox začátek', 'Infobox hlavička', 'Infobox obrázek', 'Infobox dvojitá', 'Infobox jednoduchá', 'Infobox konec', 'Infobox položka', 'Infobox chybí', 'Infobox - ročník Eurovize/Legenda', 'Infobox - animanga/Patička', 'Infobox - železniční trať/legenda', 'Infobox - železniční trať/hlavička', 'Infobox - číslo/řada', 'Infobox - politická strana/mandáty', 'Infobox - letiště/RWY', 'Infobox - letiště/Konec', 'Infobox - budova/kodbarvy', 'Infobox - chemický prvek/Legenda', 'Infobox - chemický prvek/Barva', 'Infobox - chemický prvek/Text', 'Infobox - chemický prvek/Skupina', 'Infobox - chemický prvek/Izotopy', 'Taxobox/barva', 'Taxobox/cat', 'Taxobox/compare', 'Taxobox/Stupeň ohrožení', 'Taxobox/statusWD']
+        block_if_block = ['Citace ']
+
+        after_block_template = False
+        for part in pageParts:
+            block = re.match(r'[^\n\|]+(\n+ *)\|', part)
+            if ((match(block_templates, part) and not match(block_if_block, part)) or (block and match(block_if_block, part))) and not match(skip_templates, part):
+                inTemplate.append(2)
+                if match(no_line_after, part):
+                    lines_after.append(r'')
+                elif match(one_line_after, part):
+                    lines_after.append(r'\n')
+                elif match(two_lines_after, part):
+                    lines_after.append(r'\n'*2)
+                else:  # lines_after_as_is
+                    lines_after.append(None)
+
+                if block:
+                    initial_spaces.append(block.group(1))
+                else:
+                    initial_spaces.append(initial_spaces[0])
+            elif part[:2] == '{{':
+                inTemplate.append(1)
+            elif part[:1] == '[':
+                inLink.append(True)
+            elif part[:2] == '{|':
+                inTable.append(True)
+            elif part[:1] == '<':
+                inTag.append(True)
+
+            if after_block_template:
+                if not (self.template or lines_after[-1] is None):
+                    part = textlib.replaceExcept(part, r'^\s*', lines_after[-1], exceptions)
+                lines_after.pop()
+                after_block_template = False
+            if inTemplate[-1] == 2 and not inLink[-1] and not inTable[-1] and not inTag[-1]:
+                part = textlib.replaceExcept(part, r'\|\s*(?=\||\})', r'', exceptions)
+                part = textlib.replaceExcept(part, r'\s*\|\s*', initial_spaces[-1] + r'| ', exceptions)
+                part = textlib.replaceExcept(part, r'\{\{\s*', r'{{', exceptions)
+                if part[:2] == '{{' and not '|' in part:
+                    part = textlib.replaceExcept(part, r'\s*\}\}', r'}}', exceptions)
+                else:
+                    part = textlib.replaceExcept(part, r'\s*\}\}', initial_spaces[-1].rstrip(' ') + r'}}', exceptions)
+                part = textlib.replaceExcept(part, r'\|([^=\|\}]*?)\s*=[ \t]*', r'|\1 = ', exceptions)
+                if not re.search(r'\#[0-9a-fA-F]{3,6}', part) and not re.search(r'odkaz na (?:konečné pořadí|statistiky turnaje)', part):
+                    part = textlib.replaceExcept(part, r'(\|[^=\|\}]*?=)\s*(\*|\#)', r'\1\n\2', exceptions)
+            newPageParts.append(part)
+
+            if part[-2:] == '}}' and inTemplate[-1] > 0:
+                if inTemplate[-1] == 2:
+                    initial_spaces.pop()
+                    after_block_template = True
+                inTemplate.pop()
+            elif part[-1:] == ']' and inLink[-1]:
+                inLink.pop()
+            elif part[-2:] == '|}' and inTable[-1]:
+                inTable.pop()
+            elif part[-1:] == '>' and inTag[-1]:
+                inTag.pop()
+
+        return ''.join(newPageParts)
+
     def removeNonBreakingSpaceBeforePercent(self, text: str) -> str:
         """
         Remove a non-breaking space between number and percent sign.
