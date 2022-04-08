@@ -803,7 +803,7 @@ class CosmeticChangesToolkit:
                     part = textlib.replaceExcept(part, r'\s*\}\}', initial_spaces[-1].rstrip(' ') + r'}}', exceptions)
                 part = textlib.replaceExcept(part, r'\|([^=\|\}]*?)\s*=[ \t]*', r'|\1 = ', exceptions)
                 if not re.search(r'\#[0-9a-fA-F]{3,6}', part) and not re.search(r'odkaz na (?:konečné pořadí|statistiky turnaje)', part):
-                    part = textlib.replaceExcept(part, r'=\s*(\*|\#)', r'=\n\1', exceptions)
+                    part = textlib.replaceExcept(part, r'(\|[^=\|\}]*?=)\s*(\*|\#)', r'\1\n\2', exceptions)
             newPageParts.append(part)
 
             if part[-2:] == '}}' and inTemplate[-1] > 0:
