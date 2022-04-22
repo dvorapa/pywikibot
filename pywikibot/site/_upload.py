@@ -20,7 +20,6 @@ from pywikibot.tools import compute_file_hash
 
 
 __all__ = ('Uploader', )
-_logger = 'wiki.apisite'
 
 
 class Uploader:
@@ -170,10 +169,9 @@ class Uploader:
 
         if report_success is None:
             report_success = isinstance(ignore_warnings, bool)
-        if report_success is True:
-            if not isinstance(ignore_warnings, bool):
-                raise ValueError('report_success may only be set to True when '
-                                 'ignore_warnings is a boolean')
+        if report_success is True and not isinstance(ignore_warnings, bool):
+            raise ValueError('report_success may only be set to True when '
+                             'ignore_warnings is a boolean')
         if isinstance(ignore_warnings, Iterable):
             ignored_warnings = ignore_warnings
 
@@ -457,7 +455,7 @@ class Uploader:
                         self.site._uploaddisabled = True
                     raise error
                 result = result['upload']
-                pywikibot.debug(result, _logger)
+                pywikibot.debug(result)
 
             if 'result' not in result:
                 raise Error('Upload: unrecognized response: {}'.format(result))
