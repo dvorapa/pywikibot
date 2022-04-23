@@ -1,6 +1,6 @@
 """File containing all standard fixes."""
 #
-# (C) Pywikibot team, 2008-2020
+# (C) Pywikibot team, 2008-2022
 #
 # Distributed under the terms of the MIT license.
 #
@@ -81,7 +81,8 @@ fixes = {
                 'nowiki',
                 'comment',
                 'math',
-                'pre'
+                'pre',
+                'syntaxhighlight',
             ],
         }
     },
