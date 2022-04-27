@@ -284,7 +284,7 @@ class CosmeticChangesToolkit:
             if self.ignore == CANCEL.METHOD:
                 pywikibot.warning('Unable to perform "{}" on "{}"!'
                                   .format(method.__name__, self.title))
-                pywikibot.exception(e)
+                pywikibot.error(e)
             else:
                 raise
         return text if result is None else result
@@ -303,7 +303,7 @@ class CosmeticChangesToolkit:
             if self.ignore == CANCEL.PAGE:
                 pywikibot.warning('Skipped "{}", because an error occurred.'
                                   .format(self.title))
-                pywikibot.exception(e)
+                pywikibot.error(e)
                 return False
             raise
         else:
