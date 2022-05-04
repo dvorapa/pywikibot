@@ -387,6 +387,8 @@ def init_handlers() -> None:
             warnings.filterwarnings('module')
         warnings.filterwarnings('once', category=FutureWarning)
 
+    for handler in root_logger.handlers:
+        handler.close()
     root_logger.handlers.clear()  # remove any old handlers
     root_logger.propagate = False  # T281643
 
@@ -966,6 +968,8 @@ def handle_args(args: Optional[Iterable[str]] = None,
         except (UnknownFamilyError, UnknownSiteError):
             pywikibot.exception(exc_info=False)
             sys.exit(1)
+        if calledModuleName() == 'pwb':
+            pywikibot._sites.clear()
 
     if username:
         config.usernames[config.family][config.mylang] = username
