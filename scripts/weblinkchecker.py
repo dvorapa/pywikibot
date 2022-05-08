@@ -137,8 +137,9 @@ from pywikibot.tools import ThreadList
 try:
     import memento_client
     from memento_client.memento_client import MementoClientException
-except ImportError as e:
-    memento_client = e
+    missing_dependencies = None
+except ImportError:
+    missing_dependencies = ['memento_client']
 
 
 docuReplacements = {'&params;': pagegenerators.parameterHelp}  # noqa: N816
@@ -173,9 +174,6 @@ ignorelist = [
 
 def _get_closest_memento_url(url, when=None, timegate_uri=None):
     """Get most recent memento for url."""
-    if isinstance(memento_client, ImportError):
-        raise memento_client
-
     if not when:
         when = datetime.datetime.now()
 
@@ -234,6 +232,9 @@ def weblinks_from_text(
 ):
     """
     Yield web links from text.
+
+    Only used as text predicate for XmlDumpPageGenerator to speed up
+    generator.
 
     TODO: move to textlib
     """
@@ -568,6 +569,8 @@ class WeblinkCheckerRobot(SingleSiteBot, ExistingPageBot):
     It uses several LinkCheckThreads at once to process pages from generator.
     """
 
+    use_redirects = False
+
     def __init__(self, http_ignores=None, day: int = 7, **kwargs) -> None:
         """Initializer."""
         super().__init__(**kwargs)
@@ -589,7 +592,7 @@ class WeblinkCheckerRobot(SingleSiteBot, ExistingPageBot):
     def treat_page(self) -> None:
         """Process one page."""
         page = self.current_page
-        for url in weblinks_from_text(page.text):
+        for url in page.extlinks():
             for ignore_regex in ignorelist:
                 if ignore_regex.match(url):
                     break
@@ -600,6 +603,52 @@ class WeblinkCheckerRobot(SingleSiteBot, ExistingPageBot):
                 # thread dies when program terminates
                 thread.daemon = True
                 self.threads.append(thread)
+
+    def teardown(self) -> None:
+        """Finish remaining threads and save history file."""
+        num = self.count_link_check_threads()
+        if num:
+            pywikibot.info('<<lightblue>>Waiting for remaining {} threads '
+                           'to finish, please wait...'.format(num))
+
+        while self.count_link_check_threads():
+            try:
+                time.sleep(0.1)
+            except KeyboardInterrupt:
+                # Threads will die automatically because they are daemonic.
+                if pywikibot.input_yn('There are {} pages remaining in the '
+                                      'queue. Really exit?'
+                                      .format(self.count_link_check_threads()),
+                                      default=False, automatic_quit=False):
+                    break
+
+        num = self.count_link_check_threads()
+        if num:
+            pywikibot.info('<<yellow>>>Remaining {} threads will be killed.'
+                           .format(num))
+
+        if self.history.report_thread:
+            self.history.report_thread.shutdown()
+            # wait until the report thread is shut down; the user can
+            # interrupt it by pressing CTRL-C.
+            try:
+                while self.history.report_thread.is_alive():
+                    time.sleep(0.1)
+            except KeyboardInterrupt:
+                pywikibot.info('Report thread interrupted.')
+                self.history.report_thread.kill()
+
+        pywikibot.info('Saving history...')
+        self.history.save()
+
+    @staticmethod
+    def count_link_check_threads() -> int:
+        """Count LinkCheckThread threads.
+
+        :return: number of LinkCheckThread threads
+        """
+        return sum(isinstance(thread, LinkCheckThread)
+                   for thread in threading.enumerate())
 
 
 def RepeatPageGenerator():  # noqa: N802
@@ -612,19 +661,6 @@ def RepeatPageGenerator():  # noqa: N802
     for page_title in sorted(page_titles):
         page = pywikibot.Page(pywikibot.Site(), page_title)
         yield page
-
-
-def count_link_check_threads() -> int:
-    """
-    Count LinkCheckThread threads.
-
-    :return: number of LinkCheckThread threads
-    """
-    i = 0
-    for thread in threading.enumerate():
-        if isinstance(thread, LinkCheckThread):
-            i += 1
-    return i
 
 
 def main(*args: str) -> None:
@@ -678,52 +714,12 @@ def main(*args: str) -> None:
 
     if not gen:
         gen = gen_factory.getCombinedGenerator()
-    if gen:
-        if not gen_factory.nopreload:
-            # fetch at least 240 pages simultaneously from the wiki, but more
-            # if a high thread number is set.
-            num_pages = max(240, config.max_external_links * 2)
-            gen = pagegenerators.PreloadingGenerator(gen, groupsize=num_pages)
-        gen = pagegenerators.RedirectFilterPageGenerator(gen)
+
+    if not suggest_help(missing_generator=not gen,
+                        missing_dependencies=missing_dependencies):
         bot = WeblinkCheckerRobot(http_ignores, config.weblink_dead_days,
                                   generator=gen)
-        try:
-            bot.run()
-        except ImportError:
-            suggest_help(missing_dependencies=('memento_client',))
-            return
-        finally:
-            wait_time = 0
-            # Don't wait longer than 30 seconds for threads to finish.
-            while count_link_check_threads() > 0 and wait_time < 30:
-                try:
-                    pywikibot.output('Waiting for remaining {} threads to '
-                                     'finish, please wait...'
-                                     .format(count_link_check_threads()))
-                    # wait 1 second
-                    time.sleep(1)
-                    wait_time += 1
-                except KeyboardInterrupt:
-                    pywikibot.output('Interrupted.')
-                    break
-            if count_link_check_threads() > 0:
-                pywikibot.output('Remaining {} threads will be killed.'
-                                 .format(count_link_check_threads()))
-                # Threads will die automatically because they are daemonic.
-            if bot.history.report_thread:
-                bot.history.report_thread.shutdown()
-                # wait until the report thread is shut down; the user can
-                # interrupt it by pressing CTRL-C.
-                try:
-                    while bot.history.report_thread.is_alive():
-                        time.sleep(0.1)
-                except KeyboardInterrupt:
-                    pywikibot.output('Report thread interrupted.')
-                    bot.history.report_thread.kill()
-            pywikibot.output('Saving history...')
-            bot.history.save()
-    else:
-        suggest_help(missing_generator=True)
+        bot.run()
 
 
 if __name__ == '__main__':
