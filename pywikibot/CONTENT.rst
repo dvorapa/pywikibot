@@ -89,8 +89,12 @@ The contents of the package
     +----------------------------+------------------------------------------------------+
     | data                       | Module providing layers of data access to wiki       |
     +============================+======================================================+
-    | api.py                     | Interface to MediaWiki's api.php                     |
-    +----------------------------+------------------------------------------------------+
+    | api.py                     | Interface Module to MediaWiki's api                  |
+    |                            +--------------+---------------------------------------+
+    |                            | __init__.py  | Interface to MediaWiki's api.php      |
+    |                            +--------------+---------------------------------------+
+    |                            | paraminfo.py | API parameter information data object |
+    +----------------------------+--------------+---------------------------------------+
     | mysql.py                   | Miscellaneous helper functions for mysql queries     |
     +----------------------------+------------------------------------------------------+
     | sparql.py                  | Objects representing SPARQL query API                |
