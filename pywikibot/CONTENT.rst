@@ -95,9 +95,13 @@ The contents of the package
     |                            +----------------+-------------------------------------+
     |                            | _generators.py | API/Query generators                |
     |                            +----------------+-------------------------------------+
+    |                            | _login.py      | API login interface                 |
+    |                            +----------------+-------------------------------------+
     |                            | _optionset.py  | Boolean API option                  |
     |                            +----------------+-------------------------------------+
     |                            | _paraminfo.py  | API information data object         |
+    |                            +----------------+-------------------------------------+
+    |                            | _requests.py   | API Requests interface              |
     +----------------------------+----------------+-------------------------------------+
     | mysql.py                   | Miscellaneous helper functions for mysql queries     |
     +----------------------------+------------------------------------------------------+
