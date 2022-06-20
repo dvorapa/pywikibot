@@ -37,20 +37,19 @@ class MementoTestCase(TestCase):
         return result
 
 
-class TestMementoWebCite(MementoTestCase):
+class TestMementoArchive(MementoTestCase):
 
     """New WebCite Memento tests."""
 
-    timegate_uri = 'http://timetravel.mementoweb.org/webcite/timegate/'
-    hostname = ('http://timetravel.mementoweb.org/webcite/'
-                'timemap/json/http://google.com')
+    timegate_uri = 'http://timetravel.mementoweb.org/timegate/'
+    hostname = timegate_uri.replace('gate/', 'map/json/http://google.com')
 
     def test_newest(self):
-        """Test WebCite for newest https://google.com."""
+        """Test Archive for newest https://google.com."""
         archivedversion = self._get_archive_url('https://google.com')
         parsed = urlparse(archivedversion)
         self.assertIn(parsed.scheme, ['http', 'https'])
-        self.assertEqual(parsed.netloc, 'www.webcitation.org')
+        self.assertEqual(parsed.netloc, 'archive.ph')
 
 
 class TestMementoDefault(MementoTestCase):
@@ -62,10 +61,6 @@ class TestMementoDefault(MementoTestCase):
 
     def test_newest(self):
         """Test getting memento for newest https://google.com."""
-        # Temporary increase the debug level for T196304
-        import logging
-        logging.basicConfig()
-        logging.getLogger().setLevel(logging.DEBUG)
         archivedversion = self._get_archive_url('https://google.com')
         self.assertIsNotNone(archivedversion)
 

@@ -24,7 +24,11 @@ from requests.exceptions import InvalidSchema, MissingSchema
 
 from pywikibot import config, debug, sleep, warning
 
-__all__ = ('MementoClient', 'MementoClientException')
+__all__ = (
+    'MementoClient',
+    'MementoClientException',
+    'get_closest_memento_url',
+)
 
 
 class MementoClient(OldMementoClient):
@@ -169,7 +173,7 @@ class MementoClient(OldMementoClient):
                     timeout=timeout
                 )
             except (requests.exceptions.ConnectTimeout,
-                    requests.exceptions.ConnectionError):
+                    requests.exceptions.ConnectionError):  # pragma: no cover
                 warning('Could not connect to URI {}, returning no native '
                         'URI-G'.format(original_uri))
                 return None
