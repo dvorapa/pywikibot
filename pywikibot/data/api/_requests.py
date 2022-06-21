@@ -38,6 +38,32 @@ from pywikibot.tools import PYTHON_VERSION
 
 __all__ = ('CachedRequest', 'Request', 'encode_url')
 
+# Actions that imply database updates on the server, used for various
+# things like throttling or skipping actions when we're in simulation
+# mode
+WRITE_ACTIONS = {
+    # main actions, see https://www.mediawiki.org/wiki/API:Main_page
+    'block', 'clearhasmsg', 'createaccount', 'createlocalaccount', 'delete',
+    'deleteglobalaccount', 'edit', 'editmassmessagelist', 'emailuser',
+    'filerevert', 'flowthank', 'globalblock', 'globalpreferenceoverrides',
+    'globalpreferences', 'globaluserrights', 'imagerotate', 'import',
+    'linkaccount', 'managetags', 'massmessage', 'mergehistory', 'move',
+    'newslettersubscribe', 'options', 'patrol', 'protect', 'purge',
+    'removeauthenticationdata', 'resetpassword', 'revisiondelete', 'rollback',
+    'setglobalaccountstatus', 'setnotificationtimestamp', 'setpagelanguage',
+    'strikevote', 'tag', 'thank', 'threadaction', 'transcodereset',
+    'translationreview', 'unblock', 'undelete', 'unlinkaccount', 'upload',
+    'userrights', 'watch', 'wikilove',
+    # wikibase actions, see https://www.mediawiki.org/wiki/Wikibase/API
+    'wbcreateclaim', 'wbcreateredirect', 'wbeditentity', 'wblinktitles',
+    'wbmergeitems', 'wbremoveclaims', 'wbremovequalifiers',
+    'wbremovereferences', 'wbsetaliases', 'wbsetclaim', 'wbsetclaimvalue',
+    'wbsetdescription', 'wbsetlabel', 'wbsetqualifier', 'wbsetreference',
+    'wbsetsitelink',
+    # lexeme (internal) actions
+    'wbladdform', 'wbladdsense', 'wbleditformelements', 'wbleditsenseelements',
+    'wblmergelexemes', 'wblremoveform', 'wblremovesense',
+}
 
 lagpattern = re.compile(
     r'Waiting for [\w.: ]+: (?P<lag>\d+(?:\.\d+)?) seconds? lagged')
@@ -200,24 +226,7 @@ class Request(MutableMapping):
         self.action = parameters['action']
         self.update(parameters)  # also convert all parameter values to lists
         self._warning_handler = None  # type: Optional[Callable[[str, str], Union[Match[str], bool, None]]]  # noqa: E501
-        # Actions that imply database updates on the server, used for various
-        # things like throttling or skipping actions when we're in simulation
-        # mode
-        self.write = self.action in {
-            'block', 'clearhasmsg', 'createaccount', 'delete', 'edit',
-            'emailuser', 'filerevert', 'flowthank', 'imagerotate', 'import',
-            'managetags', 'mergehistory', 'move', 'options', 'patrol',
-            'protect', 'purge', 'resetpassword', 'revisiondelete', 'rollback',
-            'setnotificationtimestamp', 'setpagelanguage', 'tag', 'thank',
-            'unblock', 'undelete', 'upload', 'userrights', 'watch',
-            'wbcreateclaim', 'wbcreateredirect', 'wbeditentity',
-            'wblinktitles', 'wbmergeitems', 'wbremoveclaims',
-            'wbremovequalifiers', 'wbremovereferences', 'wbsetaliases',
-            'wbsetclaim', 'wbsetclaimvalue', 'wbsetdescription', 'wbsetlabel',
-            'wbsetqualifier', 'wbsetreference', 'wbsetsitelink',
-            'wbladdform', 'wbleditformelements', 'wblmergelexemes',
-            'wblremoveform',
-        }
+        self.write = self.action in WRITE_ACTIONS
         # Client side verification that the request is being performed
         # by a logged in user, and warn if it isn't a config username.
         if self.write:
@@ -376,10 +385,6 @@ class Request(MutableMapping):
         """Implement dict interface."""
         return list(self._params.keys())
 
-    def __contains__(self, key) -> bool:
-        """Implement dict interface."""
-        return key in self._params
-
     def __iter__(self):
         """Implement dict interface."""
         return iter(self._params)
@@ -532,7 +537,7 @@ class Request(MutableMapping):
                 action: {'result': 'Success', 'nochange': ''},
 
                 # wikibase results
-                'entity': {'lastrevid': -1},
+                'entity': {'lastrevid': -1, 'id': '-1'},
                 'pageinfo': {'lastrevid': -1},
                 'reference': {'hash': -1},
             }
