@@ -10,10 +10,10 @@ import math
 import re
 import sys
 import threading
-import time
 from contextlib import suppress
 from decimal import Decimal
 from queue import Queue
+from time import sleep as time_sleep
 from typing import Any, Optional, Type, Union
 from urllib.parse import urlparse
 from warnings import warn
@@ -67,7 +67,8 @@ from pywikibot.logging import (
     warning,
 )
 from pywikibot.site import APISite, BaseSite, DataSite
-from pywikibot.tools import classproperty, normalize_username, PYTHON_VERSION
+from pywikibot.time import Timestamp
+from pywikibot.tools import normalize_username, PYTHON_VERSION
 
 
 ItemPageStrNoneType = Union[str, 'ItemPage', None]
@@ -100,113 +101,6 @@ It is recommended to use Python 3.6 or above.
 See T301908 for further information.
 """.format(version=sys.version.split(maxsplit=1)[0]),
          FutureWarning)  # adjust this line no in utils.execute()
-
-
-class Timestamp(datetime.datetime):
-
-    """Class for handling MediaWiki timestamps.
-
-    This inherits from datetime.datetime, so it can use all of the methods
-    and operations of a datetime object. To ensure that the results of any
-    operation are also a Timestamp object, be sure to use only Timestamp
-    objects (and datetime.timedeltas) in any operation.
-
-    Use Timestamp.fromISOformat() and Timestamp.fromtimestampformat() to
-    create Timestamp objects from MediaWiki string formats.
-    As these constructors are typically used to create objects using data
-    passed provided by site and page methods, some of which return a Timestamp
-    when previously they returned a MediaWiki string representation, these
-    methods also accept a Timestamp object, in which case they return a clone.
-
-    Use Site.server_time() for the current time; this is more reliable
-    than using Timestamp.utcnow().
-    """
-
-    mediawikiTSFormat = '%Y%m%d%H%M%S'
-    _ISO8601Format_new = '{0:+05d}-{1:02d}-{2:02d}T{3:02d}:{4:02d}:{5:02d}Z'
-
-    def clone(self) -> datetime.datetime:
-        """Clone this instance."""
-        return self.replace(microsecond=self.microsecond)
-
-    @classproperty
-    def ISO8601Format(cls: Type['Timestamp']) -> str:
-        """ISO8601 format string class property for compatibility purpose."""
-        return cls._ISO8601Format()
-
-    @classmethod
-    def _ISO8601Format(cls: Type['Timestamp'], sep: str = 'T') -> str:
-        """ISO8601 format string.
-
-        :param sep: one-character separator, placed between the date and time
-        :return: ISO8601 format string
-        """
-        assert len(sep) == 1
-        return '%Y-%m-%d{}%H:%M:%SZ'.format(sep)
-
-    @classmethod
-    def fromISOformat(cls: Type['Timestamp'], ts: Union[str, 'Timestamp'],
-                      sep: str = 'T') -> 'Timestamp':
-        """Convert an ISO 8601 timestamp to a Timestamp object.
-
-        :param ts: ISO 8601 timestamp or a Timestamp object already
-        :param sep: one-character separator, placed between the date and time
-        :return: Timestamp object
-        """
-        # If inadvertently passed a Timestamp object, use replace()
-        # to create a clone.
-        if isinstance(ts, cls):
-            return ts.clone()
-        return cls.strptime(ts, cls._ISO8601Format(sep))
-
-    @classmethod
-    def fromtimestampformat(cls: Type['Timestamp'], ts: Union[str, 'Timestamp']
-                            ) -> 'Timestamp':
-        """Convert a MediaWiki internal timestamp to a Timestamp object."""
-        # If inadvertently passed a Timestamp object, use replace()
-        # to create a clone.
-        if isinstance(ts, cls):
-            return ts.clone()
-        if len(ts) == 8:  # year, month and day are given only
-            ts += '000'
-        return cls.strptime(ts, cls.mediawikiTSFormat)
-
-    def isoformat(self, sep: str = 'T') -> str:  # type: ignore[override]
-        """
-        Convert object to an ISO 8601 timestamp accepted by MediaWiki.
-
-        datetime.datetime.isoformat does not postfix the ISO formatted date
-        with a 'Z' unless a timezone is included, which causes MediaWiki
-        ~1.19 and earlier to fail.
-        """
-        return self.strftime(self._ISO8601Format(sep))
-
-    def totimestampformat(self) -> str:
-        """Convert object to a MediaWiki internal timestamp."""
-        return self.strftime(self.mediawikiTSFormat)
-
-    def __str__(self) -> str:
-        """Return a string format recognized by the API."""
-        return self.isoformat()
-
-    def __add__(self, other: datetime.timedelta) -> 'Timestamp':
-        """Perform addition, returning a Timestamp instead of datetime."""
-        newdt = super().__add__(other)
-        if isinstance(newdt, datetime.datetime):
-            return Timestamp(newdt.year, newdt.month, newdt.day, newdt.hour,
-                             newdt.minute, newdt.second, newdt.microsecond,
-                             newdt.tzinfo)
-        return newdt
-
-    def __sub__(self, other: datetime.timedelta  # type: ignore[override]
-                ) -> 'Timestamp':
-        """Perform subtraction, returning a Timestamp instead of datetime."""
-        newdt = super().__sub__(other)
-        if isinstance(newdt, datetime.datetime):
-            return Timestamp(newdt.year, newdt.month, newdt.day, newdt.hour,
-                             newdt.minute, newdt.second, newdt.microsecond,
-                             newdt.tzinfo)
-        return newdt
 
 
 class Coordinate(_WbRepresentation):
@@ -1275,7 +1169,7 @@ def sleep(secs: int) -> None:
     """
     if secs >= 30:
         stopme()
-    time.sleep(secs)
+    time_sleep(secs)
 
 
 def stopme() -> None:
