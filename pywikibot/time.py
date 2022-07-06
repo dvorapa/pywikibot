@@ -1,6 +1,6 @@
 """Time handling module.
 
-.. versionadded:: 7.4
+.. versionadded:: 7.5
 """
 #
 # (C) Pywikibot team, 2007-2022
@@ -22,10 +22,9 @@ __all__ = (
     'str2timedelta',
     'MW_KEYS',
     'Timestamp',
-    'TZoneUTC',
 )
 
-#: ..versionadded:: 7.4
+#: ..versionadded:: 7.5
 MW_KEYS = types.MappingProxyType({
     's': 'seconds',
     'h': 'hours',
@@ -61,7 +60,7 @@ class Timestamp(datetime.datetime):
     Use Site.server_time() for the current time; this is more reliable
     than using Timestamp.utcnow().
 
-    .. versionchanged:: 7.4
+    .. versionchanged:: 7.5
        moved to :mod:`time` module
     """
 
@@ -80,7 +79,7 @@ class Timestamp(datetime.datetime):
         - ISO8601 format: YYYY-MM-DD[T ]HH:MM:SS[Z|±HH[MM[SS[.ffffff]]]]
         - POSIX format: seconds from Unix epoch S{1,13}[.ffffff]]
 
-        .. versionadded: 7.4
+        .. versionadded: 7.5
 
         :param ts: Timestamp, datetime.datetime or str
         :return: Timestamp object
@@ -99,7 +98,7 @@ class Timestamp(datetime.datetime):
     def _from_datetime(dt: datetime.datetime) -> 'Timestamp':
         """Convert a datetime.datetime timestamp to a Timestamp object.
 
-        .. versionadded: 7.4
+        .. versionadded: 7.5
         """
         return Timestamp(dt.year, dt.month, dt.day, dt.hour,
                          dt.minute, dt.second, dt.microsecond,
@@ -111,7 +110,7 @@ class Timestamp(datetime.datetime):
 
         Mediwiki timestamp format: YYYYMMDDHHMMSS
 
-        .. versionadded: 7.4
+        .. versionadded: 7.5
         """
         RE_MW = r'\d{14}$'  # noqa: N806
         m = re.match(RE_MW, timestr)
@@ -129,7 +128,7 @@ class Timestamp(datetime.datetime):
         ISO8601 format:
         - YYYY-MM-DD[T ]HH:MM:SS[[.,]ffffff][Z|±HH[MM[SS[.ffffff]]]]
 
-        .. versionadded: 7.4
+        .. versionadded: 7.5
         """
         RE_ISO8601 = (r'(?:\d{4}-\d{2}-\d{2})(?P<sep>[T ])'  # noqa: N806
                       r'(?:\d{2}:\d{2}:\d{2})(?P<u>[.,]\d{1,6})?'
@@ -171,7 +170,7 @@ class Timestamp(datetime.datetime):
 
         POSIX format: SECONDS[.ffffff]]
 
-        .. versionadded: 7.4
+        .. versionadded: 7.5
         """
         RE_POSIX = r'(?P<S>-?\d{1,13})(?:\.(?P<u>\d{1,6}))?$'  # noqa: N806
         m = re.match(RE_POSIX, timestr)
@@ -195,7 +194,7 @@ class Timestamp(datetime.datetime):
     def _from_string(cls: Type['Timestamp'], timestr: str) -> 'Timestamp':
         """Convert a string to a Timestamp object.
 
-        .. versionadded: 7.4
+        .. versionadded: 7.5
         """
         handlers = [
             cls._from_mw,
@@ -281,14 +280,14 @@ class Timestamp(datetime.datetime):
 
         See Note in datetime.timestamp().
 
-        .. versionadded: 7.4
+        .. versionadded: 7.5
         """
         return self.replace(tzinfo=datetime.timezone.utc).timestamp()
 
     def posix_timestamp_format(self) -> str:
         """Convert object to a POSIX timestamp format.
 
-        .. versionadded: 7.4
+        .. versionadded: 7.5
         """
         return '{ts:.6f}'.format(ts=self.posix_timestamp())
 
@@ -376,24 +375,3 @@ def parse_duration(string: str) -> Tuple[str, int]:
                          .format(string))
 
     return key, int(duration)
-
-
-class TZoneUTC(datetime.tzinfo):
-
-    """Class building a UTC tzinfo object."""
-
-    def utcoffset(self, dt) -> datetime.timedelta:
-        """Subclass implementation, return timedelta(0)."""
-        return ZERO
-
-    def tzname(self, dt) -> str:
-        """Subclass implementation."""
-        return 'UTC'
-
-    def dst(self, dt) -> datetime.timedelta:
-        """Subclass implementation, return timedelta(0)."""
-        return ZERO
-
-    def __repr__(self) -> str:
-        """Return a string representation."""
-        return '{}()'.format(self.__class__.__name__)
