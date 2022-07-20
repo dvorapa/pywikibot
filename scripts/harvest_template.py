@@ -101,6 +101,7 @@ will not add duplicate claims for the same member:
 #
 # Distributed under the terms of MIT License.
 #
+import re
 import signal
 import sys
 from typing import Any, Iterator, Optional
@@ -108,9 +109,11 @@ from typing import Any, Iterator, Optional
 import pywikibot
 from pywikibot import pagegenerators as pg
 from pywikibot import textlib
+from pywikibot import WbTime
 from pywikibot.backports import List, Tuple
 from pywikibot.bot import ConfigParserBot, OptionHandler, WikidataBot
 from pywikibot.exceptions import (
+    APIError,
     InvalidPageError,
     InvalidTitleError,
     NoPageError,
@@ -192,12 +195,14 @@ class HarvestRobot(ConfigParserBot, WikidataBot):
                 self.fields[key] = value
             else:  # backwards compatibility
                 self.fields[key] = (value, PropertyOptionHandler())
-        self.cacheSources()
-        # TODO: Make it a list including the redirects to the template
-        template_title = template_title.replace('_', ' ')
-        self.templateTitles = self.getTemplateSynonyms(template_title)
+        self.template_title = template_title.replace('_', ' ')
         self.linkR = textlib.compileLinkR()
         self.create_missing_item = self.opt.create
+
+    def setup(self):
+        """Cache some static data from wikis."""
+        self.cacheSources()
+        self.templateTitles = self.getTemplateSynonyms(self.template_title)
 
     def getTemplateSynonyms(self, title) -> List[str]:
         """Fetch redirects of the title, so we can check against them."""
@@ -218,6 +223,7 @@ class HarvestRobot(ConfigParserBot, WikidataBot):
 
     def template_link_target(self,
                              item: pywikibot.ItemPage,
+                             site: pywikibot.site.BaseSite,
                              link_text: str) -> Optional[pywikibot.ItemPage]:
         """Find the ItemPage target for a given link text.
 
@@ -225,7 +231,7 @@ class HarvestRobot(ConfigParserBot, WikidataBot):
            Only follow the redirect target if redirect page has no
            wikibase item.
         """
-        linked_page = pywikibot.Page(self.current_page.site, link_text)
+        linked_page = pywikibot.Page(site, link_text)
         try:
             exists = linked_page.exists()
         except (InvalidTitleError, InvalidPageError):
@@ -296,10 +302,11 @@ class HarvestRobot(ConfigParserBot, WikidataBot):
 
             # We found the template we were looking for
             for field_item in fielddict.items():
-                self.treat_field(item, field_item)
+                self.treat_field(item, page.site, field_item)
 
     def treat_field(self,
                     item: pywikibot.page.ItemPage,
+                    site: pywikibot.site.BaseSite,
                     field_item: Tuple[str, str]) -> None:
         """Process a single field of template fielddict.
 
@@ -309,8 +316,6 @@ class HarvestRobot(ConfigParserBot, WikidataBot):
         field = field.strip()
         if not field or field not in self.fields:
             return
-
-        site = self.current_page.site
 
         # todo: extend the list of tags to ignore
         value = textlib.removeDisabledParts(
@@ -334,7 +339,7 @@ class HarvestRobot(ConfigParserBot, WikidataBot):
         do_multi = self._get_option_with_fallback(options, 'multi')
         inverse_prop = self._get_option_with_fallback(options, 'inverse')
 
-        for target in handler(value, item, field):
+        for target in handler(value, site, item, field):
             claim = ppage.newClaim()
             claim.setTarget(target)
             # A generator might yield pages from multiple sites
@@ -362,12 +367,14 @@ class HarvestRobot(ConfigParserBot, WikidataBot):
                 exists_arg.add('p')
 
     def handle_wikibase_item(self, value: str,
+                             site: pywikibot.site.BaseSite,
                              item: pywikibot.page.ItemPage,
                              field: str) -> Iterator[pywikibot.ItemPage]:
         """Handle 'wikibase-item' claim type.
 
         .. versionadded:: 7.5
         """
+        value = value.replace('{{!}}', '|')
         prop, options = self.fields[field]
         matched = False
 
@@ -375,7 +382,7 @@ class HarvestRobot(ConfigParserBot, WikidataBot):
         for match in pywikibot.link_regex.finditer(value):
             matched = True
             link_text = match.group(1)
-            linked_item = self.template_link_target(item, link_text)
+            linked_item = self.template_link_target(item, site, link_text)
             if linked_item:
                 yield linked_item
 
@@ -388,9 +395,64 @@ class HarvestRobot(ConfigParserBot, WikidataBot):
                 .format(prop, field, value))
             return
 
-        linked_item = self.template_link_target(item, value)
+        linked_item = self.template_link_target(item, site, value)
         if linked_item:
             yield linked_item
+
+    def handle_time(self, value: str,
+                    site: pywikibot.site.BaseSite,
+                    *args) -> Iterator[WbTime]:
+        """Handle 'time' claim type.
+
+        .. versionadded:: 7.5
+        """
+        value = value.replace('{{!}}', '|')
+        value = value.replace('&nbsp;', ' ')
+        value = re.sub('</?sup>', '', value)
+
+        # Some wikis format dates using wikilinks. We construct
+        # all possible texts, e.g., "[[A|B]] of [[C]]" becomes
+        # "A of C" and "B of C", and parse them using the API.
+        # If the result is same for all the values, we import
+        # the value.
+        to_parse = {''}
+        prev_end = 0
+        for match in pywikibot.link_regex.finditer(value):
+            start, end = match.span()
+            since_prev_match = value[prev_end:start]
+
+            title = match.group('title').strip()
+            text = match.group(2)
+            if text:
+                text = text[1:].strip()  # remove '|'
+
+            new_to_parse = set()
+            for fragment in to_parse:
+                fragment += since_prev_match
+                new_to_parse.add(fragment + title)
+                if text:
+                    new_to_parse.add(fragment + text)
+
+            to_parse = new_to_parse
+            prev_end = end
+
+        rest = value[prev_end:]
+        to_parse = [text + rest for text in to_parse]
+
+        try:
+            result = self.repo.parsevalue('time', to_parse, language=site.lang)
+        except (APIError, ValueError):
+            return
+
+        out = None
+        for data in result:
+            if out is None:
+                out = data
+            elif out != data:
+                pywikibot.output('Found ambiguous date: "{}"'.format(value))
+                return
+
+        yield WbTime.fromWikibase(out, self.repo)
 
     @staticmethod
     def handle_string(value, *args) -> Iterator[str]:
@@ -410,13 +472,13 @@ class HarvestRobot(ConfigParserBot, WikidataBot):
         for match in self.linkR.finditer(value):
             yield match.group('url')
 
-    def handle_commonsmedia(self, value, *args
+    def handle_commonsmedia(self, value, site, *args
                             ) -> Iterator[pywikibot.FilePage]:
         """Handle 'commonsMedia' claim type.
 
         .. versionadded:: 7.5
         """
-        repo = self.current_page.site.image_repository()
+        repo = site.image_repository()
         image = pywikibot.FilePage(repo, value)
         if image.isRedirectPage():
             image = pywikibot.FilePage(image.getRedirectTarget())
@@ -493,6 +555,10 @@ def main(*args: str) -> None:
     if not template_title:
         pywikibot.error(
             'Please specify either -template or -transcludes argument')
+        return
+
+    if not fields:
+        pywikibot.error('No template parameters to harvest specified.')
         return
 
     if not gen.gens:
