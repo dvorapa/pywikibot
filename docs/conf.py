@@ -34,6 +34,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 docs_dir = dirname(__file__)
 repo_dir = abspath(join(docs_dir, '..'))
+sys.path.insert(0, repo_dir + '/pywikibot')
 sys.path.insert(0, repo_dir)
 os.chdir(repo_dir)
 
@@ -370,6 +371,7 @@ autodoc_typehints = 'description'
 # Allow lines like "Example:" to be followed by a code block
 napoleon_use_admonition_for_examples = True
 python_use_unqualified_type_names = True
+modindex_common_prefix = ['pywikibot.scripts.']
 
 # Pywikibot theme style
 html_permalinks_icon = '#'
