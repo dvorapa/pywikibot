@@ -101,9 +101,12 @@ Options (may be omitted):
   -namespace:NS   only archive pages from a given namespace
   -page:PAGE      archive a single PAGE, default ns is a user talk page
   -salt:SALT      specify salt
+  -keep           Preserve thread order in archive even if threads are
+                  archived later
 
 .. versionchanged:: 7.6
-   Localized variables for "archive" template parameter are supported
+   Localized variables for "archive" template parameter are supported.
+   `-keep` option was added.
 """
 #
 # (C) Pywikibot team, 2006-2022
@@ -111,6 +114,7 @@ Options (may be omitted):
 # Distributed under the terms of the MIT license.
 #
 import datetime
+import itertools
 import locale
 import os
 import re
@@ -314,7 +318,7 @@ class DiscussionPage(pywikibot.Page):
     Feed threads to it and run an update() afterwards.
     """
 
-    def __init__(self, source, archiver, params=None) -> None:
+    def __init__(self, source, archiver, params=None, keep=False) -> None:
         """Initializer."""
         super().__init__(source)
         self.threads = []
@@ -330,6 +334,7 @@ class DiscussionPage(pywikibot.Page):
         else:
             self.timestripper = self.archiver.timestripper
         self.params = params
+        self.keep = keep
         try:
             self.load_page()
         except NoPageError:
@@ -340,8 +345,28 @@ class DiscussionPage(pywikibot.Page):
             if self.params:
                 self.header = self.header % self.params
 
+    @staticmethod
+    def max(
+        ts1: Optional[pywikibot.Timestamp],
+        ts2: Optional[pywikibot.Timestamp]
+    ) -> Optional[pywikibot.Timestamp]:
+        """Calculate the maximum of two timestamps but allow None as value.
+
+        .. versionadded:: 7.6
+        """
+        if ts1 is None:
+            return ts2
+        if ts2 is None:
+            return ts1
+        return max(ts1, ts2)
+
     def load_page(self) -> None:
-        """Load the page to be archived and break it up into threads."""
+        """Load the page to be archived and break it up into threads.
+
+        .. versionchanged:: 7.6
+           If `-keep` option is given run through all threads and set
+           the current timestamp to the previous if the current is lower.
+        """
         self.header = ''
         self.threads = []
         self.archives = {}
@@ -369,6 +394,11 @@ class DiscussionPage(pywikibot.Page):
                 cur_thread.feed_line(line)
             self.threads.append(cur_thread)
 
+        if self.keep:
+            # set the timestamp to the previous if the current is lower
+            for first, second in itertools.pairwise(self.threads):
+                second.timestamp = self.max(first.timestamp, second.timestamp)
+
         # This extra info is not desirable when run under the unittest
         # framework, which may be run either directly or via setup.py
         if pywikibot.calledModuleName() not in ['archivebot_tests', 'setup']:
@@ -377,10 +407,14 @@ class DiscussionPage(pywikibot.Page):
 
     def is_full(self, max_archive_size: Size) -> bool:
         """Check whether archive size exceeded."""
+        if self.full:
+            return True
+
         size, unit = max_archive_size
-        if (self.size() > self.archiver.maxsize
-            or unit == 'B' and self.size() >= size
-                or unit == 'T' and len(self.threads) >= size):
+        self_size = self.size()
+        if (unit == 'B' and self_size >= size
+            or unit == 'T' and len(self.threads) >= size
+                or self_size > self.archiver.maxsize):
             self.full = True  # xxx: this is one-way flag
         return self.full
 
@@ -429,7 +463,8 @@ class PageArchiver:
 
     algo = 'none'
 
-    def __init__(self, page, template, salt: str, force: bool = False) -> None:
+    def __init__(self, page, template, salt: str, force: bool = False,
+                 keep=False) -> None:
         """Initializer.
 
         :param page: a page object to be archived
@@ -458,7 +493,7 @@ class PageArchiver:
         except KeyError:  # mw < 1.28
             self.maxsize = 2096128  # 2 MB - 1 KB gap
 
-        self.page = DiscussionPage(page, self)
+        self.page = DiscussionPage(page, self, keep=keep)
         self.comment_params = {
             'from': self.page.title(),
         }
@@ -553,21 +588,21 @@ class PageArchiver:
         return None
 
     def get_archive_page(self, title: str, params=None) -> DiscussionPage:
-        """
-        Return the page for archiving.
+        """Return the page for archiving.
 
         If it doesn't exist yet, create and cache it.
         Also check for security violations.
         """
-        page_title = self.page.title()
-        archive = pywikibot.Page(self.site, title)
-        if not (self.force or title.startswith(page_title + '/')
-                or self.key_ok()):
-            raise ArchiveSecurityError(
-                'Archive page {} does not start with page title ({})!'
-                .format(archive, page_title))
         if title not in self.archives:
-            self.archives[title] = DiscussionPage(archive, self, params)
+            page_title = self.page.title()
+            archive_link = pywikibot.Link(title, self.site)
+            if not (title.startswith(page_title + '/') or self.force
+                    or self.key_ok()):
+                raise ArchiveSecurityError(
+                    'Archive page {} does not start with page title ({})!'
+                    .format(archive_link, page_title))
+            self.archives[title] = DiscussionPage(archive_link, self, params)
+
         return self.archives[title]
 
     def get_params(self, timestamp, counter: int) -> dict:
@@ -635,7 +670,6 @@ class PageArchiver:
         params = self.get_params(self.now, counter)
         aux_params = self.get_params(self.now, counter + 1)
         counter_matters = (pattern % params) != (pattern % aux_params)
-        del params, aux_params
 
         # we need to start with the oldest archive since that is
         # the one the saved counter applies to, so sort the groups
@@ -649,6 +683,7 @@ class PageArchiver:
             # 1. it matters (AND)
             # 2. "era" (year, month, etc.) changes (AND)
             # 3. there is something to put to the new archive.
+            counter_found = False
             for i, thread in group:
                 threads_left = len(self.page.threads) - self.archived_threads
                 if threads_left <= int(self.get_attr('minthreadsleft', 5)):
@@ -663,7 +698,8 @@ class PageArchiver:
                 archive = self.get_archive_page(pattern % params, params)
 
                 if counter_matters:
-                    while counter > 1 and not archive.exists():
+                    while not counter_found and counter > 1 \
+                            and not archive.exists():
                         # This may happen when either:
                         # 1. a previous version of the bot run and reset
                         #    the counter without archiving anything
@@ -676,6 +712,10 @@ class PageArchiver:
                         params = self.get_params(thread.timestamp, counter)
                         archive = self.get_archive_page(
                             pattern % params, params)
+                    else:
+                        # There are only non existing pages found by count down
+                        counter_found = True
+
                     while archive.is_full(max_arch_size):
                         counter += 1
                         params = self.get_params(thread.timestamp, counter)
@@ -684,6 +724,7 @@ class PageArchiver:
 
                 archive.feed_thread(thread, max_arch_size)
                 self.archived_threads += 1
+
             if counter_matters:
                 era_change = True
 
@@ -755,6 +796,37 @@ class PageArchiver:
             self.page.update(comment)
 
 
+def process_page(pg, tmpl, salt: str, force: bool, keep: bool) -> bool:
+    """Call PageArchiver for a single page.
+
+    :return: Return True to continue with the next page, False to break
+        the loop.
+
+    .. versionadded:: 7.6
+    """
+    if not pg.exists():
+        pywikibot.info('{} does not exist, skipping...'.format(pg))
+        return True
+
+    pywikibot.info('\n\n>>> <<lightpurple>>{}<<default>> <<<'.format(pg))
+    # Catching exceptions, so that errors in one page do not bail out
+    # the entire process
+    try:
+        archiver = PageArchiver(pg, tmpl, salt, force, keep)
+        archiver.run()
+    except ArchiveBotSiteConfigError as e:
+        # no stack trace for errors originated by pages on-site
+        pywikibot.error('Missing or malformed template in page {}: {}'
+                        .format(pg, e))
+    except Exception:
+        pywikibot.exception('Error occurred while processing page {}'
+                            .format(pg))
+    except KeyboardInterrupt:
+        pywikibot.info('\nUser quit bot run...')
+        return False
+    return True
+
+
 def main(*args: str) -> None:
     """
     Process command line arguments and invoke bot.
@@ -769,6 +841,7 @@ def main(*args: str) -> None:
     salt = ''
     force = False
     calc = None
+    keep = False
     templates = []
 
     local_args = pywikibot.handle_args(args)
@@ -798,6 +871,8 @@ def main(*args: str) -> None:
             pagename = value
         elif option == 'namespace':
             namespace = value
+        elif option == 'keep':
+            keep = True
 
     site = pywikibot.Site()
 
@@ -835,25 +910,7 @@ def main(*args: str) -> None:
                                      namespaces=ns,
                                      content=True)
         for pg in gen:
-            if not pg.exists():
-                pywikibot.info('{} does not exist, skipping...'.format(pg))
-                continue
-            pywikibot.info('\n\n>>> <<lightpurple>>{}<<default>> <<<'
-                           .format(pg.title()))
-            # Catching exceptions, so that errors in one page do not bail out
-            # the entire process
-            try:
-                archiver = PageArchiver(pg, tmpl, salt, force)
-                archiver.run()
-            except ArchiveBotSiteConfigError as e:
-                # no stack trace for errors originated by pages on-site
-                pywikibot.error('Missing or malformed template in page {}: {}'
-                                .format(pg, e))
-            except Exception:
-                pywikibot.exception('Error occurred while processing page {}'
-                                    .format(pg))
-            except KeyboardInterrupt:
-                pywikibot.info('\nUser quit bot run...')
+            if not process_page(pg, tmpl, salt, force, keep):
                 return
 
 
