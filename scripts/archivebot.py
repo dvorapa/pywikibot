@@ -107,7 +107,8 @@ Options (may be omitted):
 
 .. versionchanged:: 7.6
    Localized variables for "archive" template parameter are supported.
-   `-keep` option was added.
+   `User:MiszaBot/config` is the default template. `-keep` option was
+   added.
 """
 #
 # (C) Pywikibot team, 2006-2022
@@ -361,6 +362,8 @@ class DiscussionPage(pywikibot.Page):
         .. versionchanged:: 7.6
            If `-keep` option is given run through all threads and set
            the current timestamp to the previous if the current is lower.
+        .. versionchanged:: 7.7
+           Load unsigned threads using timestamp of the next thread.
         """
         self.header = ''
         self.threads = []
@@ -388,6 +391,11 @@ class DiscussionPage(pywikibot.Page):
             for line in lines:
                 cur_thread.feed_line(line)
             self.threads.append(cur_thread)
+
+        # add latter timestamp to predecessor if it is None
+        for last, prev in pairwise(reversed(self.threads)):
+            if not prev.timestamp:
+                prev.timestamp = last.timestamp
 
         if self.keep:
             # set the timestamp to the previous if the current is lower
