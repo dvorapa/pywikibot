@@ -105,36 +105,66 @@ The 'user' tests are not yet enabled on AppVeyor builds.
 Environment variables
 =====================
 
-There are a set of 'edit failure' tests, which attempt to write to the wikis
-and **should** fail. If there is a bug in pywikibot or MediaWiki, these
-tests **may** actually perform a write operation.
+**PYWIKIBOT_TEST_AUTORUN**
+  Enable script tests running automatically without specifying a generator.
+  The scripts are listed in :attr:`tests.script_tests.auto_run_script_list`.
+  Currently only *deeptest* uses it.
 
-These 'edit failure' tests are disabled by default. On Travis they are enabled
-by default on builds by any other GitHub account except 'wikimedia'.
+**PYWIKIBOT_TEST_MODULES**
+  Only run tests given with this environment variable. Multiple tests must be
+  separated by a ``,`` without any white space. Available library tests are
+  listed in :ref:`Library tests` and script tests can be found in
+  :ref:`Script tests`. To enable only :mod:`tests.site_tests` and
+  :mod:`tests.wikibase_tests` set the environment variable as::
 
-To disable 'edit failure' tests, set PYWIKIBOT_TEST_WRITE_FAIL=0
+    PYWIKIBOT_TEST_MODULES=site,wikibase
 
-There are also several other 'write' tests which also attempt to perform
-write operations successfully.  These **will** write to the wikis, and they
-should always only write to 'test' wikis.
+  .. note:: test names must be given without subsequent ``_tests``.
 
-These 'write' tests are disabled by default, and currently cannot be
-run on Travis or AppVeyor as they require interaction using a terminal. Also
-enabling them won't enable 'edit failure' tests.
+**PYWIKIBOT_TEST_RUNNING**
+  This environment variable skips tests instead of raising
+  :exc:`exceptions.MaxlagTimeoutError` when maximum retries attempted due to
+  maxlag without success. It is also used by :mod:`tests.script_tests` for code
+  coverage. Github actions and Appveyor tests activate this variable::
 
-To enable 'write' tests, set PYWIKIBOT_TEST_WRITE=1
+    PYWIKIBOT_TEST_RUNNING=1
 
-Enabling only 'edit failure' tests or 'write' tests won't enable the other tests
-automatically.
+**PYWIKIBOT_TEST_WRITE**
+  There are also several other 'write' tests which also attempt to perform
+  write operations successfully.  These **will** write to the wikis, and they
+  should always only write to 'test' wikis.
+
+  These 'write' tests are disabled by default, and currently cannot be
+  run on Travis or AppVeyor as they require interaction using a terminal. Also
+  enabling them won't enable 'edit failure' tests.
+
+  To enable 'write' tests, set::
+
+    PYWIKIBOT_TEST_WRITE=1
+
+**PYWIKIBOT_TEST_WRITE_FAIL**
+  There are a set of 'edit failure' tests, which attempt to write to the wikis
+  and **should** fail. If there is a bug in pywikibot or MediaWiki, these
+  tests **may** actually perform a write operation.
+
+  These 'edit failure' tests are disabled by default. On Travis they are enabled
+  by default on builds by any other GitHub account except 'wikimedia'.
+
+  To disable 'edit failure' tests, set::
+
+    PYWIKIBOT_TEST_WRITE_FAIL=0
+
+.. note:: Enabling only 'edit failure' tests or 'write' tests won't enable the other tests
+   automatically.
 
 Decorators
-=====================
+==========
 
 pywikibot's test suite, including Python's unittest module, provides decorators
 to modify the behaviour of the test cases.
 
 @unittest.skipIf
------------------
+----------------
 Skip a test if the condition is true. Refer to unittest's documentation.
 
 ::
@@ -145,7 +175,7 @@ Skip a test if the condition is true. Refer to unittest's documentation.
   def test_skipIf(self):
 
 @unittest.skipUnless
----------------------
+--------------------
 Skip a test unless the condition is true. Refer to unittest's documentation.
 
 ::
@@ -246,9 +276,9 @@ the class attribute 'sites' may include a hostname.
 Other class attributes
 ----------------------
 
-- ``net = False`` : test class does not use a site
-- ``dry = True`` : test class can use a fake site object
-- ``cached = True``:  test class may aggressively cache API responses
-- ``login = True`` : test class needs to login to site
-- ``rights = '<rights>'`` : test class needs specific rights. Multiple rights  must be delimited with `,`.
-- ``write = True`` : test class needs to write to a site
+- ``net = False``: test class does not use a site
+- ``dry = True``: test class can use a fake site object
+- ``cached = True``: test class may aggressively cache API responses
+- ``login = True``: test class needs to login to site
+- ``rights = '<rights>'``: test class needs specific rights. Multiple rights  must be delimited with ``,``.
+- ``write = True``: test class needs to write to a site
