@@ -64,6 +64,7 @@ def list_scripts(path, exclude=None):
 script_list = framework_scripts + list_scripts(scripts_path)
 
 script_input = {
+    'create_isbn_edition': '\n',
     'interwiki': 'Test page that should not exist\n',
     'misspelling': 'q\n',
     'pagefromfile': 'q\n',
@@ -71,6 +72,7 @@ script_input = {
                                   # Enter to begin, Enter for default summary.
     'shell': '\n',  # exits on end of stdin
     'solve_disambiguation': 'Test page\nq\n',
+    'unusedfiles': 'q\n',
     'upload':
         'https://upload.wikimedia.org/wikipedia/commons/'
         '8/80/Wikipedia-logo-v2.svg\n\n\n',
@@ -83,6 +85,7 @@ auto_run_script_list = [
     'category_redirect',
     'checkimages',
     'clean_sandbox',
+    'create_isbn_edition',
     'delinker',
     'login',
     'misspelling',
@@ -399,13 +402,17 @@ class TestScriptSimulate(DefaultSiteTestCase, PwbTestCase,
 
     _expected_failures = {
         'catall',          # stdout user interaction
+        'checkimages',
+        'noreferences',
+        'patrol',
+        'revertbot',
+        'unusedfiles',     # not localized for default sites
         'upload',          # raises custom ValueError
     }
 
     _allowed_failures = [
         'disambredir',
         'misspelling',   # T94681
-        'watchlist',     # T77965
     ]
 
     _arguments = '-simulate'
@@ -422,29 +429,43 @@ class TestScriptGenerator(DefaultSiteTestCase, PwbTestCase,
     login = True
 
     _expected_failures = {
+        '_login',
         'add_text',
         'archivebot',
+        'blockpageschecker',
         'category',
         'change_pagelang',
+        'checkimages',
         'claimit',
+        'clean_sandbox',
         'dataextend',
         'data_ingestion',
         'delete',
+        'delinker',
         'djvutext',
         'download_dump',
         'harvest_template',
         'interwiki',
         'listpages',
+        'misspelling',
         'movepages',
         'pagefromfile',
+        'parser_function_count',
+        'patrol',
         'protect',
         'redirect',
         'reflinks',
         'replicate_wiki',
+        'revertbot',
+        'shell',
         'speedy_delete',
         'template',
         'templatecount',
         'transferbot',
+        'unusedfiles',
+        'upload',
+        'watchlist',
+        'welcome',
     }
 
     _allowed_failures = [
