@@ -46,7 +46,6 @@ from pywikibot.backports import Tuple
 from pywikibot.bot import (
     ConfigParserBot,
     ExistingPageBot,
-    NoRedirectPageBot,
     SingleSiteBot,
 )
 
@@ -63,12 +62,13 @@ class BasicBot(
     # CurrentPageBot,  # Sets 'current_page'. Process it in treat_page method.
     #                  # Not needed here because we have subclasses
     ExistingPageBot,  # CurrentPageBot which only treats existing pages
-    NoRedirectPageBot,  # CurrentPageBot which only treats non-redirects
 ):
 
     """
     An incomplete sample bot.
     """
+
+    use_redirects = False  # treats non-redirects only
 
     def __init__(self, generator, **kwargs) -> None:
         """

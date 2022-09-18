@@ -36,7 +36,7 @@ from urllib.parse import quote_plus
 from pywikibot import pagegenerators, textlib
 
 from pywikibot.bot import (
-    SingleSiteBot, ExistingPageBot, NoRedirectPageBot, AutomaticTWSummaryBot)
+    SingleSiteBot, ExistingPageBot, AutomaticTWSummaryBot)
 from pywikibot.tools import issue_deprecation_warning
 
 # This is required for the text that is shown when you run this script
@@ -52,7 +52,6 @@ class BasicBot(
     # CurrentPageBot,  # Sets 'current_page'. Process it in treat_page method.
     #                  # Not needed here because we have subclasses
     ExistingPageBot,  # CurrentPageBot which only treats existing pages
-    NoRedirectPageBot,  # CurrentPageBot which only treats non-redirects
     AutomaticTWSummaryBot,  # Automatically defines summary; needs summary_key
 ):
 
@@ -67,6 +66,7 @@ class BasicBot(
     @type summary_key: str
     """
 
+    use_redirects = False  # treats non-redirects only
     summary_key = 'basic-changing'
 
     def __init__(self, generator, **kwargs):
