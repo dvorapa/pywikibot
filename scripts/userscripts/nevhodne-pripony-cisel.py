@@ -151,7 +151,7 @@ class BasicBot(
         # with open('soubor.txt', 'a') as soubor:
         #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
         # part = textlib.replaceExcept(part, r'', r'', self.vyjimky)
-        ti = re.findall(r'[0-9%]+[\-–—]?(?:ti|ní)(?: |&nbsp;| )[^ \n\.,]+', text)
+        ti = re.findall(r'[0-9%]+[\-–—]?(?:ti|mi|ní)(?: |&nbsp;| )[^ \n\.,]+', text)
         if ti:
             self.seznam += '# ' + self.current_page.title(as_link=True) + '\t' + ', '.join(ti) + '\n'
 
