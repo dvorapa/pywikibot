@@ -363,16 +363,21 @@ class TestScriptSimulate(DefaultSiteTestCase, PwbTestCase,
     _expected_failures = {
         'catall',          # stdout user interaction
         'checkimages',
-        'patrol',
         'revertbot',
+        'shell',
         'unusedfiles',     # not localized for default sites
     }
 
     _allowed_failures = {
         'blockpageschecker',  # not localized for some test sites
+        'clean_sandbox',
+        'delinker',
         'disambredir',
         'misspelling',   # T94681
         'noreferences',
+        'nowcommons',
+        'patrol',
+        'unusedfiles',
         'upload',  # raises custom ValueError
         'watchlist',  # not logged in
     }
