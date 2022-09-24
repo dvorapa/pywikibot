@@ -1,6 +1,15 @@
 Current release 7.7.0
 ^^^^^^^^^^^^^^^^^^^^^
 
+* TypeError is raised if *aliases* parameter of :meth:`WikibaseEntity.editEntity
+  <page.WikibaseEntity.editEntity>` or :meth:`WikibasePage.editEntity
+  <page.WikibasePage.editEntity>` method is not a list (:phab:`T318034`)
+* Raise TypeError in :meth:`AliasesDict.normalizeData
+  <pywikibot.page._collections.AliasesDict.normalizeData>` if *data* value is not a list (:phab:`T318034`)
+* tools' threading classes were moved to :mod:`tools.threading` submodule
+* No longer raise NotimplementedError in :meth:`APISite.page_from_repository
+  <pywikibot.site._apisite.APISite.page_from_repository>` (:phab:`T318033`)
+* Ability to set ``PYWIKIBOT_TEST_...`` environment variables with pwb wrapper (:phab:`T139847`)
 * OmegaWiki family was removed
 * Provide global ``-config`` option to specify the user config file name
 * Run :mod:`pywikibot.scripts.login` script in parallel tasks if ``-async`` option is given (:phab:`T57899`)
@@ -14,6 +23,7 @@ Current release 7.7.0
 Deprecations
 ^^^^^^^^^^^^
 
+* 7.7.0: :mod:`tools.threading` classes should no longer imported from :mod:`tools`
 * 7.6.0: :mod:`tools.itertools` datatypes should no longer imported from :mod:`tools`
 * 7.6.0: :mod:`tools.collections` datatypes should no longer imported from :mod:`tools`
 * 7.5.0: :mod:`textlib`.tzoneFixedOffset class will be removed in favour of :class:`time.TZoneFixedOffset`

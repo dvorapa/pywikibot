@@ -207,46 +207,48 @@ class CategoryPreprocess(BaseBot):
         self.edit_redirects = edit_redirects
         self.create = create
 
-    def determine_type_target(self, page) -> Optional[pywikibot.Page]:
+    def determine_type_target(
+        self,
+        page: pywikibot.Page
+    ) -> Optional[pywikibot.Page]:
         """
         Return page to be categorized by type.
 
         :param page: Existing, missing or redirect page to be processed.
-        :type page: pywikibot.Page
         :return: Page to be categorized.
         """
         if page.exists():
-            if page.isRedirectPage():
-                # if it is a redirect, use the redirect target instead
-                redir_target = page.getRedirectTarget()
-                if self.follow_redirects:
-                    if redir_target.exists():
-                        return redir_target
+            if not page.isRedirectPage():
+                return page
 
-                    if self.create:
-                        redir_target.text = ''
-                        pywikibot.output('Redirect target {} does not exist '
-                                         'yet; creating.'.format(
-                                             redir_target.title(as_link=True)))
-                        return redir_target
+            # if it is a redirect, use the redirect target instead
+            redir_target = page.getRedirectTarget()
+            if self.follow_redirects:
+                if redir_target.exists():
+                    return redir_target
 
-                    if self.edit_redirects:
-                        return page
-
-                    pywikibot.warning(
-                        'Redirect target {} cannot be modified; skipping.'
-                        .format(redir_target))
-                    return None
+                if self.create:
+                    redir_target.text = ''
+                    pywikibot.output('Redirect target {} does not exist yet; '
+                                     'creating.'.format(
+                                         redir_target.title(as_link=True)))
+                    return redir_target
 
                 if self.edit_redirects:
                     return page
 
-                pywikibot.warning('Page {} is a redirect to {}; skipping.'
-                                  .format(page.title(as_link=True),
-                                          redir_target.title(as_link=True)))
+                pywikibot.warning(
+                    'Redirect target {} cannot be modified; skipping.'
+                    .format(redir_target))
                 return None
 
-            return page
+            if self.edit_redirects:
+                return page
+
+            pywikibot.warning('Page {} is a redirect to {}; skipping.'
+                              .format(page.title(as_link=True),
+                                      redir_target.title(as_link=True)))
+            return None
 
         if self.create:
             page.text = ''
@@ -447,7 +449,6 @@ class CategoryAddBot(CategoryPreprocess):
         self.sort = sort_by_last_name
         self.create = create
         self.follow_redirects = follow_redirects
-        self.always = False
         self.comment = comment
 
     @staticmethod
@@ -1554,14 +1555,11 @@ def main(*args: str) -> None:
     cat_db = CategoryDatabase(rebuild=rebuild)
 
     if action == 'add':
-        gen = gen_factory.getCombinedGenerator()
+        gen = gen_factory.getCombinedGenerator(preload=True)
         if not gen:
             # default for backwards compatibility
             gen_factory.handle_arg('-links')
-            gen = gen_factory.getCombinedGenerator()
-        # The preloading generator is responsible for downloading multiple
-        # pages from the wiki simultaneously.
-        gen = pagegenerators.PreloadingGenerator(gen)
+            gen = gen_factory.getCombinedGenerator(preload=True)
         bot = CategoryAddBot(gen,
                              newcat=options.get('to'),
                              sort_by_last_name=sort_by_last_name,
