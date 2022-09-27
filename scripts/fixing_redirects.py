@@ -138,7 +138,7 @@ class FixingRedirectBot(SingleSiteBot, ExistingPageBot, AutomaticTWSummaryBot):
 
             if ((new_page_title == link_text and not section)
                     or self.opt.overwrite):
-                newlink = '[[{}]]'.format(new_page_title)
+                newlink = f'[[{new_page_title}]]'
             # check if we can create a link with trailing characters instead of
             # a pipelink
             elif (len(new_page_title) <= len(link_text)
@@ -238,9 +238,9 @@ def main(*args: str) -> None:
 
     mysite = pywikibot.Site()
     if mysite.sitename == 'wikipedia:nl':
-        pywikibot.output(
+        pywikibot.info(
             '<<lightred>>There is consensus on the Dutch Wikipedia that '
-            'bots should not be used to fix redirects.<<default>>')
+            'bots should not be used to fix redirects.')
         return
 
     if featured:

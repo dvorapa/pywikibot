@@ -72,7 +72,7 @@ class Family:
 
     name = None
 
-    langs = {}  # type: Dict[str, str]
+    langs: Dict[str, str] = {}
 
     # For interwiki sorting order see
     # https://meta.wikimedia.org/wiki/Interwiki_sorting_order
@@ -173,12 +173,12 @@ class Family:
 
     # A dict of tuples for different sites with names of templates
     # that indicate an edit should be avoided
-    edit_restricted_templates = {}  # type: Dict[str, Tuple[str, ...]]
+    edit_restricted_templates: Dict[str, Tuple[str, ...]] = {}
 
     # A dict of tuples for different sites with names of archive
     # templates that indicate an edit of non-archive bots
     # should be avoided
-    archived_page_templates = {}  # type: Dict[str, Tuple[str, ...]]
+    archived_page_templates: Dict[str, Tuple[str, ...]] = {}
 
     # A list of projects that share cross-project sessions.
     cross_projects = []
@@ -191,34 +191,34 @@ class Family:
     cross_projects_cookie_username = 'centralauth_User'
 
     # A list with the name in the cross-language flag permissions
-    cross_allowed = []  # type: List[str]
+    cross_allowed: List[str] = []
 
     # A dict with the name of the category containing disambiguation
     # pages for the various languages. Only one category per language,
     # and without the namespace, so add things like:
     # 'en': "Disambiguation"
-    disambcatname = {}  # type: Dict[str, str]
+    disambcatname: Dict[str, str] = {}
 
     # attop is a list of languages that prefer to have the interwiki
     # links at the top of the page.
-    interwiki_attop = []  # type: List[str]
+    interwiki_attop: List[str] = []
     # on_one_line is a list of languages that want the interwiki links
     # one-after-another on a single line
-    interwiki_on_one_line = []  # type: List[str]
+    interwiki_on_one_line: List[str] = []
     # String used as separator between interwiki links and the text
     interwiki_text_separator = '\n\n'
 
     # Similar for category
-    category_attop = []  # type: List[str]
+    category_attop: List[str] = []
     # on_one_line is a list of languages that want the category links
     # one-after-another on a single line
-    category_on_one_line = []  # type: List[str]
+    category_on_one_line: List[str] = []
     # String used as separator between category links and the text
     category_text_separator = '\n\n'
     # When both at the bottom should categories come after interwikilinks?
     # TODO: T86284 Needed on Wikia sites, as it uses the CategorySelect
     # extension which puts categories last on all sites. TO BE DEPRECATED!
-    categories_last = []  # type: List[str]
+    categories_last: List[str] = []
 
     # Which languages have a special order for putting interlanguage
     # links, and what order is it? If a language is not in
@@ -238,15 +238,15 @@ class Family:
     # Which language codes no longer exist and by which language code
     # should they be replaced. If for example the language with code xx:
     # now should get code yy:, add {'xx':'yy'} to obsolete.
-    interwiki_replacements = {}  # type: Dict[str, str]
+    interwiki_replacements: Dict[str, str] = {}
 
     # Codes that should be removed, usually because the site has been
     # taken down.
-    interwiki_removals = []  # type: List[str]
+    interwiki_removals: List[str] = []
 
     # Language codes of the largest wikis. They should be roughly sorted
     # by size.
-    languages_by_size = []  # type: List[str]
+    languages_by_size: List[str] = []
 
     # Some languages belong to a group where the possibility is high that
     # equivalent articles have identical titles among the group.
@@ -339,7 +339,7 @@ class Family:
 
     # Some wiki farms have UrlShortener extension enabled only on the main
     # site. This value can specify this last one with (lang, family) tuple.
-    shared_urlshortner_wiki = None  # type: Optional[Tuple[str, str]]
+    shared_urlshortner_wiki: Optional[Tuple[str, str]] = None
 
     title_delimiter_and_aliases = ' _'
     """Titles usually are delimited by a space and the alias is replaced
@@ -380,7 +380,7 @@ class Family:
                 Family._families[fam] = myfamily
                 return Family._families[fam]
         else:
-            raise UnknownFamilyError('Family {} does not exist'.format(fam))
+            raise UnknownFamilyError(f'Family {fam} does not exist')
 
         try:
             # Ignore warnings due to dots in family names.
@@ -391,7 +391,7 @@ class Family:
                 sys.path.append(dirname(family_file))
                 mod = import_module(splitext(basename(family_file))[0])
         except ImportError:
-            raise UnknownFamilyError('Family {} does not exist'.format(fam))
+            raise UnknownFamilyError(f'Family {fam} does not exist')
         cls = mod.Family.instance
         if cls.name != fam:
             warnings.warn('Family name {} does not match family module name {}'
@@ -561,19 +561,19 @@ class Family:
         protocol, host = self._hostname(code, protocol)
         if protocol == 'https':
             uri = self.ssl_pathprefix(code) + uri
-        return urlparse.urljoin('{}://{}'.format(protocol, host), uri)
+        return urlparse.urljoin(f'{protocol}://{host}', uri)
 
     def path(self, code) -> str:
         """Return path to index.php."""
-        return '{}/index.php'.format(self.scriptpath(code))
+        return f'{self.scriptpath(code)}/index.php'
 
     def querypath(self, code) -> str:
         """Return path to query.php."""
-        return '{}/query.php'.format(self.scriptpath(code))
+        return f'{self.scriptpath(code)}/query.php'
 
     def apipath(self, code) -> str:
         """Return path to api.php."""
-        return '{}/api.php'.format(self.scriptpath(code))
+        return f'{self.scriptpath(code)}/api.php'
 
     def eventstreams_host(self, code):
         """Hostname for EventStreams.
@@ -591,7 +591,7 @@ class Family:
 
     def get_address(self, code, title) -> str:
         """Return the path to title using index.php with redirects disabled."""
-        return '{}?title={}&redirect=no'.format(self.path(code), title)
+        return f'{self.path(code)}?title={title}&redirect=no'
 
     def interface(self, code) -> str:
         """Return interface to use for code."""
@@ -653,7 +653,7 @@ class Family:
                 # Use the code and family instead of the url
                 # This is only creating a Site instance if domain matches
                 site = pywikibot.Site(code, self.name)
-                pywikibot.log('Found candidate {}'.format(site))
+                pywikibot.log(f'Found candidate {site}')
 
                 for iw_url in site._interwiki_urls():
                     iw_url, *_ = iw_url.partition('{}')
@@ -677,7 +677,7 @@ class Family:
 
     def dbName(self, code) -> str:
         """Return the name of the MySQL database."""
-        return '{}{}'.format(code, self.name)
+        return f'{code}{self.name}'
 
     def encoding(self, code) -> str:
         """Return the encoding for a specific language wiki."""
@@ -710,7 +710,7 @@ class Family:
         return self.name
 
     def __repr__(self) -> str:
-        return 'Family("{}")'.format(self.name)
+        return f'Family("{self.name}")'
 
     def shared_image_repository(self, code):
         """Return the shared image repository, if any."""
@@ -825,11 +825,11 @@ class SubdomainFamily(Family):
             codes += cls.closed_wikis
 
         # shortcut this classproperty
-        cls.langs = {code: '{}.{}'.format(code, cls.domain)
+        cls.langs = {code: f'{code}.{cls.domain}'
                      for code in codes}
 
         if hasattr(cls, 'code_aliases'):
-            cls.langs.update({alias: '{}.{}'.format(code, cls.domain)
+            cls.langs.update({alias: f'{code}.{cls.domain}'
                               for alias, code in cls.code_aliases.items()})
 
         return cls.langs
@@ -955,9 +955,9 @@ class WikimediaFamily(Family):
     }
 
     # Not open for edits; stewards can still edit.
-    closed_wikis = []  # type: List[str]
+    closed_wikis: List[str] = []
     # Completely removed
-    removed_wikis = []  # type: List[str]
+    removed_wikis: List[str] = []
 
     # WikimediaFamily uses Wikibase for the category name containing
     # disambiguation pages for the various languages. We need the
@@ -978,7 +978,7 @@ class WikimediaFamily(Family):
             return 'wikimedia.org'
 
         raise NotImplementedError(
-            "Family {} needs to define property 'domain'".format(cls.name))
+            f"Family {cls.name} needs to define property 'domain'")
 
     @classproperty
     def interwiki_removals(cls):
@@ -1014,7 +1014,7 @@ class WikimediaOrgFamily(SingleSiteFamily, WikimediaFamily):
     @classproperty
     def domain(cls) -> str:
         """Return the parents domain with a subdomain prefix."""
-        return '{}.wikimedia.org'.format(cls.name)
+        return f'{cls.name}.wikimedia.org'
 
 
 def AutoFamily(name: str, url: str) -> SingleSiteFamily:

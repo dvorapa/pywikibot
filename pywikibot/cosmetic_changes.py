@@ -200,7 +200,7 @@ def _format_isbn_match(match: Match[str], strict: bool = True) -> str:
     except stdnum_isbn.ValidationError as e:
         if strict:
             raise
-        pywikibot.log('ISBN "{}" validation error: {}'.format(isbn, e))
+        pywikibot.log(f'ISBN "{isbn}" validation error: {e}')
         return isbn
 
     return stdnum_isbn.format(isbn)
@@ -429,7 +429,7 @@ class CosmeticChangesToolkit:
             # lowerspaced and underscored namespaces
             for i, item in enumerate(namespaces):
                 item = item.replace(' ', '[ _]')
-                item = '[{}{}]'.format(item[0], item[0].lower()) + item[1:]
+                item = f'[{item[0]}{item[0].lower()}]' + item[1:]
                 namespaces[i] = item
             namespaces.append(first_lower(final_ns))
             if final_ns and namespaces:
@@ -442,14 +442,14 @@ class CosmeticChangesToolkit:
                         r'\[\[\s*({}) *:(?P<name>[^\|\]]*?\.({}))'
                         r'(?P<label>.*?)\]\]'
                         .format('|'.join(namespaces), '|'.join(extensions)),
-                        r'[[{}:\g<name>\g<label>]]'.format(final_ns),
+                        fr'[[{final_ns}:\g<name>\g<label>]]',
                         exceptions)
                 else:
                     text = textlib.replaceExcept(
                         text,
                         r'\[\[\s*({}) *:(?P<nameAndLabel>.*?)\]\]'
                         .format('|'.join(namespaces)),
-                        r'[[{}:\g<nameAndLabel>]]'.format(final_ns),
+                        fr'[[{final_ns}:\g<nameAndLabel>]]',
                         exceptions)
         return text
 
@@ -490,7 +490,7 @@ class CosmeticChangesToolkit:
             return '{}|{}]]'.format(
                 split[0], '|'.join(cache.get(x.strip(), x) for x in split[1:]))
 
-        cache = {}  # type: Dict[Union[bool, str], Any]
+        cache: Dict[Union[bool, str], Any] = {}
         exceptions = ['comment', 'nowiki', 'pre', 'syntaxhighlight']
         regex = re.compile(
             FILE_LINK_REGEX % '|'.join(self.site.namespaces[6]),
@@ -599,7 +599,7 @@ class CosmeticChangesToolkit:
                 firstcase_label = label
 
             if firstcase_label == firstcase_title:
-                newLink = '[[{}]]'.format(label)
+                newLink = f'[[{label}]]'
             # Check if we can create a link with trailing characters
             # instead of a pipelink
             elif (firstcase_label.startswith(firstcase_title)
@@ -615,7 +615,7 @@ class CosmeticChangesToolkit:
                 # uppercase
                 if self.site.sitename == 'wikipedia:de':
                     titleWithSection = first_upper(titleWithSection)
-                newLink = '[[{}|{}]]'.format(titleWithSection, label)
+                newLink = f'[[{titleWithSection}|{label}]]'
             # re-add spaces that were pulled out of the link.
             # Examples:
             #   text[[ title ]]text        -> text [[title]] text
@@ -959,7 +959,7 @@ class CosmeticChangesToolkit:
                 title_regex = (r'(?P<link>[^{sep}]+?)'
                                r'(\s+(?P<title>[^\s].*?))'
                                .format(sep=separator))
-                url_regex = r'\[\[?{url}?\s*\]\]?'.format(url=url)
+                url_regex = fr'\[\[?{url}?\s*\]\]?'
                 text = textlib.replaceExcept(
                     text,
                     url_regex.format(title=title_regex),
@@ -982,7 +982,7 @@ class CosmeticChangesToolkit:
         # dash in external link, where the correct end of the URL can
         # be detected from the file extension. It is very unlikely that
         # this will cause mistakes.
-        extensions = [r'\.{}'.format(ext)
+        extensions = [fr'\.{ext}'
                       for ext in ['pdf', 'html?', 'php', 'aspx?', 'jsp']]
         text = textlib.replaceExcept(
             text,
@@ -1053,7 +1053,7 @@ class CosmeticChangesToolkit:
 
     def fixTypo(self, text: str) -> str:
         """Fix units."""
-        exceptions = [
+        exceptions: List[Union[str, Pattern[str]]] = [
             'comment',
             'gallery',
             'hyperlink',
@@ -1064,7 +1064,7 @@ class CosmeticChangesToolkit:
             'pre',
             'startspace',
             'syntaxhighlight',
-        ]  # type: List[Union[str, Pattern[str]]]
+        ]
 
         # change <number> ccm -> <number> cm³
         text = textlib.replaceExcept(text, r'(\d)\s*(?:&nbsp;)?ccm',
@@ -1087,7 +1087,7 @@ class CosmeticChangesToolkit:
         if self.site.code not in ['ckb', 'fa']:
             return text
 
-        exceptions = [
+        exceptions: List[Union[str, Pattern[str]]] = [
             'file',
             'gallery',
             'hyperlink',
@@ -1102,7 +1102,7 @@ class CosmeticChangesToolkit:
             'ref',
             'startspace',
             'syntaxhighlight',
-        ]  # type: List[Union[str, Pattern[str]]]
+        ]
 
         digits = textlib.NON_LATIN_DIGITS
         faChrs = 'ءاآأإئؤبپتثجچحخدذرزژسشصضطظعغفقکگلمنوهیةيك' + digits['fa']

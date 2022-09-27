@@ -243,7 +243,7 @@ class ProofreadPage(pywikibot.Page):
         :return: (base, ext, num).
         """
         left, sep, right = self.title(with_ns=False).rpartition('/')
-        num = None  # type: Optional[int]
+        num: Optional[int] = None
 
         if sep:
             base = left
@@ -279,7 +279,7 @@ class ProofreadPage(pywikibot.Page):
                                set(self.getReferences(namespaces=index_ns))]
 
             if not what_links_here:
-                self._index = (None, [])  # type: _IndexType
+                self._index: _IndexType = (None, [])
             elif len(what_links_here) == 1:
                 self._index = (what_links_here.pop(), [])
             else:
@@ -294,13 +294,13 @@ class ProofreadPage(pywikibot.Page):
 
         index_page, others = self._index
         if others:
-            pywikibot.warning('{} linked to several Index pages.'.format(self))
-            pywikibot.output('{}{!s}'.format(' ' * 9, [index_page] + others))
+            pywikibot.warning(f'{self} linked to several Index pages.')
+            pywikibot.info('{}{!s}'.format(' ' * 9, [index_page] + others))
 
             if index_page:
-                pywikibot.output(
+                pywikibot.info(
                     '{}Selected Index: {}'.format(' ' * 9, index_page))
-                pywikibot.output('{}remaining: {!s}'.format(' ' * 9, others))
+                pywikibot.info('{}remaining: {!s}'.format(' ' * 9, others))
 
         if not index_page:
             pywikibot.warning('Page {} is not linked to any Index page.'
@@ -493,7 +493,7 @@ class ProofreadPage(pywikibot.Page):
         """
         def _assert_len(len_oq: int, len_cq: int, title: str) -> None:
             if (len_oq != len_cq) or (len_oq < 2 or len_cq < 2):
-                raise Error('ProofreadPage {}: invalid format'.format(title))
+                raise Error(f'ProofreadPage {title}: invalid format')
 
         # Property force page text loading.
         text = self.text
@@ -559,7 +559,7 @@ class ProofreadPage(pywikibot.Page):
         The edit summary shall be appended to pre_summary to highlight
         Status in the edit summary on wiki.
         """
-        return '/* {0.status} */ '.format(self)
+        return f'/* {self.status} */ '
 
     @property
     @cached
@@ -582,7 +582,7 @@ class ProofreadPage(pywikibot.Page):
         try:
             response = http.fetch(url, charset='utf-8')
         except Exception:
-            pywikibot.error('Error fetching HTML for {}.'.format(self))
+            pywikibot.error(f'Error fetching HTML for {self}.')
             raise
 
         soup = _bs4_soup(response.text)  # type: ignore
@@ -628,32 +628,32 @@ class ProofreadPage(pywikibot.Page):
 
         # wrong link fail with Exceptions
         for retry in range(5, 30, 5):
-            pywikibot.debug('{}: get URI {!r}'.format(ocr_tool, cmd_uri))
+            pywikibot.debug(f'{ocr_tool}: get URI {cmd_uri!r}')
             try:
                 response = http.fetch(cmd_uri)
             except ReadTimeout as e:
-                pywikibot.warning('ReadTimeout {}: {}'.format(cmd_uri, e))
+                pywikibot.warning(f'ReadTimeout {cmd_uri}: {e}')
             except Exception as e:
-                pywikibot.error('"{}": {}'.format(cmd_uri, e))
+                pywikibot.error(f'"{cmd_uri}": {e}')
                 return True, e
             else:
-                pywikibot.debug('{}: {}'.format(ocr_tool, response.text))
+                pywikibot.debug(f'{ocr_tool}: {response.text}')
                 break
 
-            pywikibot.warning('retrying in {} seconds ...'.format(retry))
+            pywikibot.warning(f'retrying in {retry} seconds ...')
             time.sleep(retry)
         else:
             return True, ReadTimeout('ReadTimeout: Could not perform OCR')
 
         if HTTPStatus.BAD_REQUEST <= response.status_code < 600:
-            return True, 'Http response status {}'.format(response.status_code)
+            return True, f'Http response status {response.status_code}'
 
         data = response.json()
 
         if ocr_tool == self._PHETOOLS:  # phetools
-            assert 'error' in data, 'Error from phetools: {}'.format(data)
+            assert 'error' in data, f'Error from phetools: {data}'
             assert data['error'] in [0, 1, 2, 3], \
-                'Error from phetools: {}'.format(data)
+                f'Error from phetools: {data}'
             error, _text = bool(data['error']), data['text']
         else:  # googleOCR
             if 'error' in data:
@@ -662,7 +662,7 @@ class ProofreadPage(pywikibot.Page):
                 error, _text = False, data['text']
 
         if error:
-            pywikibot.error('OCR query {}: {}'.format(cmd_uri, _text))
+            pywikibot.error(f'OCR query {cmd_uri}: {_text}')
             return error, _text
         return error, parser_func(_text)
 
@@ -704,7 +704,7 @@ class ProofreadPage(pywikibot.Page):
         try:
             url_image = self.url_image
         except ValueError:
-            error_text = 'No prp-page-image src found for {}.'.format(self)
+            error_text = f'No prp-page-image src found for {self}.'
             pywikibot.error(error_text)
             return True, error_text
 
@@ -765,7 +765,7 @@ class ProofreadPage(pywikibot.Page):
         if not error and isinstance(text, str):
             return text
         raise ValueError(
-            '{}: not possible to perform OCR. {}'.format(self, text))
+            f'{self}: not possible to perform OCR. {text}')
 
 
 class PurgeRequest(Request):
@@ -919,7 +919,7 @@ class IndexPage(pywikibot.Page):
         params = {'action': 'purge', 'titles': [self.title()]}
         request = PurgeRequest(site=self.site, parameters=params)
         rawdata = request.submit()
-        error_message = 'Purge action failed for {}'.format(self)
+        error_message = f'Purge action failed for {self}'
         assert 'purge' in rawdata, error_message
         assert 'purged' in rawdata['purge'][0], error_message
 
@@ -927,11 +927,11 @@ class IndexPage(pywikibot.Page):
         """Associate label and number for each page linked to the index."""
         # Clean cache, if any.
         self._page_from_numbers = {}
-        self._numbers_from_page = {}  # type: Dict[pywikibot.page.Page, int]
-        self._page_numbers_from_label = {}  # type: Dict[str, Set[int]]
-        self._pages_from_label = {}  # type: PagesFromLabelType
-        self._labels_from_page_number = {}  # type: Dict[int, str]
-        self._labels_from_page = {}  # type: Dict[pywikibot.page.Page, str]
+        self._numbers_from_page: Dict[pywikibot.page.Page, int] = {}
+        self._page_numbers_from_label: Dict[str, Set[int]] = {}
+        self._pages_from_label: PagesFromLabelType = {}
+        self._labels_from_page_number: Dict[int, str] = {}
+        self._labels_from_page: Dict[pywikibot.page.Page, str] = {}
         self._soup = _bs4_soup(self.get_parsed_page(True))  # type: ignore
         # Do not search for "new" here, to avoid to skip purging if links
         # to non-existing pages are present.
@@ -1081,7 +1081,7 @@ class IndexPage(pywikibot.Page):
         try:
             return self._labels_from_page[page]
         except KeyError:
-            raise KeyError('Invalid Page: {}.'.format(page))
+            raise KeyError(f'Invalid Page: {page}.')
 
     @check_if_cached
     def get_label_from_page_number(self, page_number: int) -> str:
@@ -1108,7 +1108,7 @@ class IndexPage(pywikibot.Page):
         try:
             return mapping_dict[label]
         except KeyError:
-            raise KeyError('No page has label: "{}".'.format(label))
+            raise KeyError(f'No page has label: "{label}".')
 
     @check_if_cached
     def get_page_number_from_label(self, label: str = '1') -> str:
@@ -1138,7 +1138,7 @@ class IndexPage(pywikibot.Page):
         try:
             return self._page_from_numbers[page_number]
         except KeyError:
-            raise KeyError('Invalid page number: {}.'.format(page_number))
+            raise KeyError(f'Invalid page number: {page_number}.')
 
     @check_if_cached
     def pages(self) -> List['pywikibot.page.Page']:
@@ -1155,4 +1155,4 @@ class IndexPage(pywikibot.Page):
         try:
             return self._numbers_from_page[page]
         except KeyError:
-            raise KeyError('Invalid page: {}.'.format(page))
+            raise KeyError(f'Invalid page: {page}.')
