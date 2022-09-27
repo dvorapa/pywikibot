@@ -147,7 +147,7 @@ class Throttle:
         """
         global pid
         mysite = self.mysite
-        pywikibot.debug('Checking multiplicity: pid = {pid}'.format(pid=pid))
+        pywikibot.debug(f'Checking multiplicity: pid = {pid}')
         with self.lock:
             processes = []
             used_pids = set()
@@ -265,7 +265,7 @@ class Throttle:
                       'now': time.strftime('%Y-%m-%d %H:%M:%S',
                                            time.localtime())})
         if seconds > config.noisysleep:
-            pywikibot.output(message)
+            pywikibot.info(message)
         else:
             pywikibot.log(message)
 

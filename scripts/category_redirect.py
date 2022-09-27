@@ -167,8 +167,7 @@ class CategoryRedirectBot(ConfigParserBot, SingleSiteBot):
                                                  summary=summary)
 
         if found:
-            pywikibot.output('{}: {} found, {} moved'
-                             .format(old_cat, found, moved))
+            pywikibot.info(f'{old_cat}: {found} found, {moved} moved')
         return found, moved
 
     def ready_to_edit(self, cat):
@@ -218,7 +217,7 @@ class CategoryRedirectBot(ConfigParserBot, SingleSiteBot):
         Check categories that are not already marked with an appropriate
         softredirect template.
         """
-        pywikibot.output('Checking hard-redirect category pages.')
+        pywikibot.info('Checking hard-redirect category pages.')
         comment = i18n.twtranslate(self.site, self.redir_comment)
 
         # generator yields all hard redirect pages in namespace 14
@@ -289,7 +288,7 @@ class CategoryRedirectBot(ConfigParserBot, SingleSiteBot):
         localtime = time.localtime()
         today = '{:04d}-{:02d}-{:02d}'.format(*localtime[:3])
         self.datafile = pywikibot.config.datafilepath(
-            '{}-catmovebot-data'.format(self.site.dbName()))
+            f'{self.site.dbName()}-catmovebot-data')
         try:
             with open(self.datafile, 'rb') as inp:
                 self.record = pickle.load(inp)
@@ -321,8 +320,8 @@ class CategoryRedirectBot(ConfigParserBot, SingleSiteBot):
         nonemptypages = []
         redircat = self.cat
 
-        pywikibot.output('\nChecking {} category redirect pages'
-                         .format(redircat.categoryinfo['subcats']))
+        pywikibot.info('\nChecking {} category redirect pages'
+                       .format(redircat.categoryinfo['subcats']))
         catpages = set()
         for cat in redircat.subcategories():
             catpages.add(cat)
@@ -357,8 +356,8 @@ class CategoryRedirectBot(ConfigParserBot, SingleSiteBot):
                                   self.catprefix + cat_name) not in catpages:
                 del self.record[cat_name]
 
-        pywikibot.output('\nMoving pages out of {} redirected categories.'
-                         .format(len(nonemptypages)))
+        pywikibot.info('\nMoving pages out of {} redirected categories.'
+                       .format(len(nonemptypages)))
 
         for cat in pagegenerators.PreloadingGenerator(nonemptypages):
             try:
@@ -472,7 +471,7 @@ class CategoryRedirectBot(ConfigParserBot, SingleSiteBot):
         self.log_page.save(comment)
         if self.edit_requests:
             edit_request_page = pywikibot.Page(
-                self.site, 'User:{}/category edit requests'.format(self.user))
+                self.site, f'User:{self.user}/category edit requests')
             edit_request_page.text = (self.edit_request_text
                                       % {'itemlist': '\n' + '\n'.join(
                                           (self.edit_request_item % item)
