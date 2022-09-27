@@ -279,14 +279,14 @@ class BasePage(ComparableMixin):
                 else:
                     # use this form for sites like commons, where the
                     # code is the same as the family name
-                    title = '{}:{}'.format(self.site.code, title)
+                    title = f'{self.site.code}:{title}'
             elif textlink and (self.is_filepage() or self.is_categorypage()):
-                title = ':{}'.format(title)
+                title = f':{title}'
             elif self.namespace() == 0 and not section:
                 with_ns = True
             if with_ns:
-                return '[[{}{}]]'.format(title, section)
-            return '[[{}{}|{}]]'.format(title, section, label)
+                return f'[[{title}{section}]]'
+            return f'[[{title}{section}|{label}]]'
         if not with_ns and self.namespace() != 0:
             title = label + section
         else:
@@ -329,7 +329,7 @@ class BasePage(ComparableMixin):
 
     def __repr__(self) -> str:
         """Return a more complete string representation."""
-        return '{}({!r})'.format(self.__class__.__name__, self.title())
+        return f'{self.__class__.__name__}({self.title()!r})'
 
     def _cmpkey(self):
         """
@@ -837,7 +837,7 @@ class BasePage(ComparableMixin):
         title = self.title(with_ns=False)
         new_ns = ns + (1, -1)[self.isTalkPage()]
         return Page(self.site,
-                    '{}:{}'.format(self.site.namespace(new_ns), title))
+                    f'{self.site.namespace(new_ns)}:{title}')
 
     def is_categorypage(self):
         """Return True if the page is a Category, False otherwise."""
@@ -1262,10 +1262,10 @@ class BasePage(ComparableMixin):
                                   watch=watch, bot=botflag, **kwargs)
         if not done:
             if not quiet:
-                pywikibot.warning('Page {} not saved'.format(link))
+                pywikibot.warning(f'Page {link} not saved')
             raise PageSaveRelatedError(self)
         if not quiet:
-            pywikibot.output('Page {} saved'.format(link))
+            pywikibot.info(f'Page {link} saved')
 
     def _cosmetic_changes_hook(self, summary: str) -> str:
         """The cosmetic changes hook.
@@ -1435,8 +1435,8 @@ class BasePage(ComparableMixin):
         for i, arg in enumerate(args):  # pragma: no cover
             key = keys[i]
             issue_deprecation_warning(
-                'Positional argument {} ({})'.format(i + 1, arg),
-                'keyword argument "{}={}"'.format(key, arg),
+                f'Positional argument {i + 1} ({arg})',
+                f'keyword argument "{key}={arg}"',
                 since='7.0.0')
             if key in kwargs:
                 pywikibot.warning('{!r} is given as keyword argument {!r} '
@@ -1805,8 +1805,7 @@ class BasePage(ComparableMixin):
         :param movesubpages: Rename subpages, if applicable.
         """
         if reason is None:
-            pywikibot.output('Moving {} to [[{}]].'
-                             .format(self.title(as_link=True), newtitle))
+            pywikibot.info(f'Moving {self} to [[{newtitle}]].')
             reason = pywikibot.input('Please enter a reason for the move:')
         return self.site.movepage(self, newtitle, reason,
                                   movetalk=movetalk,
@@ -1845,7 +1844,7 @@ class BasePage(ComparableMixin):
             -1       page was marked for deletion
         """
         if reason is None:
-            pywikibot.output('Deleting {}.'.format(self.title(as_link=True)))
+            pywikibot.info(f'Deleting {self.title(as_link=True)}.')
             reason = pywikibot.input('Please enter a reason for the deletion:')
 
         # If user has 'delete' right, delete the page
@@ -1988,7 +1987,7 @@ class BasePage(ComparableMixin):
         if reason is None:
             warn('Not passing a reason for undelete() is deprecated.',
                  DeprecationWarning)
-            pywikibot.output('Undeleting {}.'.format(self.title(as_link=True)))
+            pywikibot.info(f'Undeleting {self.title(as_link=True)}.')
             reason = pywikibot.input(
                 'Please enter a reason for the undeletion:')
         self.site.undelete(self, reason, revision=undelete_revs)
@@ -2067,19 +2066,16 @@ class BasePage(ComparableMixin):
                 cats.append(cat)
 
         if not self.has_permission():
-            pywikibot.output("Can't edit {}, skipping it..."
-                             .format(self.title(as_link=True)))
+            pywikibot.info(f"Can't edit {self}, skipping it...")
             return False
 
         if old_cat not in cats:
             if self.namespace() != 10:
                 pywikibot.error('{} is not in category {}!'
-                                .format(self.title(as_link=True),
-                                        old_cat.title()))
+                                .format(self, old_cat.title()))
             else:
-                pywikibot.output('{} is not in category {}, skipping...'
-                                 .format(self.title(as_link=True),
-                                         old_cat.title()))
+                pywikibot.info('{} is not in category {}, skipping...'
+                               .format(self, old_cat.title()))
             return False
 
         # This prevents the bot from adding new_cat if it is already present.
@@ -2106,19 +2102,18 @@ class BasePage(ComparableMixin):
             except ValueError:
                 # Make sure that the only way replaceCategoryLinks() can return
                 # a ValueError is in the case of interwiki links to self.
-                pywikibot.output('Skipping {} because of interwiki link to '
-                                 'self'.format(self.title()))
+                pywikibot.info(
+                    f'Skipping {self} because of interwiki link to self')
                 return False
 
         if oldtext != newtext:
             try:
                 self.put(newtext, summary, show_diff=show_diff)
             except PageSaveRelatedError as error:
-                pywikibot.output('Page {} not saved: {}'
-                                 .format(self.title(as_link=True), error))
+                pywikibot.info(f'Page {self} not saved: {error}')
             except NoUsernameError:
-                pywikibot.output('Page {} not saved; sysop privileges '
-                                 'required.'.format(self.title(as_link=True)))
+                pywikibot.info(
+                    f'Page {self} not saved; sysop privileges required.')
             else:
                 return True
 
@@ -2155,7 +2150,7 @@ class BasePage(ComparableMixin):
             if not with_protocol:
                 return re.sub(PROTOCOL_REGEX, '', link)
         elif with_protocol:
-            return '{}://{}'.format(wiki.protocol(), link)
+            return f'{wiki.protocol()}://{link}'
         return link
 
 
@@ -2300,7 +2295,7 @@ class Page(BasePage, WikiBlameMixin):
 
         target_link = target_page.title(as_link=True, textlink=True,
                                         allow_interwiki=False)
-        target_link = '#{} {}'.format(self.site.redirect(), target_link)
+        target_link = f'#{self.site.redirect()} {target_link}'
         self.text = prefix + target_link + suffix
         if save:
             self.save(**kwargs)
@@ -2335,7 +2330,7 @@ class Page(BasePage, WikiBlameMixin):
 
         if not self.site.has_data_repository:
             raise UnknownExtensionError(
-                'Wikibase is not implemented for {}.'.format(self.site))
+                f'Wikibase is not implemented for {self.site}.')
 
         def get_item_page(func, *args):
             try:
@@ -2384,7 +2379,7 @@ class Category(Page):
             title_with_sort_key = self.title(with_section=False) + '|' + key
         else:
             title_with_sort_key = self.title(with_section=False)
-        return '[[{}]]'.format(title_with_sort_key)
+        return f'[[{title_with_sort_key}]]'
 
     def subcategories(self,
                       recurse: Union[int, bool] = False,
