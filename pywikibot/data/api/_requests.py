@@ -36,6 +36,7 @@ from pywikibot.login import LoginStatus
 from pywikibot.textlib import removeHTMLParts
 from pywikibot.tools import PYTHON_VERSION
 
+
 __all__ = ('CachedRequest', 'Request', 'encode_url')
 
 # Actions that imply database updates on the server, used for various
@@ -224,7 +225,7 @@ class Request(MutableMapping):
             raise ValueError("'action' specification missing from Request.")
         self.action = parameters['action']
         self.update(parameters)  # also convert all parameter values to lists
-        self._warning_handler = None  # type: Optional[Callable[[str, str], Union[Match[str], bool, None]]]  # noqa: E501
+        self._warning_handler: Optional[Callable[[str, str], Union[Match[str], bool, None]]] = None  # noqa: E501
         self.write = self.action in WRITE_ACTIONS
         # Client side verification that the request is being performed
         # by a logged in user, and warn if it isn't a config username.
@@ -526,8 +527,8 @@ class Request(MutableMapping):
         """Simulate action."""
         if action and config.simulate and (
                 self.write or action in config.actions_to_block):
-            pywikibot.output('<<black;yellow>>SIMULATION: {} action blocked.'
-                             '<<default>>'.format(action))
+            pywikibot.info(
+                f'<<black;yellow>>SIMULATION: {action} action blocked.')
             # for more realistic simulation
             if config.simulate is not True:
                 pywikibot.sleep(float(config.simulate))
@@ -658,7 +659,7 @@ class Request(MutableMapping):
                     or self.site.maximum_GET_length() < len(paramstring)):
                 use_get = False
             if use_get:
-                uri = '{}?{}'.format(uri, paramstring)
+                uri = f'{uri}?{paramstring}'
                 body = None
             else:
                 body = paramstring
@@ -697,7 +698,7 @@ class Request(MutableMapping):
         except Exception:
             # for any other error on the http request, wait and retry
             pywikibot.error(traceback.format_exc())
-            pywikibot.log('{}, {}'.format(uri, paramstring))
+            pywikibot.log(f'{uri}, {paramstring}')
         else:
             return response, use_get
         self.wait()
@@ -745,8 +746,7 @@ The text message is:
                     value = self[param][0]
                     if value.isdigit():
                         self[param] = [str(int(value) // 2)]
-                        pywikibot.output('Set {} = {}'
-                                         .format(param, self[param]))
+                        pywikibot.info(f'Set {param} = {self[param]}')
         else:
             return result or {}
         self.wait()
@@ -912,7 +912,7 @@ The text message is:
 
         if not delay:
             pywikibot.warning(
-                'No rate limit found for action {}'.format(self.action))
+                f'No rate limit found for action {self.action}')
         self.wait(delay)
 
     def _bad_token(self, code) -> bool:
@@ -980,7 +980,7 @@ The text message is:
                 self.site.throttle(write=self.write)
             else:
                 pywikibot.log(
-                    "Submitting unthrottled action '{}'.".format(self.action))
+                    f"Submitting unthrottled action '{self.action}'.")
 
             use_get, uri, body, headers = self._get_request_params(use_get,
                                                                    paramstring)
@@ -1040,8 +1040,8 @@ The text message is:
                 return {'help': {'mime': 'text/plain',
                                  'help': error['help']}}
 
-            pywikibot.warning('API error {}: {}'.format(code, info))
-            pywikibot.log('           headers=\n{}'.format(response.headers))
+            pywikibot.warning(f'API error {code}: {info}')
+            pywikibot.log(f'           headers=\n{response.headers}')
 
             if self._internal_api_error(code, error.copy(), result):
                 continue
@@ -1103,7 +1103,7 @@ The text message is:
                 param_repr = str(self._params)
                 pywikibot.log('API Error: query=\n{}'
                               .format(pprint.pformat(param_repr)))
-                pywikibot.log('           response=\n{}'.format(result))
+                pywikibot.log(f'           response=\n{result}')
 
                 raise pywikibot.exceptions.APIError(**error)
             except TypeError:
@@ -1164,7 +1164,7 @@ class CachedRequest(Request):
         :return: base directory path for cache entries
         """
         path = os.path.join(config.base_dir,
-                            'apicache-py{:d}'.format(PYTHON_VERSION[0]))
+                            f'apicache-py{PYTHON_VERSION[0]:d}')
         cls._make_dir(path)
         cls._get_cache_dir = classmethod(lambda c: path)  # cache the result
         return path
@@ -1203,7 +1203,7 @@ class CachedRequest(Request):
             user_key = repr(LoginStatus(LoginStatus.NOT_LOGGED_IN))
 
         request_key = repr(sorted(self._encoded_items().items()))
-        return '{!r}{}{}'.format(self.site, user_key, request_key)
+        return f'{self.site!r}{user_key}{request_key}'
 
     def _create_file_name(self) -> str:
         """Return a unique ascii identifier for the cache entry."""
@@ -1242,7 +1242,7 @@ class CachedRequest(Request):
             # file not found
             return False
         except Exception as e:
-            pywikibot.output('Could not load cache: {!r}'.format(e))
+            pywikibot.info(f'Could not load cache: {e!r}')
             return False
 
     def _write_cache(self, data) -> None:

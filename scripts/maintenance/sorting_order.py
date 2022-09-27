@@ -23,8 +23,8 @@ pages = {
 
 def update_family(list_name, page):
     """Update family.py file."""
-    pywikibot.output('\nReading {} sorting order from\nfrom {}...'
-                     .format(list_name, page.title(with_ns=False)))
+    pywikibot.info('\nReading {} sorting order from\nfrom {}...'
+                   .format(list_name, page.title(with_ns=False)))
 
     original = getattr(Family, list_name)
     new = page.text.split()
@@ -43,20 +43,20 @@ def update_family(list_name, page):
             i -= 1
 
     if original == new:
-        pywikibot.output('The lists match!')
+        pywikibot.info('The lists match!')
         return
 
-    pywikibot.output("The lists don't match, the new list is:")
-    text = '    {} = [\n'.format(list_name)
+    pywikibot.info("The lists don't match, the new list is:")
+    text = f'    {list_name} = [\n'
     line = ' ' * 7
     for code in new:
         if len(line) + len(code) >= 76:
             text += line + '\n'
             line = ' ' * 7
-        line += " '{}',".format(code)
+        line += f" '{code}',"
     text += line + '\n'
     text += '    ]'
-    pywikibot.output(text)
+    pywikibot.info(text)
     family_file_name = 'pywikibot/family.py'
     with codecs.open(family_file_name, 'r', 'utf8') as family_file:
         family_text = family_file.read()

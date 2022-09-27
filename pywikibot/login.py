@@ -67,7 +67,7 @@ class LoginStatus(IntEnum):
 
     def __repr__(self) -> str:
         """Return internal representation."""
-        return 'LoginStatus({})'.format(self)
+        return f'LoginStatus({self})'
 
 
 class LoginManager:
@@ -227,7 +227,7 @@ class LoginManager:
                 entry = None
 
             if not isinstance(entry, tuple):
-                warn('Invalid tuple in line {}'.format(line_nr),
+                warn(f'Invalid tuple in line {line_nr}',
                      _PasswordFileWarning)
                 continue
 
@@ -286,18 +286,18 @@ class LoginManager:
                 'shown):'.format(name=self.login_name, site=self.site),
                 password=True)
 
-        pywikibot.output('Logging in to {site} as {name}'
-                         .format(name=self.login_name, site=self.site))
+        pywikibot.info('Logging in to {site} as {name}'
+                       .format(name=self.login_name, site=self.site))
         try:
             self.login_to_site()
         except APIError as e:
             error_code = e.code
-            pywikibot.error('Login failed ({}).'.format(error_code))
+            pywikibot.error(f'Login failed ({error_code}).')
             if error_code in self._api_error:
                 error_msg = 'Username "{}" {} on {}'.format(
                     self.login_name, self._api_error[error_code], self.site)
                 if error_code in ('Failed', 'FAIL'):
-                    error_msg += '\n.{}'.format(e.info)
+                    error_msg += f'\n.{e.info}'
                 raise NoUsernameError(error_msg)
 
             # TODO: investigate other unhandled API codes (bug T75539)
@@ -341,7 +341,7 @@ class BotPassword:
 
         :param user: username (without suffix)
         """
-        return '{}@{}'.format(username, self.suffix)
+        return f'{username}@{self.suffix}'
 
 
 class OauthLoginManager(LoginManager):
@@ -368,7 +368,7 @@ class OauthLoginManager(LoginManager):
         :raises ImportError: mwoauth isn't installed
         """
         if isinstance(mwoauth, ImportError):
-            raise ImportError('mwoauth is not installed: {}.'.format(mwoauth))
+            raise ImportError(f'mwoauth is not installed: {mwoauth}.')
         assert password is not None and user is not None
         super().__init__(password=None, site=site, user=None)
         if self.password:
@@ -377,7 +377,7 @@ class OauthLoginManager(LoginManager):
                            'should be removed if OAuth enabled.'
                            .format(login=self))
         self._consumer_token = (user, password)
-        self._access_token = None  # type: Optional[Tuple[str, str]]
+        self._access_token: Optional[Tuple[str, str]] = None
 
     def login(self, retry: bool = False, force: bool = False) -> bool:
         """
@@ -390,7 +390,7 @@ class OauthLoginManager(LoginManager):
         :param force: force to re-authenticate
         """
         if self.access_token is None or force:
-            pywikibot.output(
+            pywikibot.info(
                 'Logging in to {site} via OAuth consumer {key}'
                 .format(key=self.consumer_token[0], site=self.site))
             consumer_token = mwoauth.ConsumerToken(*self.consumer_token)
@@ -413,9 +413,8 @@ class OauthLoginManager(LoginManager):
                     return self.login(retry=True, force=force)
                 return False
         else:
-            pywikibot.output('Logged in to {site} via consumer {key}'
-                             .format(key=self.consumer_token[0],
-                                     site=self.site))
+            pywikibot.info('Logged in to {site} via consumer {key}'
+                           .format(key=self.consumer_token[0], site=self.site))
             return True
 
     @property
