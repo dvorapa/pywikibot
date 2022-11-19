@@ -12,7 +12,7 @@ for i in s.allpages(namespace=14):
     b = i.title(with_ns=False)[0]
     if b != a:  # print first letter for progress
       a = b
-      print(b)
+      print(b, flush=True)
     del(b)
     c = i.subcategories(recurse=True)
     if i in c:  # is there a loop?
@@ -27,7 +27,7 @@ for i in s.allpages(namespace=14):
           else:  # finish loop
             t.add('\n# ' + ' > '.join(k.title(as_link=True, textlink=True) for k in g))
             f.update(g)
-            print(g)
+            print(g, flush=True)
             del(d)
             del(g)
             break
