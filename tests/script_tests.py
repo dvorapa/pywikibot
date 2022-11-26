@@ -183,7 +183,7 @@ def import_script(script_name: str):
     import_module(prefix + script_name)
 
 
-class TestScriptMeta(MetaTestCaseClass):
+class ScriptTestMeta(MetaTestCaseClass):
 
     """Test meta class."""
 
@@ -327,7 +327,7 @@ class TestScriptMeta(MetaTestCaseClass):
         return super().__new__(cls, name, bases, dct)
 
 
-class TestScriptHelp(PwbTestCase, metaclass=TestScriptMeta):
+class TestScriptHelp(PwbTestCase, metaclass=ScriptTestMeta):
 
     """Test cases for running scripts with -help.
 
@@ -348,7 +348,7 @@ class TestScriptHelp(PwbTestCase, metaclass=TestScriptMeta):
 
 
 class TestScriptSimulate(DefaultSiteTestCase, PwbTestCase,
-                         metaclass=TestScriptMeta):
+                         metaclass=ScriptTestMeta):
 
     """Test cases for running scripts with -siumlate.
 
@@ -388,65 +388,51 @@ class TestScriptSimulate(DefaultSiteTestCase, PwbTestCase,
 
 
 class TestScriptGenerator(DefaultSiteTestCase, PwbTestCase,
-                          metaclass=TestScriptMeta):
+                          metaclass=ScriptTestMeta):
 
     """Test cases for running scripts with a generator."""
 
     login = True
 
     _expected_failures = {
-        'login',
         'add_text',
+        'archivebot',
+        'blockpageschecker',
         'category',
+        'category_redirect',
         'change_pagelang',
+        'checkimages',
         'claimit',
+        'clean_sandbox',
+        'commonscat',
+        'create_isbn_edition',
         'dataextend',
         'data_ingestion',
         'delete',
+        'delinker',
         'djvutext',
         'download_dump',
         'harvest_template',
+        'imagetransfer',
         'interwiki',
         'listpages',
+        'login',
+        'misspelling',
         'movepages',
         'pagefromfile',
+        'parser_function_count',
+        'patrol',
         'protect',
         'redirect',
-        'reflinks',
+        'reflinks',  # 404-links.txt is required
         'replicate_wiki',
         'revertbot',
+        'shell',
+        'solve_disambiguation',
         'speedy_delete',
         'template',
         'templatecount',
         'transferbot',
-    }
-
-    _allowed_failures = {
-        'archivebot',
-        'basic',
-        'blockpageschecker',
-        'category_redirect',
-        'checkimages',
-        'clean_sandbox',
-        'commonscat',
-        'commons_information',
-        'coordinate_import',
-        'cosmetic_changes',
-        'create_isbn_edition',
-        'delinker',
-        'fixing_redirects',
-        'illustrate_wikidata',
-        'image',
-        'imagetransfer',
-        'interwikidata',
-        'misspelling',
-        'newitem',
-        'parser_function_count',
-        'patrol',
-        'replace',
-        'shell',
-        'solve_disambiguation',
-        'touch',
         'unusedfiles',
         'upload',
         'watchlist',
@@ -454,8 +440,9 @@ class TestScriptGenerator(DefaultSiteTestCase, PwbTestCase,
         'welcome',
     }
 
-    _arguments = '-simulate -page:Foo -always'
-    _results = ("Working on 'Foo", 'Script terminated successfully')
+    _allowed_failures = set()
+    _arguments = '-simulate -page:Foobar -always -site:wikipedia:en'
+    _results = ("Working on 'Foobar'", 'Script terminated successfully')
     _skip_results = {}
     _timeout = True
 
