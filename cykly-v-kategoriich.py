@@ -9,7 +9,7 @@ for i in s.allpages(namespace=14):
     b = i.title(with_ns=False)[0]
     if not b in a:
         a.add(b)
-        print(b)
+        print(b, flush=True)
     subcats = i.subcategories(recurse=True)
     if next(subcats, False) and next(i.categories().__iter__(), False):
         g = []
@@ -26,12 +26,13 @@ for i in s.allpages(namespace=14):
                 else:
                     w.append(g)
                     g = []
-                    print(i)
+                    print(i, flush=True)
                     break
             f.add(j)
 
 
 f = set()
+f.add(frozenset([pywikibot.Category(s, 'Wikipedie:Neindexované stránky') for i in range(2)]))
 t = ''
 for g in w:
     l = []
