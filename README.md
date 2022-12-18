@@ -22,7 +22,8 @@ Copy one of the following templates from dvorapabot-local branch and adjust it t
 
 [Pavel Dvořák](https://cs.wikipedia.org/wiki/Wikipedista:Dvorapa) ([@dvorapa](https://twitter.com/dvorapa))
 
-You might want to buy me a [hot chocolate ☕](https://paypal.me/dvorapa).
+You might want to buy me a hot chocolate ☕ using [Paypal](
+https://paypal.me/dvorapa) or [Revolut](https://revolut.me/dvorapa).
 
 ## Contributing
 
