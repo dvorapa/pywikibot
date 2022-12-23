@@ -477,21 +477,29 @@ class WbTime(_WbRepresentation):
             elapsed_seconds += self.timezone * 60
         return elapsed_seconds
 
-    def __lt__(self, other):
+    def __lt__(self, other: object) -> bool:
         """Compare if self is less than other."""
-        return self._getSecondsAdjusted() < other._getSecondsAdjusted()
+        if isinstance(other, WbTime):
+            return self._getSecondsAdjusted() < other._getSecondsAdjusted()
+        return NotImplemented
 
-    def __le__(self, other):
+    def __le__(self, other: object) -> bool:
         """Compare if self is less equals other."""
-        return self._getSecondsAdjusted() <= other._getSecondsAdjusted()
+        if isinstance(other, WbTime):
+            return self._getSecondsAdjusted() <= other._getSecondsAdjusted()
+        return NotImplemented
 
-    def __gt__(self, other):
+    def __gt__(self, other: object) -> bool:
         """Compare if self is greater than other."""
-        return self._getSecondsAdjusted() > other._getSecondsAdjusted()
+        if isinstance(other, WbTime):
+            return self._getSecondsAdjusted() > other._getSecondsAdjusted()
+        return NotImplemented
 
-    def __ge__(self, other):
+    def __ge__(self, other: object) -> bool:
         """Compare if self is greater equals other."""
-        return self._getSecondsAdjusted() >= other._getSecondsAdjusted()
+        if isinstance(other, WbTime):
+            return self._getSecondsAdjusted() >= other._getSecondsAdjusted()
+        return NotImplemented
 
     @classmethod
     def fromTimestr(cls: Type['WbTime'],
@@ -691,7 +699,7 @@ class WbQuantity(_WbRepresentation):
 
         # also allow entity URIs to be provided via unit parameter
         if isinstance(unit, str) \
-           and unit.partition('://')[0] not in ('http', 'https'):
+           and not unit.startswith(('http://', 'https://')):
             raise ValueError("'unit' must be an ItemPage or entity uri.")
 
         if error is None and not self._require_errors(site):
