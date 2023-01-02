@@ -1,33 +1,45 @@
 #!/usr/bin/python3
-
-r"""
-Visualizes category hierarchy.
+r"""Visualizes category hierarchy.
 
 Generates graphical representation in formats dot, svg and html5
 of category hierarchy.
 
-usage: pwb.py graph [-style STYLE] [-depth DEPTH] [-from FROM] [-to TO]
+Usage:
+
+    pwb.py graph [-style STYLE] [-depth DEPTH] [-from FROM] [-to TO]
 
 actions:
-  -from [FROM]   Category name to scan, default is main category, "?" to ask.
+
+-from [FROM]   Category name to scan, default is main category, "?" to ask.
 
 optional arguments:
-  -to TO         base file name to save, "?" to ask.
-  -style STYLE   graphviz style definitions in dot format:
-                 https://graphviz.org/doc/info/attrs.html
-  -depth DEPTH   maximal hierarchy depth. 2 by default.
-  -downsize K    font size divider for subcategories. 4 by default.
-                 Use 1 for the same font size.
 
-Examples:
+-to TO         base file name to save, "?" to ask
+-style STYLE   graphviz style definitions in dot format (see below)
+-depth DEPTH   maximal hierarchy depth. 2 by default
+-downsize K    font size divider for subcategories. 4 by default
+               Use 1 for the same font size
 
-pwb.py -v category_graph -from
-pwb.py category_graph -from Life -downsize 1.5 \
-        -style 'graph[rankdir=BT ranksep=0.5] node[shape=circle
-        style=filled fillcolor=green] edge[style=dashed penwidth=3]'
+.. seealso:: https://graphviz.org/doc/info/attrs.html
+   for graphviz style definitions.
 
+Example::
+
+    pwb.py -v category_graph -from
+
+Extended example with style settings::
+
+    pwb.py category_graph -from Life -downsize 1.5 \
+    -style 'graph[rankdir=BT ranksep=0.5] node[shape=circle
+    style=filled fillcolor=green] edge[style=dashed penwidth=3]'
+
+.. versionadded:: 8.0
 """
-
+#
+# (C) Pywikibot team, 2022-2023
+#
+# Distributed under the terms of the MIT license.
+#
 import argparse
 import io
 from collections import defaultdict
@@ -58,7 +70,8 @@ class CategoryGraphBot(SingleSiteBot):
         if cat_title == '?':
             cat_title = pywikibot.input(
                 'For which category do you want to create a graph?')
-        pywikibot.output('Scanning "{}"'.format(cat_title))
+
+        pywikibot.info('Scanning {cat_title!r}')
         self.cat = pywikibot.Category(self.site, cat_title)
         self.to = args.to
         if self.to == '?':
@@ -73,23 +86,19 @@ class CategoryGraphBot(SingleSiteBot):
         self.leaves = set()
         self.counter = 0
         font = 'fontname="Helvetica,Arial,sans-serif"'
-        style = 'graph [rankdir=LR ranksep=2 concentrate=true %s] ' \
-                'node [newrank=true shape=plaintext %s] ' \
-                'edge [arrowhead=open labeldistance=3 ' \
-                'labelfontcolor="#00000080" %s] ' \
-                % (font, font, font) + args.style
-        self.dot = pydot.graph_from_dot_data('digraph {' + style + '}')[0]
-        self.dot.set_name('"' + cat_title + '"')
+        style = f'graph [rankdir=LR ranksep=2 concentrate=true {font}] ' \
+                f'node [newrank=true shape=plaintext {font}] ' \
+                f'edge [arrowhead=open labeldistance=3 ' \
+                f'labelfontcolor="#00000080" {font}] ' + args.style
+        self.dot = pydot.graph_from_dot_data(f'digraph {style}')[0]
+        self.dot.set_name(f'"{cat_title}"')
 
     def scan_level(self, cat, level, hue=None) -> str:
-        """
-        Recursive function to fill dot graph.
+        """Recursive function to fill dot graph.
 
-        Parameters:
-            * cat - the Category of the node we're currently opening.
-            * level - the current decreasing from depth to zero
-                      level in the tree (for recursion), opposite of depth.
-
+        :param cat: the Category of the node we're currently opening.
+        :param level: the current decreasing from depth to zero level in
+            the tree (for recursion), opposite of depth.
         """
         title = cat.title(with_ns=False)
         size = float(args.downsize) ** level
@@ -99,8 +108,7 @@ class CategoryGraphBot(SingleSiteBot):
             subs = ', '.join([c.title(with_ns=False).replace(' ', '&nbsp;')
                               for c in subcats])
             n = pydot.Node(title,
-                           label=r'"{}\n{} C"'.
-                           format(title, len(subcats)),
+                           label=rf'"{title}\n{len(subcats)} C"',
                            tooltip=title + '\n\n' + subs,
                            URL=cat.full_url(),
                            fontsize=int(10 * size))
@@ -123,7 +131,8 @@ class CategoryGraphBot(SingleSiteBot):
             return e
 
         if config.verbose_output:
-            pywikibot.output('Adding ' + cat.title(with_ns=False))
+            pywikibot.info('Adding ' + cat.title(with_ns=False))
+
         node = node()
         self.dot.add_node(node)
         self.counter += 1
@@ -133,6 +142,7 @@ class CategoryGraphBot(SingleSiteBot):
                 pywikibot.warning('Number of nodes reached limit')
             self.leaves.add(node.get_name())
             return
+
         columns = len(subcats) // 5 + 1
         for n, subcat in enumerate(subcats):
             # generating different hue for color per each root branch
@@ -155,19 +165,22 @@ class CategoryGraphBot(SingleSiteBot):
             for n in self.leaves:
                 while len(self.rev[n]) == 1:
                     if config.verbose_output:
-                        pywikibot.output('Removing ' + n)
+                        pywikibot.info('Removing ' + n)
+
                     self.dot.del_edge(self.rev[n][0], n)
                     self.dot.del_node(n)
                     self.fw[self.rev[n][0]].remove(n)
                     if self.fw[self.rev[n][0]]:
                         break
                     n = self.rev[n][0]
-        pywikibot.output('Saving results')
-        pywikibot.output(self.to + '.gv')
+
+        pywikibot.info('Saving results')
+        pywikibot.info(self.to + '.gv')
         self.dot.write(self.to + '.gv', encoding='utf-8')
-        pywikibot.output(self.to + '.svg')
+        pywikibot.info(self.to + '.svg')
         self.dot.write_svg(self.to + '.svg', encoding='utf-8')
-        pywikibot.output(self.to + '.html')
+        pywikibot.info(self.to + '.html')
+
         header = ('<head><meta charset="UTF-8"/>'
                   '<title>' + self.cat.title(with_ns=False)
                   + '</title> </head>\n'
