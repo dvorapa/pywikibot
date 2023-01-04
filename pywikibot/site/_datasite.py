@@ -1,6 +1,6 @@
 """Objects representing API interface to Wikibase site."""
 #
-# (C) Pywikibot team, 2012-2022
+# (C) Pywikibot team, 2012-2023
 #
 # Distributed under the terms of the MIT license.
 #
@@ -46,6 +46,29 @@ class DataSite(APISite):
             'form': pywikibot.LexemeForm,
             'sense': pywikibot.LexemeSense,
         }
+
+    def get_repo_for_entity_type(self, entity_type: str) -> 'DataSite':
+        """
+        Get the data repository for the entity type.
+
+        When no foreign repository is defined for the entity type,
+        the method returns this repository itself even if it does not
+        support that entity type either.
+
+        .. seealso:: https://www.mediawiki.org/wiki/Wikibase/Federation
+        .. versionadded:: 8.0
+
+        :raises ValueError: when invalid entity type was provided
+        """
+        if entity_type not in self._type_to_class:
+            raise ValueError(f'Invalid entity type "{entity_type}"')
+        entity_sources = self.entity_sources()
+        if entity_type in entity_sources:
+            return pywikibot.Site(
+                *entity_sources[entity_type],
+                interface='DataSite',
+                user=self.username())
+        return self
 
     def _cache_entity_namespaces(self) -> None:
         """Find namespaces for each known wikibase entity type."""
