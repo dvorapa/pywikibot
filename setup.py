@@ -20,7 +20,7 @@
 .. warning: do not upload a development release to pypi.
 """
 #
-# (C) Pywikibot team, 2009-2022
+# (C) Pywikibot team, 2009-2023
 #
 # Distributed under the terms of the MIT license.
 #
@@ -39,52 +39,44 @@ else:
 extra_deps = {
     # Core library dependencies
     'eventstreams': ['sseclient<0.0.23,>=0.0.18'],  # T222885
-    'isbn': ['python-stdnum>=1.17'],
-    'Graphviz': ['pydot>=1.2'],
+    'isbn': ['python-stdnum>=1.18'],
+    'Graphviz': ['pydot>=1.4.1'],
     'Google': ['google>=1.7'],
     'memento': ['memento_client==0.6.1'],
-    'mwparserfromhell': ['mwparserfromhell>=0.5.0'],
     'wikitextparser': ['wikitextparser>=0.47.0'],
     'mysql': ['PyMySQL >= 0.9.3'],  # toolforge
     # vulnerability found in Pillow<8.1.1 but toolforge uses 5.4.1
     'Tkinter': ['Pillow>=8.1.1'],
     'mwoauth': ['mwoauth!=0.3.1,>=0.2.4'],
-    'html': ['BeautifulSoup4'],
-    'http': ['fake_useragent'],
+    'html': ['beautifulsoup4>=4.7.1'],
+    'http': [
+        'fake_useragent<0.1.14; python_version < "3.7"',
+        'fake_useragent>1.0.1; python_version >= "3.7"',
+    ],
     'flake8': [  # Due to incompatibilities between packages the order matters.
-        'flake8>=5.0.2',
+        'flake8>=5.0.4',
         'darglint',
-        'pydocstyle>=4.0.0',
-        'flake8-bugbear!=21.4.1,!=21.11.28',
+        'pydocstyle>=6.2.3',
+        'flake8-bugbear',
         'flake8-coding',
-        'flake8-comprehensions>=3.1.4; python_version >= "3.8"',
-        'flake8-comprehensions>=2.2.0; python_version < "3.8"',
-        'flake8-docstrings>=1.3.1',
-        'verve-flake8-mock>=0.4',
-        'flake8-print>=2.0.1',
-        # flake8-quotes is incompatible with flake8 6 (T323752),
-        # jenkins CI ignores "3.8.1"
-        'flake8-quotes>=3.3.0; python_version < "3.8"',
+        'flake8-comprehensions',
+        'flake8-docstrings>=1.4.0',
+        'flake8-mock-x2',
+        'flake8-print>=4.0.1',
+        'flake8-quotes>=3.3.2',
         'flake8-string-format',
-        'flake8-tuple>=0.2.8',
+        'flake8-tuple>=0.4.1',
         'flake8-no-u-prefixed-strings>=0.2',
         'pep8-naming>=0.12.1, <0.13.0; python_version < "3.7"',
-        'pep8-naming>=0.12.1; python_version >= "3.7"',
+        'pep8-naming>=0.13.3; python_version >= "3.7"',
     ],
-    'hacking': [
-        'hacking',
-        # importlib-metadata module already installed with hacking 4.1.0
-        # but importlib-metadata 5 fails, so adjust it
-        'importlib-metadata<5.0.0; python_version < "3.8"',
-    ],
+    'hacking': ['hacking'],
 }
 
 
 # ------- setup extra_requires for scripts ------- #
 script_deps = {
     'create_isbn_edition.py': ['isbnlib', 'unidecode'],
-    'commons_information.py': extra_deps['mwparserfromhell'],
-    'patrol.py': extra_deps['mwparserfromhell'],
     'weblinkchecker.py': extra_deps['memento'],
 }
 
@@ -94,14 +86,14 @@ extra_deps.update({'scripts': [i for k, v in script_deps.items() for i in v]})
 # ------- setup install_requires ------- #
 # packages which are mandatory
 dependencies = [
-    'requests>=2.20.1, <2.28.0; python_version < "3.7"',
-    'requests>=2.20.1; python_version>="3.7"',
+    'mwparserfromhell>=0.6.3',
+    'requests>=2.21.0, <2.28.0; python_version < "3.7"',
+    'requests>=2.21.0; python_version>="3.7"',
     # PEP 440
     'setuptools>=48.0.0 ; python_version >= "3.10"',
-    'setuptools>=38.5.2 ; python_version >= "3.7" and python_version < "3.10"',
-    'setuptools>=20.8.1, <59.7.0 ; python_version < "3.7"',
+    'setuptools>=40.8.0 ; python_version >= "3.7" and python_version < "3.10"',
+    'setuptools>=40.8.0, <59.7.0 ; python_version < "3.7"',
 ]
-# in addition either mwparserfromhell or wikitextparser is required
 
 # ------- setup tests_require ------- #
 test_deps = ['mock']
