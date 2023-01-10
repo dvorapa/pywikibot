@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 """Test that each script can be compiled and executed."""
 #
-# (C) Pywikibot team, 2014-2022
+# (C) Pywikibot team, 2014-2023
 #
 # Distributed under the terms of the MIT license.
 #
@@ -27,8 +27,6 @@ framework_scripts = ['login', 'shell']
 # Here, the name given to the module which will be imported is required.
 script_deps = {
     'create_isbn_edition': ['isbnlib', 'unidecode'],
-    'commons_information': ['mwparserfromhell'],
-    'patrol': ['mwparserfromhell'],
     'weblinkchecker': ['memento_client'],
 }
 
