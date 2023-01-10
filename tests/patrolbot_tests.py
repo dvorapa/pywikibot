@@ -1,14 +1,14 @@
 #!/usr/bin/python3
 """Tests for the patrol script."""
 #
-# (C) Pywikibot team, 2015-2022
+# (C) Pywikibot team, 2015-2023
 #
 # Distributed under the terms of the MIT license.
 #
 from contextlib import suppress
 
 from scripts.patrol import PatrolBot
-from tests.aspects import DefaultDrySiteTestCase, require_modules, unittest
+from tests.aspects import DefaultDrySiteTestCase, unittest
 
 
 DUMMY_PAGE_TUPLES = """
@@ -27,7 +27,6 @@ This is some text above the entries:
 """
 
 
-@require_modules('mwparserfromhell')
 class TestPatrolBot(DefaultDrySiteTestCase):
 
     """Test the PatrolBot class."""
