@@ -250,7 +250,7 @@ def check_modules(script=None):
                 # print the minimal requirement
                 _print_requirements(
                     ['setuptools>=20.8.1'], None,
-                    'outdated ({})'.format(setuptools.__version__))
+                    f'outdated ({setuptools.__version__})')
                 return False
             raise e
 
@@ -322,7 +322,7 @@ except SyntaxError as e:  # pragma: no cover
 
 def find_alternates(filename, script_paths):
     """Search for similar filenames in the given script paths."""
-    from pywikibot import config, input_choice, error, info, warning
+    from pywikibot import config, error, info, input_choice, warning
     from pywikibot.bot import QuitKeyboardInterrupt, ShowingListOption
 
     assert config.pwb_close_matches > 0, \
@@ -330,7 +330,7 @@ def find_alternates(filename, script_paths):
     assert 0.0 < config.pwb_cut_off < 1.0, \
         'config.pwb_cut_off must be a float in range [0, 1]'
 
-    error('{} not found! Misspelling?'.format(filename))
+    error(f'{filename} not found! Misspelling?')
 
     scripts = {}
 
