@@ -455,7 +455,7 @@ class DataExtendBot(SingleSiteBot):
             for claim in claims[prop]:
                 if claim.type == 'wikibase-item':
                     if claim.getTarget() is None:
-                        pywikibot.info('{}: unknown'.format(self.label(prop)))
+                        pywikibot.info(f'{self.label(prop)}: unknown')
                     else:
                         pywikibot.info(
                             '{}: {}'
@@ -11005,10 +11005,8 @@ class PornhubAnalyzer(Analyzer):
         section = self.findbyre(r'(?s)class="aboutMeSection(.*?)</section>', html)
         if section:
             result += self.findallbyre(r'>([^<>]*)<', section)
-        section = self.findlongtext(html)
-        if section:
-            lines = section.split('.')
-            result += [lines[0], lines[:1].join(','), lines[:2].join(',')]
+        # this would also analyze self.findlongtext(html)
+        # but the code was removed
         return result
 
     def findlongtext(self, html: str):
