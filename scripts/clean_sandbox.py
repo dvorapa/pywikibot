@@ -59,8 +59,8 @@ from pywikibot.exceptions import EditConflictError, NoPageError
 
 content = {
     'commons': '{{Sandbox}}\n<!-- Please edit only below this line. -->',
-    'meta': '{{Meta:Sandbox/Please do not edit this line}}'
-            '<!--Please edit below this line.-->',
+    'meta': '{{Meta:Sandbox/Please do not edit this line}}\n'
+            '<!-- Please edit below this line. -->',
     'test': '<noinclude>{{Sandbox}}</noinclude>\n'
             '== Please start your testing below this line ==',
     'wikidata': '{{Please leave this line alone (sandbox heading)}}',
@@ -79,6 +79,13 @@ content = {
     'ar': '{{عنوان الملعب}}\n<!-- مرحبا! خذ راحتك في تجربة مهارتك في التنسيق '
           'والتحرير أسفل هذا السطر. هذه الصفحة لتجارب التعديل ، سيتم تفريغ '
           'هذه الصفحة كل 12 ساعة. -->',
+    'ary': '{{راس تيران}}<!--'
+           '\n*               مرحبا بيك ف تّيران د رّملة!              *'
+           '\n*            عافاك خلي هاد لپارتية ف بلاصتها            *'
+           '\n*        هاد لپاج كيتّمحا لمحتوى ديالها بشكل معاود      *'
+           '\n*    تريني هنا ؤ تعلم معا راسك كيفاش تكتب ف ويكيپيديا  *'
+           '\n■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■-->'
+           '\n\n[[تصنيف:معاونة ف لكتابة علا ويكيپيديا]]',
     'arz': '{{عنوان السبوره}}\n<!-- مرحبا! خد راحتك فى تجريب مهاراتك فى'
            'التحرير تحت الخط ده. بما إن الصفحه دى لتجارب التعديل، فالصفحه دى '
            'حيتم تنضيفها اوتوماتيكيا كل 12 ساعه. -->',
