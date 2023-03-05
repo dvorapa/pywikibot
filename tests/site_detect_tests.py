@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Test for site detection."""
 #
-# (C) Pywikibot team, 2014-2022
+# (C) Pywikibot team, 2014-2023
 #
 # Distributed under the terms of the MIT license.
 #
+import os
 import unittest
 from contextlib import suppress
 from http import HTTPStatus
@@ -15,6 +16,7 @@ import requests.exceptions as requests_exceptions
 import pywikibot
 from pywikibot.exceptions import ServerError
 from pywikibot.site_detect import MWSite
+
 from tests.aspects import PatchingTestCase, TestCase
 from tests.utils import DrySite, skipping
 
@@ -56,7 +58,6 @@ class MediaWikiSiteTestCase(SiteDetectionTestCase):
     """Test detection of MediaWiki sites."""
 
     standard_version_sites = (
-        'http://www.proofwiki.org/wiki/$1',
         'http://www.ck-wissen.de/ckwiki/index.php?title=$1',
         'http://en.citizendium.org/wiki/$1',
         # Server that hosts www.wikichristian.org is unreliable - it
@@ -110,6 +111,12 @@ class MediaWikiSiteTestCase(SiteDetectionTestCase):
         for url in self.standard_version_sites:
             with self.subTest(url=urlparse(url).netloc):
                 self.assertSite(url)
+
+    def test_proofreadwiki(self):
+        """Test detection of proofwiki.org site."""
+        if os.getenv('GITHUB_ACTIONS'):
+            self.skipTest('Skip test on github due to T331223')
+        self.assertSite('http://www.proofwiki.org/wiki/$1')
 
     def test_non_standard_version_sites(self):
         """Test detection of non standard MediaWiki sites."""
