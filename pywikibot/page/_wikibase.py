@@ -31,6 +31,7 @@ from pywikibot.exceptions import (
     IsNotRedirectPageError,
     IsRedirectPageError,
     NoPageError,
+    NoSiteLinkError,
     NoWikibaseEntityError,
     WikiBaseError,
 )
@@ -1075,10 +1076,12 @@ class ItemPage(WikibasePage):
                 yield pg
 
     def getSitelink(self, site, force: bool = False) -> str:
-        """
-        Return the title for the specific site.
+        """Return the title for the specific site.
 
-        If the item doesn't have that language, raise NoPageError.
+        If the item doesn't have that language, raise NoSiteLinkError.
+
+        .. versionchanged:: 8.1
+           raises NoSiteLinkError instead of NoPageError.
 
         :param site: Site to find the linked page of.
         :type site: pywikibot.Site or database name
@@ -1086,13 +1089,13 @@ class ItemPage(WikibasePage):
         :param get_redirect: return the item content, do not follow the
                              redirect, do not raise an exception.
         :raise IsRedirectPageError: instance is a redirect page
-        :raise NoPageError: site is not in :attr:`sitelinks`
+        :raise NoSiteLinkError: site is not in :attr:`sitelinks`
         """
         if force or not hasattr(self, '_content'):
             self.get(force=force)
 
         if site not in self.sitelinks:
-            raise NoPageError(self)
+            raise NoSiteLinkError(self, site.lang)
 
         return self.sitelinks[site].canonical_title()
 
@@ -1576,7 +1579,7 @@ class Claim(Property):
         """
         claim_repo = site.get_repo_for_entity_type('property')
         claim = cls(claim_repo, data['mainsnak']['property'],
-                    datatype=data['mainsnak'].get('datatype', None))
+                    datatype=data['mainsnak'].get('datatype'))
         if 'id' in data:
             claim.snak = data['id']
         elif 'hash' in data:

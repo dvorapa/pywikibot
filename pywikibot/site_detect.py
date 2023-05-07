@@ -17,7 +17,7 @@ from requests.exceptions import RequestException
 import pywikibot
 from pywikibot.backports import removesuffix
 from pywikibot.comms.http import fetch
-from pywikibot.exceptions import ServerError
+from pywikibot.exceptions import ClientError, ServerError
 from pywikibot.tools import MediaWikiVersion
 
 
@@ -93,12 +93,11 @@ class MWSite:
                         'Unable to determine articlepath because the wiki is '
                         'private. Use the Main Page URL instead of the API.')
             else:
-                raise RuntimeError('Unable to determine articlepath: '
-                                   '{}'.format(self.fromurl))
+                raise RuntimeError(
+                    f'Unable to determine articlepath: {self.fromurl}')
 
     def __repr__(self) -> str:
-        return '{}("{}")'.format(
-            self.__class__.__name__, self.fromurl)
+        return f'{type(self).__name__}("{self.fromurl}")'
 
     @property
     def langs(self):
@@ -108,9 +107,11 @@ class MWSite:
             + '?action=query&meta=siteinfo&siprop=interwikimap'
               '&sifilteriw=local&format=json')
         iw = response.json()
-        if 'error' in iw:
-            raise RuntimeError('{} - {}'.format(iw['error']['code'],
-                                                iw['error']['info']))
+
+        error = iw.get('error')
+        if error:
+            raise RuntimeError(f"{error['code']} - {error['info']}")
+
         return [wiki for wiki in iw['query']['interwikimap']
                 if 'language' in wiki]
 
@@ -151,9 +152,8 @@ class MWSite:
                 'Private wiki detected. Login is required.\n'
                 'Please enter your username?')
             # Setup a dummy family so that we can create a site object
-            fam = pywikibot.family.AutoFamily(
-                'temporary_family',
-                self.api[:-8])
+            fam = pywikibot.family.AutoFamily('temporary_family',
+                                              self.server + self.scriptpath)
             site = pywikibot.Site(fam.code, fam, username)
             site.version = lambda: str(self.version)
             # Now the site object is able to login
@@ -259,8 +259,8 @@ class WikiHTMLPageParser(HTMLParser):
                     self._parsed_url, new_parsed_url)
 
         self._parsed_url = new_parsed_url
-        self.server = '{}://{}'.format(
-            self._parsed_url.scheme, self._parsed_url.netloc)
+        self.server = '{url.scheme}://{url.netloc}'.format(
+            url=self._parsed_url)
         self.scriptpath = self._parsed_url.path
 
     def handle_starttag(self, tag, attrs) -> None:
@@ -280,25 +280,31 @@ class WikiHTMLPageParser(HTMLParser):
 
 
 def check_response(response):
-    """Raise ServerError if the response indicates a server error.
+    """Raise ClientError or ServerError depending on http status.
 
     .. versionadded:: 3.0
     .. versionchanged:: 7.0
-       Raise a generic ServerError if http status code is not
-       IANA-registered but unofficial code
-
-
+       Raise a generic :class:`exceptions.ServerError` if http status
+       code is not IANA-registered but unofficial code
+    .. versionchanged:: 8.1
+       Raise a :class:`exceptions.ClientError` if status code is 4XX
     """
-    if response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
-        try:
-            msg = HTTPStatus(response.status_code).phrase
-        except ValueError as err:
-            m = re.search(r'\d{3}', err.args[0], flags=re.ASCII)
-            if not m:
-                raise err
-            msg = f'Generic Server Error ({m.group()})'
+    for status_code, err_class, err_type in [
+        (HTTPStatus.INTERNAL_SERVER_ERROR, ServerError, 'Server'),
+        (HTTPStatus.BAD_REQUEST, ClientError, 'Client')
+    ]:  # highest http status code first
+        if response.status_code >= status_code:
+            try:
+                status = HTTPStatus(response.status_code)
+            except ValueError as err:
+                m = re.search(r'\d{3}', err.args[0], flags=re.ASCII)
+                if not m:
+                    raise err
+                msg = f'Generic {err_type} Error ({m.group()})'
+            else:
+                msg = f'({status}) {status.description}'
 
-        raise ServerError(msg)
+            raise err_class(msg)
 
     if response.status_code == HTTPStatus.OK \
        and SERVER_DB_ERROR_MSG in response.text:

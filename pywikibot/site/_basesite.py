@@ -6,6 +6,7 @@
 #
 import functools
 import re
+import sys
 import threading
 from typing import Optional
 from warnings import warn
@@ -28,6 +29,9 @@ from pywikibot.tools import (
     first_upper,
     normalize_username,
 )
+
+
+PYTHON_312A7 = sys.version.split()[0] == '3.12.0a7'  # T334378 workaround
 
 
 class BaseSite(ComparableMixin):
@@ -186,6 +190,8 @@ class BaseSite(ComparableMixin):
 
     def __getattr__(self, attr):
         """Delegate undefined methods calls to the Family object."""
+        if PYTHON_312A7:  # T334378 workaround
+            print(end='')  # noqa: T001, T201
         try:
             method = getattr(self.family, attr)
             if not callable(method):
@@ -408,7 +414,7 @@ class BaseSite(ComparableMixin):
 
     def interwiki_putfirst(self):
         """Return list of language codes for ordering of interwiki links."""
-        return self.family.interwiki_putfirst.get(self.code, None)
+        return self.family.interwiki_putfirst.get(self.code)
 
     def getSite(self, code):  # noqa: N802
         """Return Site object for language 'code' in this Family."""
