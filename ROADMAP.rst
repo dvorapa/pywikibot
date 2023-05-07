@@ -1,12 +1,18 @@
 Current release
 ---------------
 
-* Improve flush exception logging
+* L10N updates
+* :class:`family.Family` class was rewritten. ``obsolete.setter`` was removed,
+  :meth:`family.Family.interwiki_replacements` returns an invariant mapping,
+  :meth:`family.Family.interwiki_removals` returns a frozenset. ``closed_wikis``,
+  ``removed_wikis`` and ``code_aliases`` are :class:`family.Family` class attributes.  (:phab:`T334834`)
 
 
 Deprecations
 ------------
 
+* 8.1.0: Dependency of :exc:`exceptions.NoSiteLinkError` from :exc:`exceptions.NoPageError` will be removed
+* 8.1.0: ``exceptions.Server414Error`` is deprecated in favour of :exc:`exceptions.Client414Error`
 * 8.0.0: :meth:`Timestamp.clone()<pywikibot.time.Timestamp.clone>` method is deprecated
   in favour of ``Timestamp.replace()`` method.
 * 8.0.0: :meth:`family.Family.maximum_GET_length` method is deprecated in favour of

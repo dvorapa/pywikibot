@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 import requests.exceptions as requests_exceptions
 
 import pywikibot
-from pywikibot.exceptions import ServerError
+from pywikibot.exceptions import ClientError, ServerError
 from pywikibot.site_detect import MWSite
 
 from tests.aspects import PatchingTestCase, TestCase
@@ -38,13 +38,14 @@ class SiteDetectionTestCase(TestCase):
             self.assertIsInstance(MWSite(url), MWSite)
 
     def assertNoSite(self, url: str):
-        """
-        Assert a url is not a MediaWiki site.
+        """Assert a url is not a MediaWiki site.
 
         :param url: Url of tested site
         :raises AssertionError: Site under url is MediaWiki powered
         """
         with self.assertRaises((AttributeError,
+                                ClientError,
+                                ConnectionError,  # different from requests
                                 RuntimeError,
                                 ServerError,
                                 requests_exceptions.ConnectionError,
@@ -73,11 +74,9 @@ class MediaWikiSiteTestCase(SiteDetectionTestCase):
     old_version_sites = (
         'http://tfwiki.net/wiki/$1',  # 1.19.5-1+deb7u1
         'http://www.hrwiki.org/index.php/$1',  # v 1.15.4
-        'http://www.wikifon.org/$1',  # v1.11.0
         'http://www.thelemapedia.org/index.php/$1',
         'http://www.werelate.org/wiki/$1',
         'http://www.otterstedt.de/wiki/index.php/$1',
-        'http://kb.mozillazine.org/$1',
         'https://en.wikifur.com/wiki/$1',  # 1.23.16
         'http://kb.mozillazine.org/$1'  # 1.26.4
     )

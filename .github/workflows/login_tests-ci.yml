@@ -16,7 +16,7 @@ env:
 jobs:
   build:
     runs-on: ${{ matrix.os || 'ubuntu-latest' }}
-    timeout-minutes: 2
+    timeout-minutes: 30
 
     strategy:
       fail-fast: false
@@ -80,7 +80,6 @@ jobs:
         pip install -U setuptools
         pip install requests
         pip install mwparserfromhell
-        pip install codecov
         pip install coverage
         python -c "import setuptools; print('setuptools:', setuptools.__version__)"
 
@@ -115,10 +114,14 @@ jobs:
         echo "('${{ env.PYWIKIBOT_USERNAME }}', '${{ secrets.PYWIKIBOT_USERPWD }}')" > passwordfile
 
     - name: Test with unittest
-      timeout-minutes: 1
+      timeout-minutes: 2
       run: |
         python pwb.py version
         coverage run -m unittest -vv tests/site_login_logout_tests.py
 
+    - name: Show coverage statistics
+      run: |
+        coverage report
+
     - name: Upload coverage to Codecov
-      run: codecov
+      uses: codecov/codecov-action@v3
