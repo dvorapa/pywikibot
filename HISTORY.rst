@@ -1,6 +1,71 @@
 Release history
 ===============
 
+8.1.2
+-----
+*23 April 2023*
+
+* Add support for guwwikinews (:phab:`T334461`)
+* Add support for kbdwiktionary (:phab:`T333271`)
+* Fix :func:`tools.chars.url2string` parsing for multiple encodings (:phab:`T335224`)
+
+
+8.1.1
+-----
+*21 April 2023*
+
+* Add support for fatwikipedia (:phab:`T335021`)
+* Add support for kcgwiktionary (:phab:`T334742`)
+* Update for wowwiki family
+
+
+8.1.0
+-----
+*16 April 2023*
+
+* :mod:`generate_family_file<pywikibot.scripts.generate_family_file>` script was improved (:phab:`T334775`)
+* A ``quiet`` parameter was added to :meth:`APISite.preloadpages()
+  <pywikibot.site._generators.GeneratorsMixin.preloadpages>` which is True by default
+* Fix getting HTTPStatus enum in site_detect check_response (:phab:`T334728`)
+* Do not show a logging in message if password is entered (:phab:`T178061`)
+* Enable preleading ``Bot:`` prefix with twtranslate messages (:phab:`T161459`)
+* Disable command.log if -nolog option is given (:phab:`T334381`)
+* Guess the last needed token key if the token is not found (:phab:`T334288`)
+* Show parameters with APIError (:phab:`T333957`)
+* Raise :exc:`exceptions.NoSiteLinkError` instead of :exc:`exceptions.NoPageError` when sitelink
+  is missing in :meth:`ItemPage.getSitelink()<pywikibot.ItemPage.getSitelink>` (:phab:`T332341`)
+* :exc:`exceptions.ClientError` was added
+* Raise :exc:`exceptions.NoPageError` when deleting a missing Page (:phab:`T332924`)
+* ``text`` parameter of :class:`proofreadpage.PagesTagParser` has a default value
+* L10N updates
+* Ignore talk pages with :meth:`APISite.watched_pages()<pywikibot.site._generators.GeneratorsMixin.watched_pages>` (:phab:`T330806`)
+* Load page info when creating a page if not updated previously (:phab:`T330980`)
+* Improve flush exception logging
+
+
+8.0.4
+-----
+*13 April 2023*
+
+* L10N Updates
+* Minimal needed mwparserfromhell was decreased to 0.5.2 (:phab:`T326498`, :phab:`T327600`)
+* No longer lazy load password cookies (:phab:`T271858`, :phab:`T326779`, :phab:`T329132`, :phab:`T330488`, :phab:`T331315`)
+
+
+8.0.3
+-----
+*29 March 2023*
+
+* Add support for ckb-wiktionary (:phab:`T332093`)
+
+
+8.0.2
+-----
+*25 March 2023*
+
+* Add support for anpwiki (:phab:`T332115`)
+
+
 8.0.1
 -----
 *04 March 2023*

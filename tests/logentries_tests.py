@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Test logentries module."""
 #
-# (C) Pywikibot team, 2015-2022
+# (C) Pywikibot team, 2015-2023
 #
 # Distributed under the terms of the MIT license.
 #
@@ -88,12 +88,12 @@ class TestLogentriesBase(TestCase):
             self.assertIsInstance(logentry.comment(), str)
             self.assertIsInstance(logentry.user(), str)
             self.assertEqual(logentry.user(), logentry['user'])
-        except HiddenKeyError as e:
+        except HiddenKeyError as e:  # pragma: no cover
             self.assertRegex(
                 str(e),
                 r"Log entry \([^)]+\) has a hidden '\w+' key and you "
                 r"don't have permission to view it")
-        except KeyError as e:
+        except KeyError as e:  # pragma: no cover
             self.assertRegex(str(e), "Log entry ([^)]+) has no 'comment' key")
         else:
             self.assertEqual(logentry.comment(), logentry['comment'])
@@ -120,7 +120,7 @@ class TestLogentriesBase(TestCase):
                 self.assertIsInstance(logentry.page(), pywikibot.FilePage)
             else:
                 self.assertIsInstance(logentry.page(), pywikibot.Page)
-        else:
+        else:  # pragma: no cover
             with self.assertRaises(KeyError):
                 logentry.page()
 
@@ -143,8 +143,12 @@ class LogentriesTestMeta(MetaTestCaseClass):
                 """Test a single logtype entry."""
                 site = self.sites[key]['site']
                 if logtype not in site.logtypes:
-                    self.skipTest('{}: "{}" logtype not available on {}.'
-                                  .format(key, logtype, site))
+                    self.skipTest(
+                        f'{key}: {logtype!r} logtype not available on {site}.')
+                if logtype == 'upload' and key == 'old':
+                    self.skipTest(f'{key}: frequently timeouts for '
+                                  f'{logtype!r} logtype on {site} (T334729).')
+
                 self._test_logevent(logtype)
 
             return test_logevent
@@ -175,13 +179,13 @@ class TestSimpleLogentries(TestLogentriesBase):
                             - set(LogEntryFactory._logtypes)):
             if not simple_type:
                 # paraminfo also reports an empty string as a type
-                continue
+                continue  # pragma: no cover
             try:
                 self._test_logevent(simple_type)
-            except StopIteration:
+            except StopIteration:  # pragma: no cover
                 unittest_print(
-                    'Unable to test "{}" on "{}" because there are no log '
-                    'entries with that type.'.format(simple_type, key))
+                    f'Unable to test "{simple_type}" on "{key}" because there'
+                    ' are no log entries with that type.')
 
 
 class TestLogentryParams(TestLogentriesBase):
@@ -219,6 +223,9 @@ class TestLogentryParams(TestLogentriesBase):
     def test_move_entry(self, key):
         """Test MoveEntry methods."""
         logentry = self._get_logentry('move')
+        if 'actionhidden' in logentry:
+            self.skipTest(
+                f'move action was hidden due to {logentry.comment()}')
         self.assertIsInstance(logentry.target_ns, pywikibot.site.Namespace)
         self.assertEqual(logentry.target_page.namespace(),
                          logentry.target_ns.id)
