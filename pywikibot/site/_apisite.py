@@ -118,11 +118,13 @@ class APISite(
         super().__init__(code, fam, user)
         self._globaluserinfo: Dict[Union[int, str], Any] = {}
         self._interwikimap = _InterwikiMap(self)
-        self._loginstatus = login.LoginStatus.NOT_ATTEMPTED
         self._msgcache: Dict[str, str] = {}
         self._paraminfo = api.ParamInfo(self)
         self._siteinfo = Siteinfo(self)
         self._tokens = TokenWallet(self)
+        self._loginstatus = login.LoginStatus.NOT_ATTEMPTED
+        with suppress(SiteDefinitionError):
+            self.login(cookie_only=True)
 
     def __getstate__(self) -> Dict[str, Any]:
         """Remove TokenWallet before pickling, for security reasons."""
@@ -324,12 +326,17 @@ class APISite(
     def login(
         self,
         autocreate: bool = False,
-        user: Optional[str] = None
+        user: Optional[str] = None,
+        *,
+        cookie_only: bool = False
     ) -> None:
         """Log the user in if not already logged in.
 
-        .. versionchanged:: 8.0
-           lazy load cookies when logging in.
+        .. versionchanged:: 8.0.0
+           lazy load cookies when logging in. This was dropped in 8.0.4
+        .. versionchanged:: 8.0.4
+           the *cookie_only* parameter was added and cookies are loaded
+           whenever the site is initialized.
 
         .. seealso:: :api:`Login`
 
@@ -337,6 +344,8 @@ class APISite(
             using unified login
         :param user: bot user name. Overrides the username set by
             BaseSite initializer parameter or user config setting
+        :param cookie_only: Only try to login from cookie but do not
+            force to login with username/password settings.
 
         :raises pywikibot.exceptions.NoUsernameError: Username is not
             recognised by the site.
@@ -404,23 +413,22 @@ class APISite(
 
             raise NoUsernameError(error_msg)
 
-        login_manager = login.ClientLoginManager(site=self,
-                                                 user=self.username())
-        if login_manager.login(retry=True, autocreate=autocreate):
-            self._username = login_manager.username
-            del self.userinfo  # force reloading
+        if not cookie_only:
+            login_manager = login.ClientLoginManager(site=self,
+                                                     user=self.username())
+            if login_manager.login(retry=True, autocreate=autocreate):
+                self._username = login_manager.username
+                del self.userinfo  # force reloading
 
-            # load userinfo
-            if self.userinfo['name'] == self.username():
-                self._loginstatus = login.LoginStatus.AS_USER
-                return
+                # load userinfo
+                if self.userinfo['name'] == self.username():
+                    self._loginstatus = login.LoginStatus.AS_USER
+                    return
 
-            pywikibot.error('{} != {} after {}.login() and successful '
-                            '{}.login()'
-                            .format(self.userinfo['name'],
-                                    self.username(),
-                                    type(self).__name__,
-                                    type(login_manager).__name__))
+                pywikibot.error(
+                    f"{self.userinfo['name']} != {self.username()} after "
+                    f'{type(self).__name__}.login() and successful '
+                    f'{type(login_manager).__name__}.login()')
 
         self._loginstatus = login.LoginStatus.NOT_LOGGED_IN  # failure
 
@@ -538,7 +546,8 @@ class APISite(
             assert 'userinfo' in uidata['query'], \
                    "API userinfo response lacks 'userinfo' key"
             self._userinfo = uidata['query']['userinfo']
-            if 'anon' in self._userinfo or not self._userinfo.get('id'):
+            if self._loginstatus != login.LoginStatus.IN_PROGRESS \
+               and ('anon' in self._userinfo or not self._userinfo.get('id')):
                 pywikibot.warning('No user is logged in on site {}'
                                   .format(self))
         return self._userinfo
@@ -1975,6 +1984,7 @@ class APISite(
                         "editpage: Unexpected error code '{}' received."
                         .format(err.code))
                     raise
+
                 assert 'edit' in result and 'result' in result['edit'], result
 
                 if result['edit']['result'] == 'Success':
@@ -2017,7 +2027,7 @@ class APISite(
                             'editpage: unknown CAPTCHA response {}, '
                             'page not saved'
                             .format(captcha))
-                        return False
+                        break
 
                     if 'spamblacklist' in result['edit']:
                         raise SpamblacklistError(
@@ -2028,20 +2038,22 @@ class APISite(
                             'editpage: {}\n{}, '
                             .format(result['edit']['code'],
                                     result['edit']['info']))
-                        return False
+                        break
 
                     pywikibot.error('editpage: unknown failure reason {}'
                                     .format(str(result)))
-                    return False
+                    break
 
                 pywikibot.error(
                     "editpage: Unknown result code '{}' received; "
                     'page not saved'.format(result['edit']['result']))
                 pywikibot.log(str(result))
-                return False
+                break
 
         finally:
             self.unlock_page(page)
+
+        return False
 
     OnErrorExc = namedtuple('OnErrorExc', 'exception on_new_page')
 
@@ -2371,7 +2383,6 @@ class APISite(
         'cantundelete': 'Could not undelete [[{title}]]. '
                         'Revision may not exist or was already undeleted.',
         'nodeleteablefile': 'No such old version of file',
-        'missingtitle': "[[{title}]] doesn't exist.",
     }  # other errors shouldn't occur because of pre-submission checks
 
     @need_right('delete')
@@ -2401,6 +2412,9 @@ class APISite(
 
         .. versionchanged:: 7.1
            keyword only parameter `deletetalk` was added.
+
+        .. versionchanged:: 8.1
+           raises :exc:`exceptions.NoPageError` if page does not exist.
 
         :param page: Page to be deleted or its pageid.
         :param reason: Deletion reason.
@@ -2443,11 +2457,15 @@ class APISite(
         try:
             req.submit()
         except APIError as err:
+            if err.code == 'missingtitle':
+                raise NoPageError(page) from None
+
             errdata = {
                 'site': self,
                 'title': title,
                 'user': self.user(),
             }
+
             if err.code in self._dl_errors:
                 raise Error(
                     self._dl_errors[err.code].format_map(errdata)
@@ -2861,15 +2879,16 @@ class APISite(
         """
         # check old and diff types
         def get_param(item: object) -> Optional[Tuple[str, Union[str, int]]]:
+            param = None
             if isinstance(item, str):
-                return 'title', item
-            if isinstance(item, pywikibot.Page):
-                return 'title', item.title()
-            if isinstance(item, int):
-                return 'rev', item
-            if isinstance(item, pywikibot.page.Revision):
-                return 'rev', item.revid
-            return None
+                param = 'title', item
+            elif isinstance(item, pywikibot.Page):
+                param = 'title', item.title()
+            elif isinstance(item, int):
+                param = 'rev', item
+            elif isinstance(item, pywikibot.page.Revision):
+                param = 'rev', item.revid
+            return param
 
         old_t = get_param(old)
         if not old_t:

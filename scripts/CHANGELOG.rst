@@ -1,6 +1,43 @@
 Scripts Changelog
 =================
 
+8.2.0
+-----
+
+replicate_wiki
+~~~~~~~~~~~~~~
+
+* i18n support was added (:phab:`T333759`)
+
+transwikiimport
+~~~~~~~~~~~~~~~
+
+* Script was added (:phab:`T335246`)
+
+
+8.1.0
+-----
+
+archivebot
+~~~~~~~~~~
+
+* Processing speed was improved and is up to 20 times faster, 2-3 times on average
+
+redirect
+~~~~~~~~
+
+* Use ``Bot:`` prefixed summary (:phab:`T161459`)
+* Fix ``-namespace`` usage if RedirectGenerator is used (:phab:`T331243`)
+
+
+8.0.2
+-----
+
+clean_sandbox
+~~~~~~~~~~~~~
+
+* L10N for es-wikis
+
 8.0.1
 -----
 
