@@ -322,9 +322,14 @@ def error_handling_callback(response):
 
     if isinstance(response, requests.ConnectionError):
         msg = str(response)
-        if 'NewConnectionError' in msg \
+        if ('NewConnectionError' in msg or 'NameResolutionError' in msg) \
            and re.search(r'\[Errno (-2|8|11001)\]', msg):
             raise ConnectionError(response)
+
+    # catch requests.ReadTimeout and requests.ConnectTimeout and convert
+    # it to ServerError
+    if isinstance(response, requests.Timeout):
+        raise ServerError(response)
 
     if isinstance(response, Exception):
         with suppress(Exception):
