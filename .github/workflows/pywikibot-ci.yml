@@ -19,7 +19,7 @@ jobs:
   build:
     runs-on: ${{ matrix.os || 'ubuntu-latest' }}
     continue-on-error: ${{ matrix.experimental || false }}
-    timeout-minutes: 90
+    timeout-minutes: 100
 
     strategy:
       fail-fast: false
@@ -74,6 +74,9 @@ jobs:
             site: wikisource:zh
             test_prod_only: true
             experimental: true
+          - python-version: "3.13-dev"
+            site: wikipedia:test
+            experimental: true
 
     steps:
     - name: Checkout Repository
@@ -83,6 +86,14 @@ jobs:
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
+      if: ${{ matrix.python-version != '3.13-dev' }}
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    # use deadsnakes/action until actions/setup-python supports Python 3.13
+    - name: Set up development Python ${{ matrix.python-version }}
+      uses: deadsnakes/action@v3.0.1
+      if: ${{ matrix.python-version == '3.13-dev' }}
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -129,7 +140,7 @@ jobs:
     - name: Test with unittest or pytest
       id: ci_test
       continue-on-error: true
-      timeout-minutes: 70
+      timeout-minutes: 90
       env:
         PYWIKIBOT_TEST_NO_RC:
           ${{ (matrix.site == 'wikisource:zh' || matrix.test_no_rc) && 1 || 0 }}
