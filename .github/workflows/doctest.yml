@@ -29,6 +29,7 @@ jobs:
         include:
           - python-version: "3.12.0-alpha - 3.12.0"
           # ubuntu-20.04 required for Python 3.6
+          - python-version: "3.13-dev"
           - python-version: 3.6
             os: windows-latest
           - python-version: 3.6
@@ -44,6 +45,14 @@ jobs:
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
+      if: ${{ matrix.python-version != '3.13-dev' }}
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    # use deadsnakes/action until actions/setup-python supports Python 3.13
+    - name: Set up development Python ${{ matrix.python-version }}
+      uses: deadsnakes/action@v3.0.1
+      if: ${{ matrix.python-version == '3.13-dev' }}
       with:
         python-version: ${{ matrix.python-version }}
 
