@@ -1,31 +1,13 @@
 Current release
 ---------------
 
-* Remove incorrect time normalization in :class:`page.Claim` (:phab:`T338748`, :phab:`T325860`, :phab:`T57755`)
-* Add support for other types of diffs in :meth:`Site.compare()<pywikibot.site._apisite.APISite.compare>`
-* Improvements for :func:`textlib.extract_sections` function (:phab:`T338748`)
-* Backport ``itertools.batched()`` from Python 3.12 which replaces :func:`tools.itertools.itergroup`
-* Upcast page types in :func:`pagegenerators.RecentChangesPageGenerator` (:phab:`T340450`)
-* Enable :meth:`FilePage.download()<pywikibot.FilePage.download>` to download thumbnails (:phab:`T247095`)
-* Refactor :func:`tools.compute_file_hash` and use ``hashlib.file_digest`` with Python 3.11
-* Url ends with curly bracket in :func:`textlib.compileLinkR` (:phab:`T338029`)
-* Allows spaces in environment variables for :class:`editor.TextEditor` (:phab:`T102465`, :phab:`T323078`)
-* Add :func:`textlib.get_regexes` public function (:phab:`T336144`)
-* Return 'https' scheme with :meth:`family.Family.protocol` (:phab:`T326046`)
-* Use ``build`` instead of ``setuptools.setup()`` to build the distribution
-* Raise ``ConnectionError`` on ``requests.ReadTimeout`` in :func:`comms.http.error_handling_callback`
-* Raise :exc:`exceptions.ServerError` on ``requests.ReadTimeout`` in :func:`comms.http.error_handling_callback`
-* Do not evaluate :func:`pywikibot.Site` with dict.pop() as default value (:phab:`T335720`)
-* L10N updates
-* :class:`family.Family` class was rewritten. ``obsolete.setter`` was removed,
-  :meth:`family.Family.interwiki_replacements` returns an invariant mapping,
-  :meth:`family.Family.interwiki_removals` returns a frozenset. ``closed_wikis``,
-  ``removed_wikis`` and ``code_aliases`` are :class:`family.Family` class attributes.  (:phab:`T334834`)
+* *(No changes yet)*
 
 
 Deprecations
 ------------
 
+* 8.2.0: *normalize* parameter of :meth:`WbTime.toTimestr` and :meth:`WbTime.toWikibase` will be removed
 * 8.1.0: Dependency of :exc:`exceptions.NoSiteLinkError` from :exc:`exceptions.NoPageError` will be removed
 * 8.1.0: ``exceptions.Server414Error`` is deprecated in favour of :exc:`exceptions.Client414Error`
 * 8.0.0: :meth:`Timestamp.clone()<pywikibot.time.Timestamp.clone>` method is deprecated
