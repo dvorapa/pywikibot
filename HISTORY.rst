@@ -1,6 +1,17 @@
 Release history
 ===============
 
+8.3.0
+-----
+*27 July 2023*
+
+* Add support for btmwiktionary (:phab:`T336117`)
+* Add 'yue'/'zh-yue' code_aliases to family files (:phab:`T341960`)
+* All wbtypes are placed in ``pywkibot._wbtypes`` module
+* Use ``site.lang`` instead of ``site.code`` in :func:`comms.http.user_agent` (:phab:`T228322`)
+* Make header extraction in :func:`textlib.extract_sections` more robust (:phab:`T341787`)
+*
+
 8.2.0
 -----
 *05 July 2023*
@@ -68,7 +79,7 @@ Release history
 * L10N updates
 * Ignore talk pages with :meth:`APISite.watched_pages()<pywikibot.site._generators.GeneratorsMixin.watched_pages>` (:phab:`T330806`)
 * Load page info when creating a page if not updated previously (:phab:`T330980`)
-* Improve flush exception logging
+* Improve flush exception logging  (:phab:`T108444`)
 
 
 8.0.4
