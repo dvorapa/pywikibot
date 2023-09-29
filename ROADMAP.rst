@@ -1,6 +1,9 @@
 Current release
 ---------------
 
+* Python 3.6 support will be discontinued and probably this is the last version supporting it
+* Upcast to :class:`pywikibot.FilePage` for a proper extension only (:phab:`T346889`)
+* Handle missing SDC mediainfo (:phab:`T345038`)
 * *modules_only_mode* parameter of :class:`data.api.ParamInfo`, its *paraminfo_keys* class attribute
   and its *preloaded_modules* property was deprecated, the :meth:`data.api.ParamInfo.normalize_paraminfo`
   method became a staticmethod (:phab:`T306637`)
@@ -19,6 +22,7 @@ Current release
 Deprecations
 ------------
 
+* 8.4.0: Python 3.6 support is deprecated and will be dropped with Pywikibot 9
 * 8.4.0: *modules_only_mode* parameter of :class:`data.api.ParamInfo`, its *paraminfo_keys* class attribute
   and its preloaded_modules property will be removed
 * 8.4.0: *dropdelay* and *releasepid* attributes of :class:`throttle.Throttle` will be removed
@@ -76,4 +80,3 @@ Will be removed in Pywikibot 9
 * 6.2.0: Throttle.multiplydelay attribute is deprecated
 * 6.2.0: SequenceOutputter.format_list() is deprecated in favour of 'out' property
 * 6.0.0: config.register_family_file() is deprecated
-* 5.5.0: APISite.redirectRegex() will be removed in favour of APISite.redirect_regex()
