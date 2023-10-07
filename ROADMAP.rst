@@ -1,28 +1,13 @@
 Current release
 ---------------
 
-* Python 3.6 support will be discontinued and probably this is the last version supporting it
-* Upcast to :class:`pywikibot.FilePage` for a proper extension only (:phab:`T346889`)
-* Handle missing SDC mediainfo (:phab:`T345038`)
-* *modules_only_mode* parameter of :class:`data.api.ParamInfo`, its *paraminfo_keys* class attribute
-  and its *preloaded_modules* property was deprecated, the :meth:`data.api.ParamInfo.normalize_paraminfo`
-  method became a staticmethod (:phab:`T306637`)
-* raise ValueError when :class:`pywikibot.FilePage` title doesn't have a valid file extension (:phab:`T345786`)
-* :attr:`site.APISite.file_extensions <pywikibot.site._apisite.APISite.file_extensions>` property was added (:phab:`T345786`)
-* ``dropdelay`` and ``releasepid`` attributes of :class:`throttle.Throttle` where deprecated
-  in favour of `expiry` class attribute
-* Add https scheme if missing in url asked by :mod:`pywikibot.scripts.generate_family_file`
-* L10N updates and i18n updates
-* use inline re.IGNORECASE flag in :func:`textlib.case_escape` function (:phab:`T308265`)
-* Convert URL-encoded characters also for links outside main namespace with
-  :meth:`cosmetic_changes.CosmeticChangesToolkit.cleanUpLinks` (:phab:`T342470`)
-* Implement Flow topic summaries (:phab:`T109443`)
+* **Python 3.6 support will be discontinued** and this is the last version supporting it.
 
 
 Deprecations
 ------------
 
-* 8.4.0: Python 3.6 support is deprecated and will be dropped with Pywikibot 9
+* 8.4.0: Python 3.6 support is deprecated and will be dropped soon with Pywikibot 9
 * 8.4.0: *modules_only_mode* parameter of :class:`data.api.ParamInfo`, its *paraminfo_keys* class attribute
   and its preloaded_modules property will be removed
 * 8.4.0: *dropdelay* and *releasepid* attributes of :class:`throttle.Throttle` will be removed
