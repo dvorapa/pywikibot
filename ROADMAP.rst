@@ -1,7 +1,6 @@
 Current release
 ---------------
 
-* (no changes yet)
 * **Python 3.6 support will be discontinued soon**.
 
 
