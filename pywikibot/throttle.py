@@ -4,6 +4,8 @@
 #
 # Distributed under the terms of the MIT license.
 #
+from __future__ import annotations
+
 import itertools
 import math
 import threading
@@ -77,23 +79,6 @@ class Throttle:
 
         self.checkMultiplicity()
         self.setDelays()
-
-    @property
-    @deprecated(since='6.2')
-    def multiplydelay(self) -> bool:
-        """DEPRECATED attribute.
-
-        .. deprecated:: 6.2
-        """
-        return True
-
-    @multiplydelay.setter
-    @deprecated(since='6.2')
-    def multiplydelay(self) -> None:
-        """DEPRECATED attribute setter.
-
-        .. deprecated:: 6.2
-        """
 
     @property
     @deprecated('expiry', since='8.4.0')
