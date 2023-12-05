@@ -5,6 +5,8 @@
 #
 # Distributed under the terms of the MIT license.
 #
+from __future__ import annotations
+
 import os
 import re
 import unittest
@@ -228,6 +230,14 @@ class TestFilePageLatestFileInfo(TestCase):
         """Create File page."""
         super().setUp()
         self.image = pywikibot.FilePage(self.site, self.file_name)
+
+    def test_lazyload_metadata(self):
+        """Test metadata lazy load."""
+        self.assertTrue(self.image.exists())
+
+        rev = self.image.latest_file_info
+        self.assertIsNone(rev._metadata)
+        self.assertIsNotNone(rev.metadata)
 
     def test_get_file_url(self):
         """Get File url."""
