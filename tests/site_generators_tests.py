@@ -5,6 +5,8 @@
 #
 # Distributed under the terms of the MIT license.
 #
+from __future__ import annotations
+
 import unittest
 from contextlib import suppress
 from unittest.mock import patch
@@ -181,8 +183,7 @@ class TestSiteGenerators(DefaultSiteTestCase):
             'continue': [True],
             'inprop': ['protection'],
             'iilimit': ['max'],
-            'iiprop': ['timestamp', 'user', 'comment', 'url', 'size', 'sha1',
-                       'metadata'],
+            'iiprop': ['timestamp', 'user', 'comment', 'url', 'size', 'sha1'],
             'indexpageids': [True],
             'generator': ['templates'], 'action': ['query'],
             'prop': ['info', 'imageinfo', 'categoryinfo'],
@@ -218,7 +219,7 @@ class TestSiteGenerators(DefaultSiteTestCase):
             'inprop': ['protection'],
             'iilimit': ['max'],
             'iiprop': ['timestamp', 'user', 'comment', 'url', 'size',
-                       'sha1', 'metadata'], 'generator': ['links'],
+                       'sha1'], 'generator': ['links'],
             'prop': ['info', 'imageinfo', 'categoryinfo'],
             'redirects': [False],
         }
@@ -1108,8 +1109,7 @@ class SearchTestCase(DefaultSiteTestCase):
         expected_params = {
             'prop': ['info', 'imageinfo', 'categoryinfo'],
             'inprop': ['protection'],
-            'iiprop': ['timestamp', 'user', 'comment', 'url', 'size', 'sha1',
-                       'metadata'],
+            'iiprop': ['timestamp', 'user', 'comment', 'url', 'size', 'sha1'],
             'iilimit': ['max'], 'generator': ['search'], 'action': ['query'],
             'indexpageids': [True], 'continue': [True],
             'gsrnamespace': [0], 'gsrsearch': ['wiki'], 'gsrwhat': ['title']}

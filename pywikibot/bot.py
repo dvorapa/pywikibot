@@ -61,6 +61,8 @@ Additionally there is the :py:obj:`AutomaticTWSummaryBot` which subclasses
 #
 # Distributed under the terms of the MIT license.
 #
+from __future__ import annotations
+
 __all__ = (
     'CRITICAL', 'ERROR', 'INFO', 'WARNING', 'DEBUG', 'INPUT', 'STDOUT',
     'VERBOSE', 'critical', 'debug', 'error', 'exception', 'log', 'warning',
@@ -140,7 +142,6 @@ from pywikibot.bot_choice import (
     UnhandledAnswer,
 )
 from pywikibot.exceptions import (
-    ArgumentDeprecationWarning,
     EditConflictError,
     Error,
     LockedPageError,
@@ -359,8 +360,8 @@ def init_handlers() -> None:
     :mod:`pywikibot.logging` module.
 
     .. versionchanged:: 6.2
-      Different logfiles are used if multiple processes of the same
-      script are running.
+       Different logfiles are used if multiple processes of the same
+       script are running.
     """
     module_name = calledModuleName()
     if not module_name:
@@ -419,20 +420,10 @@ def init_handlers() -> None:
             logfile = config.datafilepath('logs',
                                           f'{module_name}-{pid}bot.log')
 
-        # give up infinite rotating file handler with logfilecount of -1;
-        # set it to 999 and use the standard implementation
-        max_count = config.logfilecount
-        if max_count == -1:  # pragma: no cover
-            max_count = 999
-            issue_deprecation_warning('config.logfilecount with value -1',
-                                      'any positive number',
-                                      warning_class=ArgumentDeprecationWarning,
-                                      since='6.5.0')
-
         file_handler = logging.handlers.RotatingFileHandler(
             filename=logfile,
             maxBytes=config.logfilesize << 10,
-            backupCount=max_count,
+            backupCount=config.logfilecount,
             encoding='utf-8'
         )
         file_handler.namer = handler_namer
