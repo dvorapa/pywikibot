@@ -4,18 +4,22 @@ Current release
 Improvements
 ^^^^^^^^^^^^
 
+* Add :meth:`site.APISite.ratelimit()<pywikibot.site._apisite.APISite.ratelimit>` method 
+  and :class:`tools.collections.RateLimit` NamedTuple (:phab:`T304808`)
 * L10N Updates
 * Add :class:`pagegenerators.PagePilePageGenerator` (:phab:`T353086`)
 
 Bugfixes
 ^^^^^^^^
 
-* :func:`pywikibot.input_choice` validates *default* parameter  (:phab:`T353097`)
+* Suppress error in :meth:`cosmetic_changes.CosmeticChangesToolkit.cleanUpLinks` (:phab:`T337045`)
+* :func:`pywikibot.input_choice` validates *default* parameter (:phab:`T353097`)
 * Remove typing imports from user-config.py file (:phab:`T352965`)
 
 Breaking changes and code cleanups
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* ``keys()`` and ``items()`` methods of :class:`data.api.Reques` gives a view instead a list (:phab:`T310953`)
 * ``SequenceOutputter.format_list()`` was removed in favour of :attr:`tools.formatter.SequenceOutputter.out` property
 * *output* parameter of :class:`bot_choice.OutputProxyOption` (i.e. ``OutputOption`` instance) without *out* property is no longer supported
 * ``OutputOption.output()`` method was removed
@@ -32,6 +36,7 @@ Breaking changes and code cleanups
 Deprecations
 ------------
 
+* 9.0.0: ``iteritems`` method of :class:`data.api.Request` will be removed in favour of ``items``
 * 9.0.0: ``SequenceOutputter.output()`` is deprecated in favour of :attr:`tools.formatter.SequenceOutputter.out` property
 * 9.0.0: *nullcontext* context manager and *SimpleQueue* queue of :mod:`backports` are derecated
 * 8.4.0: *modules_only_mode* parameter of :class:`data.api.ParamInfo`, its *paraminfo_keys* class attribute
@@ -59,6 +64,11 @@ Deprecations
   :attr:`userinfo['messages']<pywikibot.site._apisite.APISite.userinfo>`
 * 8.0.0: :meth:`Page.editTime()<page.BasePage.editTime>` method is deprecated and should be replaced by
   :attr:`Page.latest_revision.timestamp<page.BasePage.latest_revision>`
+
+
+Will be removed in Pywikibot 10
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 * 7.7.0: :mod:`tools.threading` classes should no longer imported from :mod:`tools`
 * 7.6.0: :mod:`tools.itertools` datatypes should no longer imported from :mod:`tools`
 * 7.6.0: :mod:`tools.collections` datatypes should no longer imported from :mod:`tools`
