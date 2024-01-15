@@ -1,0 +1,1 @@
+/shared/pywikibot/core/typing_extensions.py
