@@ -9,7 +9,7 @@ o = pywikibot.Page(s, 'Diskuse s wikipedistou:Dvorapa/Obsah')
 ot = o.text
 odkazu = ot.count('<li')
 
-nadpisy = textlib._extract_headings(pywikibot.Page(s, 'Diskuse s wikipedistou:Dvorapa').text, s)
+nadpisy = textlib._extract_headings(pywikibot.Page(s, 'Diskuse s wikipedistou:Dvorapa').text)
 rozdil = len(nadpisy) - odkazu
 if rozdil:
   pred, ul, po = ot.partition('</ul>')
