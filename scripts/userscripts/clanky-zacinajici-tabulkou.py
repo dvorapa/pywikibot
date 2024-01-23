@@ -42,7 +42,6 @@ cannot be set by settings file:
 #
 import pywikibot, re
 from pywikibot import pagegenerators
-from pywikibot.backports import Tuple
 from pywikibot.bot import (
     ConfigParserBot,
     ExistingPageBot,
@@ -135,7 +134,7 @@ class BasicBot(
         #self.put_current(text, summary=self.shrnuti)
 
 
-def main(*args: Tuple[str, ...]) -> None:
+def main(*args: tuple[str, ...]) -> None:
     """
     Process command line arguments and invoke bot.
 

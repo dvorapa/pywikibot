@@ -29,7 +29,6 @@ In addition the following generators and filters are supported:
 #
 import pywikibot, re
 from pywikibot import pagegenerators, Page
-from pywikibot.backports import Tuple
 from pywikibot.bot import (
     ExistingPageBot,
     SingleSiteBot,
@@ -164,7 +163,7 @@ class BasicBot(
         ################################################################
 
 
-def main(*args: Tuple[str, ...]) -> None:
+def main(*args: tuple[str, ...]) -> None:
     """
     Process command line arguments and invoke bot.
 
