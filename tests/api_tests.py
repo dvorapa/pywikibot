@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """API test module."""
 #
-# (C) Pywikibot team, 2007-2023
+# (C) Pywikibot team, 2007-2024
 #
 # Distributed under the terms of the MIT license.
 #
@@ -926,8 +926,7 @@ class TestLagpattern(DefaultSiteTestCase):
         if ('dbrepllag' not in mysite.siteinfo
                 or mysite.siteinfo['dbrepllag'][0]['lag'] == -1):
             self.skipTest(
-                '{} is not running on a replicated database cluster.'
-                .format(mysite)
+                f'{mysite} is not running on a replicated database cluster.'
             )
         mythrottle = DummyThrottle(mysite)
         mysite._throttle = mythrottle
@@ -939,10 +938,10 @@ class TestLagpattern(DefaultSiteTestCase):
             req.submit()
         except SystemExit:
             pass  # expected exception from DummyThrottle instance
-        except APIError as e:  # pragma: no cover
+        except APIError:  # pragma: no cover
             pywikibot.warning(
                 'Wrong api lagpattern regex, cannot retrieve lag value')
-            raise e
+            raise
         self.assertIsInstance(mythrottle._lagvalue, (int, float))
         self.assertGreaterEqual(mythrottle._lagvalue, 0)
         self.assertIsInstance(mythrottle.retry_after, int)

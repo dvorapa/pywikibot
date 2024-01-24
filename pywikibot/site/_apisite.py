@@ -1,6 +1,6 @@
 """Objects representing API interface to MediaWiki site."""
 #
-# (C) Pywikibot team, 2008-2023
+# (C) Pywikibot team, 2008-2024
 #
 # Distributed under the terms of the MIT license.
 #
@@ -403,9 +403,9 @@ class APISite(
         # May occur if you are not logged in (no API read permissions).
         except APIError:
             pass
-        except NoUsernameError as e:
+        except NoUsernameError:
             if not autocreate:
-                raise e
+                raise
 
         if self.is_oauth_token_available():
             if self.userinfo['name'] == self.username():
@@ -1280,7 +1280,7 @@ class APISite(
     def image_repository(self) -> BaseSite | None:
         """Return Site object for image repository e.g. commons."""
         code, fam = self.shared_image_repository()
-        if bool(code or fam):
+        if code or fam:
             return pywikibot.Site(code, fam, self.username())
 
         return None
