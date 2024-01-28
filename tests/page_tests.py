@@ -26,7 +26,7 @@ from pywikibot.exceptions import (
     UnknownExtensionError,
 )
 from pywikibot.tools import suppress_warnings
-from tests import WARN_SITE_CODE
+from tests import WARN_SITE_CODE, unittest_print
 from tests.aspects import (
     DefaultDrySiteTestCase,
     DefaultSiteTestCase,
@@ -522,15 +522,21 @@ class TestPageObject(DefaultSiteTestCase):
         mainpage = self.get_mainpage()
         for p in mainpage.linkedPages():
             self.assertIsInstance(p, pywikibot.Page)
-        iw = list(mainpage.interwiki(expand=True))
-        for p in iw:
-            self.assertIsInstance(p, pywikibot.Link)
-        for p2 in mainpage.interwiki(expand=False):
-            self.assertIsInstance(p2, pywikibot.Link)
-            self.assertIn(p2, iw)
+
+        if mainpage.site.sitename == 'wikipedia:en':
+            unittest_print('Skipping interwiki link test due to T356009')
+        else:
+            iw = set(mainpage.interwiki(expand=True))
+            for link in iw:
+                self.assertIsInstance(link, pywikibot.Link)
+            for link in mainpage.interwiki(expand=False):
+                self.assertIsInstance(link, pywikibot.Link)
+                self.assertIn(link, iw)
+
         with suppress_warnings(WARN_SITE_CODE, category=UserWarning):
             for p in mainpage.langlinks():
                 self.assertIsInstance(p, pywikibot.Link)
+
         for p in mainpage.imagelinks():
             self.assertIsInstance(p, pywikibot.FilePage)
         for p in mainpage.templates():
@@ -658,33 +664,25 @@ class TestPageRepr(DefaultDrySiteTestCase):
     def setUpClass(cls):
         """Initialize page instance."""
         super().setUpClass()
+        cls._old_encoding = config.console_encoding
+        config.console_encoding = 'utf8'
         cls.page = pywikibot.Page(cls.site, 'Ō')
 
-    def setUp(self):
-        """Force the console encoding to UTF-8."""
-        super().setUp()
-        self._old_encoding = config.console_encoding
-        config.console_encoding = 'utf8'
-
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         """Restore the original console encoding."""
-        config.console_encoding = self._old_encoding
-        super().tearDown()
+        config.console_encoding = cls._old_encoding
+        super().tearDownClass()
 
-    def test_mainpage_type(self):
-        """Test the return type of repr(Page(<main page>)) is str."""
+    def test_type(self):
+        """Test the return type of repr(Page(<page>)) is str."""
         mainpage = self.get_mainpage()
         self.assertIsInstance(repr(mainpage), str)
+        self.assertIsInstance(repr(self.page), str)
 
-    def test_unicode_type(self):
-        """Test the return type of repr(Page('<non-ascii>')) is str."""
-        page = pywikibot.Page(self.get_site(), 'Ō')
-        self.assertIsInstance(repr(page), str)
-
-    def test_unicode_value(self):
-        """Test to capture actual Python result pre unicode_literals."""
+    def test_value(self):
+        """Test to capture actual Python result."""
         self.assertEqual(repr(self.page), "Page('Ō')")
-        self.assertEqual(f'{self.page!r}', "Page('Ō')")
         self.assertEqual(f'{self.page!r}', "Page('Ō')")
 
 
