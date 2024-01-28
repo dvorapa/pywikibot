@@ -29,6 +29,7 @@ from __future__ import annotations
 import os
 import re
 import sys
+from contextlib import suppress
 
 
 if sys.version_info[:3] >= (3, 9):
@@ -59,7 +60,6 @@ extra_deps = {
         'flake8-bugbear>=23.3.12',
         'flake8-comprehensions>=3.13.0',
         'flake8-docstrings>=1.4.0',
-        'flake8-executable',
         'flake8-future-annotations',
         'flake8-mock-x2',
         'flake8-print>=5.0.0',
@@ -135,7 +135,7 @@ def get_validated_version() -> str:
     """
     version = metadata.__version__
     if 'sdist' not in sys.argv:
-        return version  # pragma: no cover
+        return version
 
     # validate version for sdist
     from contextlib import suppress
@@ -146,12 +146,12 @@ def get_validated_version() -> str:
     try:
         tags = run(['git', 'tag'], check=True, stdout=PIPE,
                    universal_newlines=True).stdout.splitlines()
-    except Exception as e:  # pragma: no cover
+    except Exception as e:
         print(e)
         sys.exit('Creating source distribution canceled.')
 
     last_tag = None
-    if tags:  # pragma: no cover
+    if tags:
         for tag in ('stable', 'python2'):
             with suppress(ValueError):
                 tags.remove(tag)
@@ -161,16 +161,16 @@ def get_validated_version() -> str:
     warning = ''
     try:
         vrsn = Version(version)
-    except InvalidVersion:  # pragma: no cover
+    except InvalidVersion:
         warning = f'{version} is not a valid version string following PEP 440.'
     else:
         if last_tag and vrsn <= Version(last_tag):
-            warning = (  # pragma: no cover
+            warning = (
                 f'New version {version!r} is not higher than last version '
                 f'{last_tag!r}.'
             )
 
-    if warning:  # pragma: no cover
+    if warning:
         print(__doc__)
         print('\n\n{warning}')
         sys.exit('\nBuild of distribution package canceled.')
@@ -200,7 +200,7 @@ def read_desc(filename) -> str:
     return ''.join(desc)
 
 
-def get_packages(name) -> List[str]:
+def get_packages(name: str) -> List[str]:
     """Find framework packages."""
     try:
         from setuptools import find_namespace_packages
@@ -208,10 +208,12 @@ def get_packages(name) -> List[str]:
         sys.exit(
             'setuptools >= 40.1.0 is required to create a new distribution.')
     packages = find_namespace_packages(include=[name + '.*'])
+    with suppress(ValueError):
+        packages.remove(name + '.apicache-py3')
     return [str(name)] + packages
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover
     """Setup entry point."""
     from setuptools import setup
 
@@ -349,10 +351,6 @@ def main() -> None:
             'Topic :: Utilities',
         ],
     )
-
-    # Finally show distribution version before uploading
-    if 'sdist' in sys.argv:
-        print(f'\nDistribution package created for version {version}')
 
 
 if __name__ == '__main__':  # pragma: no cover
