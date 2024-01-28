@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Test for site detection."""
 #
-# (C) Pywikibot team, 2014-2023
+# (C) Pywikibot team, 2014-2024
 #
 # Distributed under the terms of the MIT license.
 #
@@ -65,6 +65,7 @@ class MediaWikiSiteTestCase(SiteDetectionTestCase):
         # Server that hosts www.wikichristian.org is unreliable - it
         # occasionally responding with 500 error (see: T151368).
         'http://www.wikichristian.org/index.php?title=$1',
+        'http://kb.mozillazine.org/$1'  # 1.40.1
     )
 
     non_standard_version_sites = (
@@ -79,7 +80,6 @@ class MediaWikiSiteTestCase(SiteDetectionTestCase):
         'http://www.werelate.org/wiki/$1',
         'http://www.otterstedt.de/wiki/index.php/$1',
         'https://en.wikifur.com/wiki/$1',  # 1.23.16
-        'http://kb.mozillazine.org/$1'  # 1.26.4
     )
 
     no_sites = (
