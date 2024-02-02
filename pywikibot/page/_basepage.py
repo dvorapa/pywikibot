@@ -1,6 +1,6 @@
 """Objects representing a base object for a MediaWiki page."""
 #
-# (C) Pywikibot team, 2008-2023
+# (C) Pywikibot team, 2008-2024
 #
 # Distributed under the terms of the MIT license.
 #
@@ -1943,8 +1943,10 @@ class BasePage(ComparableMixin):
         content: bool = False,
         **kwargs
     ) -> list:
-        """
-        Return a particular deleted revision by timestamp.
+        """Return a particular deleted revision by timestamp.
+
+        .. seealso:: :meth:`APISite.deletedrevs()
+           <pywikibot.site._generators.GeneratorsMixin.deletedrevs>`
 
         :return: a list of [date, editor, comment, text, restoration
             marker]. text will be None, unless content is True (or has
