@@ -139,7 +139,7 @@ def read_project() -> str:
     return config['project']['name'].strip('"')
 
 
-def get_validated_version(name: str) -> str:
+def get_validated_version(name: str) -> str:  # pragma: no cover
     """Get a validated pywikibot module version string.
 
     The version number from pywikibot.__metadata__.__version__ is used.
@@ -162,7 +162,6 @@ def get_validated_version(name: str) -> str:
         return version
 
     # validate version for sdist
-    from contextlib import suppress
     from subprocess import PIPE, run
 
     from packaging.version import InvalidVersion, Version
@@ -255,5 +254,5 @@ def main() -> None:  # pragma: no cover
     )
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == '__main__':
     main()
