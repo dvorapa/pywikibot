@@ -112,7 +112,7 @@ class BasicBot(
         # assign the generator to the bot
         generator = itertools.chain()
         for proptext in self.proptexty:
-            gen = wiki.search('"' + proptext + '"', namespaces = [0])
+            gen = wiki.search('"' + proptext + '"', namespaces = [0], where = 'text')
             generator = itertools.chain(generator, gen)
         self.generator = generator
 
