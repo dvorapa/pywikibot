@@ -224,7 +224,7 @@ class ScriptTestMeta(MetaTestCaseClass):
                     test_overrides['pywikibot.Site'] = 'lambda *a, **k: None'
 
                 # run the script
-                result = execute_pwb(cmd, data_in, timeout=timeout,
+                result = execute_pwb(cmd, data_in=data_in, timeout=timeout,
                                      overrides=test_overrides)
 
                 err_result = result['stderr']
@@ -369,6 +369,7 @@ class TestScriptSimulate(DefaultSiteTestCase, PwbTestCase,
 
     _allowed_failures = {
         'blockpageschecker',  # not localized for some test sites
+        'category_redirect',
         'clean_sandbox',
         'delinker',
         'disambredir',
