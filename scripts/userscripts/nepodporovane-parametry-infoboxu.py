@@ -83,13 +83,6 @@ class BasicBot(
         'ref': None,
     }
 
-    infobox = opt.ref
-    if re.match(r'[Šš]ablona:', infobox):
-        infobox = infobox[8:]
-    infobox = re.escape(infobox)
-    infobox = infobox.replace(r'\ ', r'[ _]')
-    infobox = r'\{\{\s*[' + infobox[0].upper() + infobox[0].lower() + r']' + infobox[1:] + r' *(?:\||\}\}|<!\-\-|\n)'
-
     def treat_page(self) -> None:
         """Load the given page, do some changes, and save it."""
         objekt_stranky = self.current_page
@@ -206,9 +199,12 @@ def main(*args: str) -> None:
 
     for arg in local_args:
         arg, _, value = arg.partition(':')
-        option = arg[1:]
-        if option == 'ref':
-            options[option] = value
+        if arg[1:] == 'ref':
+            if re.match(r'[Šš]ablona:', value):
+                value = value[8:]
+            value = re.escape(value)
+            value = value.replace(r'\ ', r'[ _]')
+            infobox = r'\{\{\s*[' + value[0].upper() + value[0].lower() + r']' + value[1:] + r' *(?:\||\}\}|<!\-\-|\n)'
 
     # Process pagegenerators arguments
     local_args = gen_factory.handle_args(local_args)
@@ -235,11 +231,13 @@ def main(*args: str) -> None:
         # pass generator and private options to the bot
         gen = pagegenerators.MySQLPageGenerator("select page_namespace, page_title from page where page_namespace like 10 and (page_title like 'Infobox_%' or page_title like 'Taxobox' or page_title like 'Lokomotiva_%' or page_title like 'Cycling_race/infobox') and not page_is_redirect and not page_title like '%/doc'")
         bot = BasicBot(generator=gen, **options)
+        bot.infobox = infobox
         bot.step = 1
         bot.run()  # guess what it does
         gen2 = bot.site.allpages(filterredir=False)
         #gen2 = pagegenerators.MySQLPageGenerator("select tl_from_namespace, page_title from templatelinks left join page on tl_from=page_id where tl_from_namespace like 0 and tl_target_id in (select * from (select lt_id from linktarget where lt_namespace like 10 and (lt_title like 'Infobox_%' or lt_title like 'Taxobox' or lt_title like 'Lokomotiva_%' or lt_title like 'Cycling_race/infobox')) as subquery)")
         bot2 = BasicBot(generator=gen2, **options)
+        bot2.infobox = infobox
         bot2.step = 2
         bot2.mapa2 = bot.mapa
         bot2.run()  # guess what it does
