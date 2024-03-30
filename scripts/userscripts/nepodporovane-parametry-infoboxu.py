@@ -238,6 +238,7 @@ def main(*args: str) -> None:
         bot.step = 1
         bot.run()  # guess what it does
         gen2 = bot.site.allpages(filterredir=False)
+        #gen2 = pagegenerators.MySQLPageGenerator("select tl_from_namespace, page_title from templatelinks left join page on tl_from=page_id where tl_from_namespace like 0 and tl_target_id in (select * from (select lt_id from linktarget where lt_namespace like 10 and (lt_title like 'Infobox_%' or lt_title like 'Taxobox' or lt_title like 'Lokomotiva_%' or lt_title like 'Cycling_race/infobox')) as subquery)")
         bot2 = BasicBot(generator=gen2, **options)
         bot2.step = 2
         bot2.mapa2 = bot.mapa
