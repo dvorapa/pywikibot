@@ -76,7 +76,7 @@ class BasicBot(
         'ref': None,
     }
 
-    infobox = self.opt.ref
+    infobox = opt.ref
     if re.match(r'[Šš]ablona:', infobox):
         infobox = infobox[8:]
     infobox = re.escape(infobox)
