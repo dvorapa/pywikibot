@@ -79,7 +79,6 @@ class BasicBot(
 
     update_options = {
         'summary': 'Robot: ' + shrnuti,  # your own bot summary
-        'ref': None,
     }
 
     def treat_page(self) -> None:
@@ -273,15 +272,6 @@ def main(*args: str) -> None:
     # to work on.
     gen_factory = pagegenerators.GeneratorFactory()
 
-    for arg in local_args:
-        arg, _, value = arg.partition(':')
-        if arg[1:] == 'ref':
-            if re.match(r'[Šš]ablona:', value):
-                value = value[8:]
-            value = re.escape(value)
-            value = value.replace(r'\ ', r'[ _]')
-            infobox = r'\{\{\s*[' + value[0].upper() + value[0].lower() + r']' + value[1:] + r' *(?:\||\}\}|<!\-\-|\n)'
-
     # Process pagegenerators arguments
     local_args = gen_factory.handle_args(local_args)
 
@@ -306,15 +296,12 @@ def main(*args: str) -> None:
     if not pywikibot.bot.suggest_help(missing_generator=not gen):
         # pass generator and private options to the bot
         bot = BasicBot(generator=gen, **options)
-        bot.infobox = infobox
         bot.step = 1
         bot.run()
         bot2 = BasicBot(generator=bot.gen2, **options)
-        bot2.infobox = infobox
         bot2.step = 2
         bot2.run()
         bot3 = BasicBot(generator=bot.gen3, **options)
-        bot3.infobox = infobox
         bot3.step = 3
         bot3.run()
         page = pywikibot.Page(bot.site, 'Wikipedie:Údržbové seznamy/Nepojmenované parametry infoboxů/seznam')
