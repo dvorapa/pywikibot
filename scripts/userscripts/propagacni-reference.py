@@ -35,7 +35,7 @@ The following generators and filters are supported:
 #
 from __future__ import absolute_import, division, unicode_literals
 
-import pywikibot, itertools
+import pywikibot, itertools, re
 from pywikibot import pagegenerators
 
 from pywikibot.bot import (
@@ -112,7 +112,7 @@ class BasicBot(
         # assign the generator to the bot
         generator = itertools.chain()
         for proptext in self.proptexty:
-            gen = wiki.search('"' + proptext + '"', namespaces = [0], where = 'text')
+            gen = wiki.search('insource:/' + re.escape(proptext).replace('/', '\/') + '/', namespaces = [0], where = 'text')
             generator = itertools.chain(generator, gen)
         self.generator = generator
 
