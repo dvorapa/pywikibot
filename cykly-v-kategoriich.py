@@ -33,7 +33,7 @@ for i in s.allpages(namespace=14):
 
 f = set()
 f.add(frozenset([pywikibot.Category(s, 'Wikipedie:Neindexované stránky') for i in range(2)]))
-t = ''
+t = []
 for g in w:
     l = []
     for i in g:
@@ -42,8 +42,8 @@ for g in w:
     u = frozenset(l)
     if not u in f:
         f.add(u)
-        t += '# ' + ' > '.join(i.title(as_link=True, textlink=True) for i in l) + '\n'
+        t.append(' > '.join(i.title(as_link=True, textlink=True) for i in l))
 
 p = pywikibot.Page(s, 'Wikipedie:Údržbové seznamy/Cykly v kategoriích/seznam')
-p.text += '\n' + t
+p.text += '\n# ' + '\n# '.join(t)
 p.save(summary='Robot: aktualizace')

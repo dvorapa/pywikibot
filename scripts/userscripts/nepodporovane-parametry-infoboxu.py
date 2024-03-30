@@ -1,5 +1,4 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """
 An incomplete sample script.
 
@@ -10,40 +9,38 @@ whatever way you want.
 Use global -simulate option for test purposes. No changes to live wiki
 will be done.
 
-The following parameters are supported:
 
-&params;
+The following parameters are supported:
 
 -always           The bot won't ask for confirmation when putting a page
 
--text:            Use this text to be added; otherwise 'Test' is used
-
--replace:         Dont add text but replace it
-
--top              Place additional text on top of the page
-
 -summary:         Set the action summary message for the edit.
+
+In addition the following generators and filters are supported but
+cannot be set by settings file:
+
+&params;
 """
 #
-# (C) Pywikibot team, 2006-2018
+# (C) Pywikibot team, 2006-2022
 #
 # Distributed under the terms of the MIT license.
 #
-from __future__ import absolute_import, unicode_literals
+from __future__ import annotations
 
 import pywikibot, re
-from urllib.parse import quote_plus
-from pywikibot import pagegenerators, textlib
-
+from pywikibot import pagegenerators, Page
 from pywikibot.bot import (
-    SingleSiteBot, ExistingPageBot, AutomaticTWSummaryBot)
-from pywikibot.tools import issue_deprecation_warning
+    ExistingPageBot,
+    SingleSiteBot,
+)
+from pywikibot.textlib import replaceExcept
+from urllib.parse import quote_plus
+
 
 # This is required for the text that is shown when you run this script
 # with the parameter -help.
-docuReplacements = {
-    '&params;': pagegenerators.parameterHelp
-}
+docuReplacements = {'&params;': pagegenerators.parameterHelp}  # noqa: N816
 
 
 class BasicBot(
@@ -52,97 +49,53 @@ class BasicBot(
     # CurrentPageBot,  # Sets 'current_page'. Process it in treat_page method.
     #                  # Not needed here because we have subclasses
     ExistingPageBot,  # CurrentPageBot which only treats existing pages
-    AutomaticTWSummaryBot,  # Automatically defines summary; needs summary_key
 ):
 
     """
     An incomplete sample bot.
-
-    @ivar summary_key: Edit summary message key. The message that should be
-        used is placed on /i18n subdirectory. The file containing these
-        messages should have the same name as the caller script (i.e. basic.py
-        in this case). Use summary_key to set a default edit summary message.
-
-    @type summary_key: str
     """
 
     use_redirects = False  # treats non-redirects only
-    summary_key = 'basic-changing'
 
-    def __init__(self, generator, **kwargs):
-        """
-        Initializer.
+    ################################################################
+    #                           výjimky                            #
+    ################################################################
 
-        @param generator: the page generator that determines on which pages
-            to work
-        @type generator: generator
-        """
-        # Add your own options to the bot and set their defaults
-        # -always option is predefined by BaseBot class
-        self.available_options.update({
-            'replace': False,  # delete old text and write the new text
-            'summary': None,  # your own bot summary
-            'text': 'Test',  # add this text from option. 'Test' is default
-            'top': False,  # append text on top of the page
-        })
+    # ['comment', 'header', 'pre', 'source', 'score', 'ref', 'template', 'startspace', 'table', 'hyperlink', 'gallery', 'link', 'interwiki', 'property', 'invoke', 'category', 'file', 'pagelist'] + libovolný HTML prvek
+    vyjimky = ['nowiki']
 
-        ################################################################
-        #                           výjimky                            #
-        ################################################################
+    ################################################################
+    #                           shrnutí                            #
+    ################################################################
 
-        # ['comment', 'header', 'pre', 'source', 'score', 'ref', 'template', 'startspace', 'table', 'hyperlink', 'gallery', 'link', 'interwiki', 'property', 'invoke', 'category', 'file', 'pagelist'] + libovolný HTML prvek
-        self.vyjimky = ['nowiki']
+    shrnuti = 'aktualizace'
 
-        ################################################################
-        #                           shrnutí                            #
-        ################################################################
+    ################################################################
 
-        self.shrnuti = 'aktualizace'
+    mapa = {}
+    seznam = []
+    duplicity = {}
 
-        self.mapa = {}
-        self.seznam = []
-        self.duplicity = {}
+    ################################################################
 
-        ################################################################
+    update_options = {
+        'summary': 'Robot: ' + shrnuti,  # your own bot summary
+        'ref': None,
+    }
 
-        # call initializer of the super class
-        super(BasicBot, self).__init__(site=True, **kwargs)
+    infobox = self.opt.ref
+    if re.match(r'[Šš]ablona:', infobox):
+        infobox = infobox[8:]
+    infobox = re.escape(infobox)
+    infobox = infobox.replace(r'\ ', r'[ _]')
+    infobox = r'\{\{\s*[' + infobox[0].upper() + infobox[0].lower() + r']' + infobox[1:] + r' *(?:\||\}\}|<!\-\-|\n)'
 
-        # handle old -dry parameter
-        self._handle_dry_param(**kwargs)
-
-        # assign the generator to the bot
-        self.generator = generator
-
-    def _handle_dry_param(self, **kwargs):
-        """
-        Read the dry parameter and set the simulate variable instead.
-
-        This is a private method. It prints a deprecation warning for old
-        -dry paramter and sets the global simulate variable and informs
-        the user about this setting.
-
-        The constuctor of the super class ignores it because it is not
-        part of self.available_options.
-
-        @note: You should ommit this method in your own application.
-
-        @keyword dry: deprecated option to prevent changes on live wiki.
-            Use -simulate instead.
-        @type dry: bool
-        """
-        if 'dry' in kwargs:
-            issue_deprecation_warning('dry argument',
-                                      'pywikibot.config.simulate', 1,
-                                      since='20160124')
-            # use simulate variable instead
-            pywikibot.config.simulate = True
-            pywikibot.output('config.simulate was set to True')
-
-    def treat_page(self):
+    def treat_page(self) -> None:
         """Load the given page, do some changes, and save it."""
-        text = self.current_page.text
-        plink = self.current_page.title(as_link=True)
+        objekt_stranky = self.current_page
+        text = objekt_stranky.text
+        vyjimky = self.vyjimky
+        plink = objekt_stranky.title(as_link=True)
 
         if self.step == 1:
             parametry = re.sub(r'\{\{\{\s*', r'\n{{{', text)
@@ -155,14 +108,14 @@ class BasicBot(
                 parametry.remove('!')
             self.mapa[plink] = parametry
         elif self.step == 2:
-            text = textlib.replaceExcept(text, r'\{\{', r'ßßß{{', self.vyjimky)
-            text = textlib.replaceExcept(text, r'\}\}', r'}}ßßß', self.vyjimky)
-            text = textlib.replaceExcept(text, r'(\[+)', r'ßßß\1', self.vyjimky)
-            text = textlib.replaceExcept(text, r'(\]{1,2})', r'\1ßßß', self.vyjimky)
-            text = textlib.replaceExcept(text, r'\{\|', r'ßßß{|', self.vyjimky)
-            text = textlib.replaceExcept(text, r'\|\}([^\}])', r'|}ßßß\1', self.vyjimky)
-            text = textlib.replaceExcept(text, r'\<', r'ßßß<', self.vyjimky)
-            text = textlib.replaceExcept(text, r'\>', r'>ßßß', self.vyjimky)
+            text = replaceExcept(text, r'\{\{', r'ßßß{{', vyjimky)
+            text = replaceExcept(text, r'\}\}', r'}}ßßß', vyjimky)
+            text = replaceExcept(text, r'(\[+)', r'ßßß\1', vyjimky)
+            text = replaceExcept(text, r'(\]{1,2})', r'\1ßßß', vyjimky)
+            text = replaceExcept(text, r'\{\|', r'ßßß{|', vyjimky)
+            text = replaceExcept(text, r'\|\}([^\}])', r'|}ßßß\1', vyjimky)
+            text = replaceExcept(text, r'\<', r'ßßß<', vyjimky)
+            text = replaceExcept(text, r'\>', r'>ßßß', vyjimky)
             pageParts = text.strip('ß').split('ßßß')
             inTemplate = [0]
             inLink = [False]
@@ -174,7 +127,7 @@ class BasicBot(
                 match = re.match(r'\{\{\s*((?:[Ii]nfobox[ _]|[Tt]axobox|[Ll]okomotiva[ _]|[Cc]ycling[ _]race\/infobox)[^\|\}]*)', part)
                 if match:
                     inTemplate.append(2)
-                    tpage.append(pywikibot.Page(self.site, 'Template:' + match.group(1).strip()))
+                    tpage.append(Page(self.site, 'Template:' + match.group(1).strip()))
                     if tpage[-1].isRedirectPage():
                         target.append(tpage[-1].getRedirectTarget().title(as_link=True))
                     else:
@@ -194,10 +147,10 @@ class BasicBot(
                     ################################################################
 
                     # self.opt.parametr
-                    # self.current_page.title()
+                    # objekt_stranky.title()
                     # with open('soubor.txt', 'a') as soubor:
-                    #     soubor.write('# ' + self.current_page.title(as_link=True) + '\n')
-                    # part = textlib.replaceExcept(part, r'', r'', self.vyjimky)
+                    #     soubor.write('# ' + plink + '\n')
+                    # part = replaceExcept(part, r'', r'', vyjimky)
                     try:
                         params = re.findall(r'\|\s*([^\=\|\}]+)\s*=\s*([^\|\}]*)', part)
                         known = self.mapa2[target[-1]]
@@ -231,17 +184,16 @@ class BasicBot(
 
         # if summary option is None, it takes the default i18n summary from
         # i18n subdirectory with summary_key as summary key.
-        # self.put_current(text, summary=self.opt.summary if self.opt.summary else 'Robot: ' + self.shrnuti)
+        #self.put_current(text, summary=self.opt.summary)
 
 
-def main(*args):
+def main(*args: str) -> None:
     """
     Process command line arguments and invoke bot.
 
     If args is an empty list, sys.argv is used.
 
-    @param args: command line arguments
-    @type args: list of unicode
+    :param args: command line arguments
     """
     options = {}
     # Process global arguments to determine desired site
@@ -252,15 +204,18 @@ def main(*args):
     # to work on.
     gen_factory = pagegenerators.GeneratorFactory()
 
-    # Parse command line arguments
     for arg in local_args:
+        arg, _, value = arg.partition(':')
+        option = arg[1:]
+        if option == 'ref':
+            options[option] = value
 
-        # Catch the pagegenerators options
-        if gen_factory.handle_arg(arg):
-            continue  # nothing to do here
+    # Process pagegenerators arguments
+    local_args = gen_factory.handle_args(local_args)
 
-        # Now pick up your own options
-        arg, sep, value = arg.partition(':')
+    # Parse your own command line arguments
+    for arg in local_args:
+        arg, _, value = arg.partition(':')
         option = arg[1:]
         if option in ('summary', 'text'):
             if not value:
@@ -273,34 +228,37 @@ def main(*args):
 
     # The preloading option is responsible for downloading multiple
     # pages from the wiki simultaneously.
-    # pass generator and private options to the bot
-    gen = pagegenerators.MySQLPageGenerator("select page_namespace, page_title from page where page_namespace like 10 and (page_title like 'Infobox_%' or page_title like 'Taxobox' or page_title like 'Lokomotiva_%' or page_title like 'Cycling_race/infobox') and not page_is_redirect and not page_title like '%/doc'")
-    bot = BasicBot(gen, **options)
-    bot.step = 1
-    bot.run()  # guess what it does
-    gen2 = bot.site.allpages(filterredir=False)
-    bot2 = BasicBot(gen2, **options)
-    bot2.step = 2
-    bot2.mapa2 = bot.mapa
-    bot2.run()  # guess what it does
-    page = pywikibot.Page(bot2.site, 'Wikipedie:Údržbové seznamy/Nepodporované parametry infoboxů/seznam')
-    page.text = '{| class="wikitable sortable"\n! data-sort-type="number" | Počet výskytů !! Infobox !! Parametr !! Hodnota\n|-\n| '
-    seznam = set()
-    for template, original, param, val, article in bot2.seznam:
-        key = original + ':' + param
-        count = bot2.duplicity[key]
-        if count > 1:
-            seznam.add((str(count) + ' ([https://cs.wikipedia.org/w/index.php?search=hastemplate%3A%22' + quote_plus(original) + '%22+insource%3A%2F%5C%7C+*' + quote_plus(re.escape(param)) + '+*%3D%2F&title=Speci%C3%A1ln%C3%AD%3AHled%C3%A1n%C3%AD&profile=default&fulltext=1])', template, param, ''))
-        else:
-            seznam.add(('1 (' + article + ')', template, param, '<nowiki>' + val + '</nowiki>'))
-    newtext = []
-    for article, template, param, val in seznam:
-        newtext.append(article + ' || ' + template + ' || ' + param + ' || ' + val)
-    newtext.sort()
-    page.text += '\n|-\n| '.join(newtext)
-    page.text += '\n|}'
-    page.save(summary='Robot: ' + bot2.shrnuti)
-    return True
+    gen = gen_factory.getCombinedGenerator(preload=True)
+
+    # check if further help is needed
+    if not pywikibot.bot.suggest_help(missing_generator=not gen):
+        # pass generator and private options to the bot
+        gen = pagegenerators.MySQLPageGenerator("select page_namespace, page_title from page where page_namespace like 10 and (page_title like 'Infobox_%' or page_title like 'Taxobox' or page_title like 'Lokomotiva_%' or page_title like 'Cycling_race/infobox') and not page_is_redirect and not page_title like '%/doc'")
+        bot = BasicBot(generator=gen, **options)
+        bot.step = 1
+        bot.run()  # guess what it does
+        gen2 = bot.site.allpages(filterredir=False)
+        bot2 = BasicBot(generator=gen2, **options)
+        bot2.step = 2
+        bot2.mapa2 = bot.mapa
+        bot2.run()  # guess what it does
+        page = Page(bot2.site, 'Wikipedie:Údržbové seznamy/Nepodporované parametry infoboxů/seznam')
+        page.text = '{| class="wikitable sortable"\n! data-sort-type="number" | Počet výskytů !! Infobox !! Parametr !! Hodnota\n|-\n| '
+        seznam = set()
+        for template, original, param, val, article in bot2.seznam:
+            key = original + ':' + param
+            count = bot2.duplicity[key]
+            if count > 1:
+                seznam.add((str(count) + ' ([https://cs.wikipedia.org/w/index.php?search=hastemplate%3A%22' + quote_plus(original) + '%22+insource%3A%2F%5C%7C+*' + quote_plus(re.escape(param)) + '+*%3D%2F&title=Speci%C3%A1ln%C3%AD%3AHled%C3%A1n%C3%AD&profile=default&fulltext=1])', template, param, ''))
+            else:
+                seznam.add(('1 (' + article + ')', template, param, '<nowiki>' + val + '</nowiki>'))
+        newtext = []
+        for article, template, param, val in seznam:
+            newtext.append(article + ' || ' + template + ' || ' + param + ' || ' + val)
+        newtext.sort()
+        page.text += '\n|-\n| '.join(newtext)
+        page.text += '\n|}'
+        page.save(summary=bot2.opt.summary)
 
 
 if __name__ == '__main__':

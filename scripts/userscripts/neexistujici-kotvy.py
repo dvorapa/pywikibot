@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 """
 An incomplete sample script.
 
@@ -16,17 +16,18 @@ The following parameters are supported:
 
 -summary:         Set the action summary message for the edit.
 
-All settings can be made by giving option with the command line.
-
-In addition the following generators and filters are supported:
+In addition the following generators and filters are supported but
+cannot be set by settings file:
 
 &params;
 """
 #
-# (C) Pywikibot team, 2006-2021
+# (C) Pywikibot team, 2006-2022
 #
 # Distributed under the terms of the MIT license.
 #
+from __future__ import annotations
+
 import pywikibot, re
 from pywikibot import pagegenerators, Page
 from pywikibot.bot import (
@@ -35,7 +36,7 @@ from pywikibot.bot import (
 )
 from pywikibot.textlib import replaceExcept
 from pywikibot.exceptions import SiteDefinitionError, InvalidTitleError
-from urllib import parse
+from urllib.parse import unquote
 
 
 # This is required for the text that is shown when you run this script
@@ -57,40 +58,29 @@ class BasicBot(
 
     use_redirects = False  # treats non-redirects only
 
-    def __init__(self, generator, **kwargs) -> None:
-        """
-        Initializer.
+    ################################################################
+    #                           výjimky                            #
+    ################################################################
 
-        @param generator: the page generator that determines on which pages
-            to work
-        @type generator: generator
-        """
-        # Add your own options to the bot and set their defaults
-        # -always option is predefined by BaseBot class
-        self.available_options.update({
-            'summary': None,  # your own bot summary
-        })
+    # ['comment', 'header', 'pre', 'source', 'score', 'ref', 'template', 'startspace', 'table', 'hyperlink', 'gallery', 'link', 'interwiki', 'property', 'invoke', 'category', 'file', 'pagelist'] + libovolný HTML prvek
+    vyjimky = tuple()
 
-        ################################################################
-        #                           výjimky                            #
-        ################################################################
+    ################################################################
+    #                           shrnutí                            #
+    ################################################################
 
-        # ['comment', 'header', 'pre', 'source', 'score', 'ref', 'template', 'startspace', 'table', 'hyperlink', 'gallery', 'link', 'interwiki', 'property', 'invoke', 'category', 'file', 'pagelist'] + libovolný HTML prvek
-        self.vyjimky = tuple()
+    shrnuti = 'aktualizace'
 
-        ################################################################
-        #                           seznamy                            #
-        ################################################################
+    ################################################################
 
-        self.seznam = []
-        self.seznam2 = []
+    seznam = []
+    seznam2 = []
 
-        ################################################################
+    ################################################################
 
-        # call initializer of the super class
-        super().__init__(site=True, **kwargs)
-        # assign the generator to the bot
-        self.generator = generator
+    update_options = {
+        'summary': 'Robot: ' + shrnuti,  # your own bot summary
+    }
 
     def treat_page(self) -> None:
         """Load the given page, do some changes, and save it."""
@@ -98,13 +88,14 @@ class BasicBot(
         text = objekt_stranky.text
 
         ################################################################
-        #                            regexy                            #
+        #                            změny                             #
         ################################################################
 
-        # self.opt.parametr nebo self.opt['parametr']
+        # If you find out that you do not want to edit this page, just return.
+        # self.opt.parametr (nebo self.opt['parametr'])
         # objekt_stranky.title()
         # with open('soubor.txt', 'a') as soubor:
-        #     soubor.write('# ' + objekt_stranky.title(as_link=True) + '\n')
+        #     soubor.write('# ' + stranka + '\n')
         # part = replaceExcept(part, r'', r'', vyjimky)
         stranka = objekt_stranky.title(as_link=True)
         kotvy = re.findall(r'\[\[ *([^\#\|\]\n]+)\#([^\|\]\n]+)', text)
@@ -132,7 +123,7 @@ class BasicBot(
                 nadpisy_for = (nadpis, nadpis_wiki)
                 nadpisy_if = []
                 for n in nadpisy_for:
-                    n = parse.unquote(n)
+                    n = unquote(n)
                     n = replaceExcept(n, r'_', r' ', vyjimky)
                     nadpisy_if.append(n)
                 nadpisy = []
@@ -162,14 +153,18 @@ class BasicBot(
 
         ################################################################
 
+        # if summary option is None, it takes the default i18n summary from
+        # i18n subdirectory with summary_key as summary key.
+        #self.put_current(text, summary=self.opt.summary)
 
-def main(*args: tuple[str, ...]) -> None:
+
+def main(*args: str) -> None:
     """
     Process command line arguments and invoke bot.
 
     If args is an empty list, sys.argv is used.
 
-    @param args: command line arguments
+    :param args: command line arguments
     """
     options = {}
     # Process global arguments to determine desired site
@@ -185,7 +180,7 @@ def main(*args: tuple[str, ...]) -> None:
 
     # Parse your own command line arguments
     for arg in local_args:
-        arg, sep, value = arg.partition(':')
+        arg, _, value = arg.partition(':')
         option = arg[1:]
         if option in ('summary', 'text'):
             if not value:
@@ -199,19 +194,18 @@ def main(*args: tuple[str, ...]) -> None:
     # The preloading option is responsible for downloading multiple
     # pages from the wiki simultaneously.
     gen = gen_factory.getCombinedGenerator(preload=True)
-    if gen:
+
+    # check if further help is needed
+    if not pywikibot.bot.suggest_help(missing_generator=not gen):
         # pass generator and private options to the bot
-        bot = BasicBot(gen, **options)
+        bot = BasicBot(generator=gen, **options)
         bot.run()  # guess what it does
         page = Page(bot.site, 'Wikipedie:Údržbové seznamy/Neexistující kotvy/seznam')
         page.text = '# ' + ']]\n# '.join(bot.seznam) + ']]'
-        shrnuti = bot.opt.summary or 'Robot: aktualizace'
-        page.save(summary=shrnuti)
+        page.save(summary=bot.opt.summary)
         page2 = Page(bot.site, 'Wikipedie:Údržbové seznamy/Neexistující kotvy/seznam2')
         page2.text = '# ' + ']]\n# '.join(bot.seznam2) + ']]'
-        page2.save(summary=shrnuti)
-    else:
-        pywikibot.bot.suggest_help(missing_generator=True)
+        page2.save(summary=bot.opt.summary)
 
 
 if __name__ == '__main__':
