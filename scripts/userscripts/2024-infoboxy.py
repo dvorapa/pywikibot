@@ -76,13 +76,6 @@ class BasicBot(
         'ref': None,
     }
 
-    infobox = opt.ref
-    if re.match(r'[Šš]ablona:', infobox):
-        infobox = infobox[8:]
-    infobox = re.escape(infobox)
-    infobox = infobox.replace(r'\ ', r'[ _]')
-    infobox = r'\{\{\s*[' + infobox[0].upper() + infobox[0].lower() + r']' + infobox[1:] + r' *(?:\||\}\}|<!\-\-|\n)'
-
     def treat_page(self) -> None:
         """Load the given page, do some changes, and save it."""
         text = self.current_page.text
@@ -180,9 +173,12 @@ def main(*args: str) -> None:
 
     for arg in local_args:
         arg, _, value = arg.partition(':')
-        option = arg[1:]
-        if option == 'ref':
-            options[option] = value
+        if arg[1:] == 'ref':
+            if re.match(r'[Šš]ablona:', value):
+                value = value[8:]
+            value = re.escape(value)
+            value = value.replace(r'\ ', r'[ _]')
+            infobox = r'\{\{\s*[' + value[0].upper() + value[0].lower() + r']' + value[1:] + r' *(?:\||\}\}|<!\-\-|\n)'
 
     # Process pagegenerators arguments
     local_args = gen_factory.handle_args(local_args)
@@ -208,6 +204,7 @@ def main(*args: str) -> None:
     if not pywikibot.bot.suggest_help(missing_generator=not gen):
         # pass generator and private options to the bot
         bot = BasicBot(generator=gen, **options)
+        bot.infobox = infobox
         bot.run()  # guess what it does
 
 
