@@ -219,7 +219,6 @@ def main(*args: str) -> None:
     # check if further help is needed
     if not pywikibot.bot.suggest_help(missing_generator=not gen):
         # pass generator and private options to the bot
-        gen = pagegenerators.MySQLPageGenerator("select page_namespace, page_title from page where page_namespace like 10 and (page_title like 'Infobox_%' or page_title like 'Taxobox' or page_title like 'Lokomotiva_%' or page_title like 'Cycling_race/infobox') and not page_is_redirect and not page_title like '%/doc'")
         bot = BasicBot(generator=gen, **options)
         bot.step = 1
         bot.run()  # guess what it does
