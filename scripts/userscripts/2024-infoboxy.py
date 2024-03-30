@@ -171,6 +171,7 @@ def main(*args: str) -> None:
     # to work on.
     gen_factory = pagegenerators.GeneratorFactory()
 
+    infobox = None
     for arg in local_args:
         arg, _, value = arg.partition(':')
         if arg[1:] == 'ref':
