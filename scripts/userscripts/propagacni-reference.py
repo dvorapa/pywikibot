@@ -112,7 +112,7 @@ class BasicBot(
         # assign the generator to the bot
         generator = itertools.chain()
         for proptext in self.proptexty:
-            gen = wiki.search('insource:/' + re.escape(proptext).replace('/', '\/') + '/', namespaces = [0], where = 'text')
+            gen = wiki.search('insource:/' + re.escape(proptext).replace('/', '\/').replace('@', '\@') + '/', namespaces = [0], where = 'text')
             generator = itertools.chain(generator, gen)
         self.generator = generator
 
