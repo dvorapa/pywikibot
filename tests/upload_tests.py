@@ -5,7 +5,7 @@ Site upload test.
 These tests write to the wiki.
 """
 #
-# (C) Pywikibot team, 2014-2022
+# (C) Pywikibot team, 2014-2024
 #
 # Distributed under the terms of the MIT license.
 #
@@ -31,6 +31,7 @@ class TestUpload(TestCase):
     sounds_png = join_images_path('MP_sounds.png')
     arrow_png = join_images_path('1rightarrow.png')
 
+    @unittest.expectedFailure  # T367319
     def test_png(self):
         """Test uploading a png using Site.upload."""
         page = pywikibot.FilePage(self.site, 'MP_sounds-pwb.png')
@@ -38,6 +39,7 @@ class TestUpload(TestCase):
                          comment='pywikibot test',
                          ignore_warnings=True)
 
+    @unittest.expectedFailure  # T367320
     def test_png_chunked(self):
         """Test uploading a png in two chunks using Site.upload."""
         page = pywikibot.FilePage(self.site, 'MP_sounds-pwb-chunked.png')
@@ -59,10 +61,7 @@ class TestUpload(TestCase):
             self._file_key = warnings[0].file_key
             self._offset = warnings[0].offset
 
-        if chunk_size:
-            expected_warns = ['exists']
-        else:
-            expected_warns = ['duplicate', 'exists']
+        expected_warns = ['exists'] if chunk_size else ['duplicate', 'exists']
 
         # First upload the warning with warnings enabled
         page = pywikibot.FilePage(self.site, 'MP_sounds-pwb.png')
@@ -103,18 +102,20 @@ class TestUpload(TestCase):
         with self.assertAPIError('siiinvalidsessiondata') as cm:
             self.site.stash_info(self._file_key)
         self.assertTrue(cm.exception.info.startswith('File not found'),
-                        'info ({}) did not start with '
-                        '"File not found"'.format(cm.exception.info))
+                        f'info ({cm.exception.info}) did not start with '
+                        '"File not found"')
 
+    @unittest.expectedFailure  # T367314
     def test_continue_filekey_once(self):
         """Test continuing to upload a file without using chunked mode."""
         self._test_continue_filekey(0)
 
-    @unittest.expectedFailure  # see T112416
+    @unittest.expectedFailure  # T133288
     def test_continue_filekey_chunked(self):
         """Test continuing to upload a file with using chunked mode."""
         self._test_continue_filekey(1024)
 
+    @unittest.expectedFailure  # T367321
     def test_sha1_missmatch(self):
         """Test trying to continue with a different file."""
         self._init_upload(1024)
@@ -122,11 +123,12 @@ class TestUpload(TestCase):
             self._finish_upload(1024, self.arrow_png)
         self.assertEqual(
             str(cm.exception),
-            'The SHA1 of 1024 bytes of the stashed "{}" is '
+            f'The SHA1 of 1024 bytes of the stashed "{self._file_key}" is '
             '3503db342c8dfb0a38db0682b7370ddd271fa163 while the local file is '
-            '3dd334f11aa1e780d636416dc0649b96b67588b6'.format(self._file_key))
+            '3dd334f11aa1e780d636416dc0649b96b67588b6')
         self._verify_stash()
 
+    @unittest.expectedFailure  # T367316
     def test_offset_missmatch(self):
         """Test trying to continue with a different offset."""
         self._init_upload(1024)
@@ -135,10 +137,12 @@ class TestUpload(TestCase):
             self._finish_upload(1024, self.sounds_png)
         self.assertEqual(
             str(cm.exception),
-            'For the file key "{}" the server reported a size 1024 while the '
-            'offset was 0'.format(self._file_key))
+            f'For the file key "{self._file_key}" the server reported a size'
+            ' 1024 while the offset was 0'
+        )
         self._verify_stash()
 
+    @unittest.expectedFailure  # T367317
     def test_offset_oversize(self):
         """Test trying to continue with an offset which is to large."""
         self._init_upload(1024)
@@ -147,8 +151,9 @@ class TestUpload(TestCase):
             self._finish_upload(1024, self.sounds_png)
         self.assertEqual(
             str(cm.exception),
-            'For the file key "{}" the offset was set to 2000 while the file '
-            'is only 1276 bytes large.'.format(self._file_key))
+            f'For the file key "{self._file_key}" the offset was set to 2000'
+            ' while the file is only 1276 bytes large.'
+        )
         self._verify_stash()
 
 

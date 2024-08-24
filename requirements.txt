@@ -18,15 +18,17 @@
 # $ awk -F '[#>=]' '{print $1}' requirements.txt | xargs apt-cache search
 
 # mandatory dependencies, others are optional
+# mwparserfromhell fails with Python 3.13 (T372162)
 importlib_metadata ; python_version < '3.8'
-mwparserfromhell>=0.5.2
+mwparserfromhell>=0.5.2; python_version != '3.13'
 packaging
 requests>=2.21.0
 
 # MediaWiki markup parser
 # mwparserfromhell is mandatory but wikitextparser can be used instead
 # mwparserfromhell is still required for commons_information.py and patrol.py
-# wikitextparser>=0.47.5
+# wikitextparser is required for Page.authorship()
+wikitextparser>=0.47.5
 
 # OAuth support
 # mwoauth 0.2.4 is needed because it supports getting identity information
@@ -40,7 +42,8 @@ pydot >= 1.4.1
 python-stdnum >= 1.19
 
 # GUI
-Pillow >= 8.1.2, != 10.0, != 10.1
+Pillow >= 8.1.2, != 10.0, != 10.1 ; python_version < '3.13'
+Pillow >= 10.4 ; python_version >= '3.13'
 
 # core pagegenerators
 google >= 1.7

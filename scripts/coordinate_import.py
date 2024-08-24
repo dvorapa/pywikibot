@@ -44,7 +44,7 @@ The following command line parameters are supported:
 &params;
 """
 #
-# (C) Pywikibot team, 2013-2023
+# (C) Pywikibot team, 2013-2024
 #
 # Distributed under the terms of MIT license.
 #
@@ -100,15 +100,14 @@ class CoordImportRobot(ConfigParserBot, WikidataBot):
         """
         claims = item.get().get('claims')
         if self.prop in claims:
-            pywikibot.info('Item {} already contains coordinates ({})'
-                           .format(item.title(), self.prop))
+            pywikibot.info(f'Item {item.title()} already contains coordinates '
+                           f'({self.prop})')
             return True
 
         prop = self.has_coord_qualifier(claims)
         if prop:
-            pywikibot.info(
-                'Item {} already contains coordinates ({}) as qualifier for {}'
-                .format(item.title(), self.prop, prop))
+            pywikibot.info(f'Item {item.title()} already contains coordinates '
+                           f'({self.prop}) as qualifier for {prop}')
             return True
         return False
 
@@ -144,14 +143,15 @@ class CoordImportRobot(ConfigParserBot, WikidataBot):
             newclaim.addSource(source)
         pywikibot.info(
             f'Adding {coordinate.lat}, {coordinate.lon} to {item.title()}')
+
         # todo: handle exceptions using self.user_add_claim
         try:
             item.addClaim(newclaim)
         except CoordinateGlobeUnknownError as e:
             pywikibot.info(f'Skipping unsupported globe: {e.args}')
             return False
-        else:
-            return True
+
+        return True
 
 
 def main(*args: str) -> None:
@@ -177,12 +177,8 @@ def main(*args: str) -> None:
     # FIXME: this preloading preloads neither coordinates nor Wikibase items
     # but preloads wikitext which we don't need
     generator = generator_factory.getCombinedGenerator(preload=True)
-
-    if generator:
-        coordbot = CoordImportRobot(generator=generator, create=create_new)
-        coordbot.run()
-    else:
-        pywikibot.bot.suggest_help(missing_generator=True)
+    coordbot = CoordImportRobot(generator=generator, create=create_new)
+    coordbot.run()
 
 
 if __name__ == '__main__':

@@ -1741,6 +1741,15 @@ class TestPropertyPage(WikidataTestCase):
         self.assertEqual(claim.type, 'wikibase-property')
         self.assertEqual(claim.target, property_page)
 
+    @unittest.expectedFailure
+    def test_exists(self):
+        """Test the exists method of PropertyPage."""
+        wikidata = self.get_repo()
+        property_page = PropertyPage(wikidata, 'P1687')
+        self.assertTrue(property_page.exists())
+        # Retry with cached _content.
+        self.assertTrue(property_page.exists())
+
 
 class TestClaim(WikidataTestCase):
 
@@ -2014,7 +2023,7 @@ class TestClaimSetValue(WikidataTestCase):
         wikidata = self.get_repo()
         claim = pywikibot.Claim(wikidata, 'P6604')
         self.assertEqual(claim.type, 'musical-notation')
-        target = "\relative c' { c d e f | g2 g | a4 a a a | g1 |})"
+        target = "\\relative c' { c d e f | g2 g | a4 a a a | g1 |}"
         claim.setTarget(target)
         self.assertEqual(claim.target, target)
 
@@ -2102,7 +2111,7 @@ class TestLinks(WikidataTestCase):
 
     def test_iterlinks_page_object(self):
         """Test iterlinks for page objects."""
-        page = [pg for pg in self.wdp.iterlinks() if pg.site.code == 'af'][0]
+        page = next(pg for pg in self.wdp.iterlinks() if pg.site.code == 'af')
         self.assertEqual(page, pywikibot.Page(self.get_site('afwiki'),
                          'New York Stad'))
 

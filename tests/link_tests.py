@@ -123,33 +123,29 @@ class TestLink(DefaultDrySiteTestCase):
         """Test that invalid titles raise InvalidTitleError."""
         # Bad characters forbidden regardless of wgLegalTitleChars
         def generate_contains_illegal_chars_exc_regex(text):
-            exc_regex = (
-                r'^(u|)\'{}\' contains illegal char\(s\) (u|)\'{}\'$'
-                .format(re.escape(text), re.escape(text[2])))
+            exc_regex = (rf'^(u|)\'{re.escape(text)}\' contains illegal char'
+                         rf'\(s\) (u|)\'{re.escape(text[2])}\'$')
             return exc_regex
 
         # Directory navigation
         def generate_contains_dot_combinations_exc_regex(text):
-            exc_regex = (r'^\(contains \. / combinations\): (u|)\'{}\'$'
-                         .format(re.escape(text)))
+            exc_regex = (rf'^\(contains \. / combinations\): (u|)'
+                         rf'\'{re.escape(text)}\'$')
             return exc_regex
 
         # Tilde
         def generate_contains_tilde_exc_regex(text):
-            exc_regex = r'^\(contains ~~~\): (u|)\'{}\'$' \
-                        .format(re.escape(text))
+            exc_regex = rf'^\(contains ~~~\): (u|)\'{re.escape(text)}\'$'
             return exc_regex
 
         # Overlength
         def generate_overlength_exc_regex(text):
-            exc_regex = r'^\(over 255 bytes\): (u|)\'{}\'$' \
-                        .format(re.escape(text))
+            exc_regex = rf'^\(over 255 bytes\): (u|)\'{re.escape(text)}\'$'
             return exc_regex
 
         # Namespace prefix without actual title
         def generate_has_no_title_exc_regex(text):
-            exc_regex = r'^(u|)\'{}\' has no title\.$'.format(
-                re.escape(text.strip()))
+            exc_regex = rf'^(u|)\'{re.escape(text.strip())}\' has no title\.$'
             return exc_regex
 
         title_tests = [
@@ -506,38 +502,25 @@ class TestFullyQualifiedNoLangFamilyExplicitLinkParser(LinkTestCase):
         config.mylang = 'en'
         config.family = 'wikipedia'
 
-    def test_fully_qualified_NS0_code(self):
-        """Test ':testwiki:wikidata:Q6' on enwp is namespace 0."""
-        link = Link(':testwiki:wikidata:Q6')
-        link.parse()
-        self.assertEqual(link.site, self.get_site('wikidata'))
-        self.assertEqual(link.title, 'Q6')
-        self.assertEqual(link.namespace, 0)
+    def test_fully_qualified_NS_code(self):
+        """Test ':testwiki:wikidata:Q6' on enwp."""
+        for ns, title in enumerate(['Q6', 'Talk:Q6']):
+            with self.subTest(title=title):
+                link = Link(f':testwiki:wikidata:{title}')
+                link.parse()
+                self.assertEqual(link.site, self.get_site('wikidata'))
+                self.assertEqual(link.title, 'Q6')
+                self.assertEqual(link.namespace, ns)
 
-    def test_fully_qualified_NS1_code(self):
-        """Test ':testwiki:wikidata:Talk:Q6' on enwp is namespace 1."""
-        link = Link(':testwiki:wikidata:Talk:Q6')
-        link.parse()
-        self.assertEqual(link.site, self.get_site('wikidata'))
-        self.assertEqual(link.title, 'Q6')
-        self.assertEqual(link.namespace, 1)
-
-    def test_fully_qualified_NS0_family(self):
-        """Test ':wikidata:testwiki:Q6' on enwp is namespace 0."""
-        config.family = 'wikipedia'
-        link = Link(':wikidata:testwiki:Q6')
-        link.parse()
-        self.assertEqual(link.site, self.get_site('test'))
-        self.assertEqual(link.title, 'Q6')
-        self.assertEqual(link.namespace, 0)
-
-    def test_fully_qualified_NS1_family(self):
-        """Test ':wikidata:testwiki:Talk:Q6' on enwp is namespace 1."""
-        link = Link(':wikidata:testwiki:Talk:Q6')
-        link.parse()
-        self.assertEqual(link.site, self.get_site('test'))
-        self.assertEqual(link.title, 'Q6')
-        self.assertEqual(link.namespace, 1)
+    def test_fully_qualified_NS_family(self):
+        """Test ':wikidata:testwiki:Q6' on enwp."""
+        for ns, title in enumerate(['Q6', 'Talk:Q6']):
+            with self.subTest(title=title):
+                link = Link(f':wikidata:testwiki:{title}')
+                link.parse()
+                self.assertEqual(link.site, self.get_site('test'))
+                self.assertEqual(link.title, 'Q6')
+                self.assertEqual(link.namespace, ns)
 
 
 class TestFullyQualifiedOneSiteFamilyExplicitLinkParser(LinkTestCase):

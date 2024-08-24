@@ -1,6 +1,6 @@
 """Objects representing API interface to Wikibase site."""
 #
-# (C) Pywikibot team, 2012-2023
+# (C) Pywikibot team, 2012-2024
 #
 # Distributed under the terms of the MIT license.
 #
@@ -253,11 +253,12 @@ class DataSite(APISite):
                 yield page
 
     def getPropertyType(self, prop):
-        """
-        Obtain the type of a property.
+        """Obtain the type of a property.
 
-        This is used specifically because we can cache
-        the value for a much longer time (near infinite).
+        This is used specifically because we can cache the value for a
+        much longer time (near infinite).
+
+        :raises KeyError: *prop* does not exist
         """
         params = {'action': 'wbgetentities', 'ids': prop.getID(),
                   'props': 'datatype'}
@@ -269,11 +270,14 @@ class DataSite(APISite):
         # the IDs returned from the API can be upper or lowercase, depending
         # on the version. See bug T55894 for more information.
         try:
-            dtype = data['entities'][prop.getID()]['datatype']
+            entity = data['entities'][prop.getID()]
         except KeyError:
-            dtype = data['entities'][prop.getID().lower()]['datatype']
+            entity = data['entities'][prop.getID().lower()]
 
-        return dtype
+        if 'missing' in entity:
+            raise KeyError(f'{prop} does not exist')
+
+        return entity['datatype']
 
     @need_right('edit')
     def editEntity(self, entity, data, bot: bool = True, **kwargs):
@@ -312,8 +316,10 @@ class DataSite(APISite):
         params['action'] = 'wbeditentity'
         if bot:
             params['bot'] = 1
-        if 'baserevid' in kwargs and kwargs['baserevid']:
+
+        if kwargs.get('baserevid'):
             params['baserevid'] = kwargs['baserevid']
+
         params['token'] = self.tokens['csrf']
 
         for arg in kwargs:
@@ -443,10 +449,7 @@ class DataSite(APISite):
                   'summary': summary, 'bot': bot, 'token': self.tokens['csrf']}
 
         # build up the snak
-        if isinstance(source, list):
-            sources = source
-        else:
-            sources = [source]
+        sources = source if isinstance(source, list) else [source]
 
         snak = {}
         for sourceclaim in sources:
@@ -808,14 +811,14 @@ class DataSite(APISite):
         wbsetaliases:
             dict shall have the following structure:
 
-            .. code-block::
+            .. code-block:: python
 
                {
                    'language': value (str),
                    'add': list of language codes (str),
                    'remove': list of language codes (str),
-                   'set' list of language codes (str)
-                }
+                   'set' list of language codes (str),
+               }
 
             'add' and 'remove' are alternative to 'set'
 

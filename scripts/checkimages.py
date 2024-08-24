@@ -71,7 +71,7 @@ right parameter.
    Welcome messages are imported from :mod:`scripts.welcome` script.
 """
 #
-# (C) Pywikibot team, 2006-2023
+# (C) Pywikibot team, 2006-2024
 #
 # Distributed under the terms of the MIT license.
 #
@@ -739,8 +739,11 @@ class CheckImagesBot:
                 except NotEmailableError:
                     pywikibot.info('User is not mailable, aborted')
 
-    def regex_generator(self, regexp, textrun) -> Generator[pywikibot.FilePage,
-                                                            None, None]:
+    def regex_generator(
+        self,
+        regexp,
+        textrun,
+    ) -> Generator[pywikibot.FilePage]:
         """Find page to yield using regex to parse text."""
         regex = re.compile(fr'{regexp}', re.DOTALL)
         results = regex.findall(textrun)
@@ -751,7 +754,7 @@ class CheckImagesBot:
         """Function to load the white templates."""
         # A template as {{en is not a license! Adding also them in the
         # whitelist template...
-        for key in Family.load('wikipedia').langs.keys():
+        for key in Family.load('wikipedia').langs:
             self.hiddentemplates.add(pywikibot.Page(
                 self.site, f'Template:{key}'))
         # Hidden template loading
@@ -888,7 +891,7 @@ class CheckImagesBot:
                 if dup_page.title(as_url=True) != self.image.title(
                         as_url=True) or self.timestamp is None:
                     try:
-                        self.timestamp = (dup_page.latest_file_info.timestamp)
+                        self.timestamp = dup_page.latest_file_info.timestamp
                     except PageRelatedError:
                         continue
                 data = self.timestamp.timetuple()
@@ -961,8 +964,8 @@ class CheckImagesBot:
                 fp = pywikibot.FilePage(self.site, images_to_tag_list[-1])
                 already_reported_in_past = fp.revision_count(self.bots)
                 image_title = re.escape(self.image.title(as_url=True))
-                from_regex = (r'\n\*\[\[:{}{}\]\]'
-                              .format(self.image_namespace, image_title))
+                from_regex = (
+                    rf'\n\*\[\[:{self.image_namespace}{image_title}\]\]')
                 # Delete the image in the list where we're write on
                 text_for_the_report = re.sub(from_regex, '',
                                              text_for_the_report)
@@ -992,19 +995,18 @@ class CheckImagesBot:
                    == self.image.title(as_url=True):
                     # the image itself, not report also this as duplicate
                     continue
-                repme += '\n** [[:{}{}]]'.format(self.image_namespace,
-                                                 dup_page.title(as_url=True))
+                repme += (f'\n** [[:{self.image_namespace}'
+                          f'{dup_page.title(as_url=True)}]]')
 
             result = self.report_image(self.image_name, self.rep_page,
                                        self.com, repme, addings=False)
             if not result:
                 return True  # If Errors, exit (but continue the check)
 
-        if older_image_page.title() != self.image_name:
-            # The image is a duplicate, it will be deleted. So skip the
-            # check-part, useless
-            return False
-        return True  # Ok - No problem. Let's continue the checking phase
+        # If different, the image is a duplicate; it will be deleted.
+        # So skip the check-part as useless.
+        # Otherwise ok - No problem. Let's continue the checking phase
+        return older_image_page.title() == self.image_name
 
     def report_image(self, image_to_report, rep_page=None, com=None,
                      rep_text=None, addings: bool = True) -> bool:
@@ -1037,14 +1039,12 @@ class CheckImagesBot:
             pywikibot.info(f'{image_to_report} is already in the report page.')
             reported = False
         elif len(text_get) >= self.log_full_number:
+            msg = (f'The log page ({another_page.title()}) is full! Please'
+                   ' delete the old files reported.')
             if self.log_full_error:
-                raise LogIsFull(
-                    'The log page ({}) is full! Please delete the old files '
-                    'reported.'.format(another_page.title()))
+                raise LogIsFull(msg)
 
-            pywikibot.info(
-                'The log page ({}) is full! Please delete the old files '
-                ' reported. Skip!'.format(another_page.title()))
+            pywikibot.info(msg + ' Skip!')
             # Don't report, but continue with the check
             # (we don't know if this is the first time we check this file
             # or not)
@@ -1057,52 +1057,43 @@ class CheckImagesBot:
 
     def takesettings(self) -> None:
         """Function to take the settings from the wiki."""
+        self.settings_data = None
+
         settings_page = i18n.translate(self.site, PAGE_WITH_SETTINGS)
-        try:
-            if not settings_page:
-                self.settings_data = None
-            else:
-                page = pywikibot.Page(self.site, settings_page)
-                self.settings_data = []
-                try:
-                    testo = page.get()
+        if not settings_page:
+            pywikibot.info('>> No additional settings found! <<')
+            return
 
-                    for number, m in enumerate(SETTINGS_REGEX.finditer(testo),
-                                               start=1):
-                        name = str(m[1])
-                        find_tipe = str(m[2])
-                        find = str(m[3])
-                        imagechanges = str(m[4])
-                        summary = str(m[5])
-                        head = str(m[6])
-                        text = str(m[7])
-                        mexcatched = str(m[8])
-                        tupla = [number, name, find_tipe, find, imagechanges,
-                                 summary, head, text, mexcatched]
-                        self.settings_data += [tupla]
-
-                    if not self.settings_data:
-                        pywikibot.info(
-                            "You've set wrongly your settings, please take a "
-                            'look to the relative page. (run without them)')
-                        self.settings_data = None
-                except NoPageError:
-                    pywikibot.info("The settings' page doesn't exist!")
-                    self.settings_data = None
-        except Error:
+        page = pywikibot.Page(self.site, settings_page)
+        page_text = page.text
+        if not page_text:
             pywikibot.info(
-                'Problems with loading the settigs, run without them.')
-            self.settings_data = None
-            self.some_problem = False
+                'Either the settings page does not exist or is empty!')
+            return
+
+        self.settings_data = []
+        for number, m in enumerate(SETTINGS_REGEX.finditer(page_text),
+                                   start=1):
+            name = str(m[1])
+            find_tipe = str(m[2])
+            find = str(m[3])
+            imagechanges = str(m[4])
+            summary = str(m[5])
+            head = str(m[6])
+            text = str(m[7])
+            mexcatched = str(m[8])
+            settings = [number, name, find_tipe, find, imagechanges, summary,
+                        head, text, mexcatched]
+            self.settings_data.append(settings)
 
         if not self.settings_data:
+            pywikibot.info(
+                "You've set wrongly your settings, please take a look to the "
+                'relative page. (run without them)')
             self.settings_data = None
+            return
 
-        # Real-Time page loaded
-        if self.settings_data:
-            pywikibot.info('>> Loaded the real-time page... <<')
-        else:
-            pywikibot.info('>> No additional settings found! <<')
+        pywikibot.info('>> Loaded the real-time page... <<')
 
     def load_licenses(self) -> set[pywikibot.Page]:
         """Load the list of the licenses.
@@ -1159,7 +1150,7 @@ class CheckImagesBot:
             try:
                 self.all_licenses.remove(template)
             except ValueError:
-                return False
+                pass
             else:
                 self.white_templates_found = True
         return False
@@ -1324,8 +1315,7 @@ class CheckImagesBot:
         return False
 
     @staticmethod
-    def wait(generator, wait_time) -> Generator[pywikibot.FilePage, None,
-                                                None]:
+    def wait(generator, wait_time) -> Generator[pywikibot.FilePage]:
         """
         Skip the images uploaded before x seconds.
 

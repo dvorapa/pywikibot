@@ -72,7 +72,7 @@ if TYPE_CHECKING:
 _ValueType = TypeVar('_ValueType')
 
 
-OSWIN32 = (sys.platform == 'win32')
+OSWIN32 = sys.platform == 'win32'
 
 
 # This frozen set should contain all imported modules/variables, so it must
@@ -128,7 +128,7 @@ family = 'wikipedia'
 # The language code of the site we're working on.
 mylang = 'language'
 # If family and mylang are not modified from the above, the default is changed
-# to test:test, which is test.wikipedia.org, at the end of this module.
+# to wikipedia:test, which is test.wikipedia.org, at the end of this module.
 
 # The dictionary usernames should contain a username for each site where you
 # have a bot account. Please set your usernames by adding such lines to your
@@ -371,7 +371,7 @@ def get_base_dir(test_directory: str | None = None,
                     raise OSError(
                         f'Windows version {win_version} not supported yet.')
                 base_dir_cand.extend([[home] + sub_dir + ['Pywikibot'],
-                                     [home] + sub_dir + ['pywikibot']])
+                                      [home] + sub_dir + ['pywikibot']])
             else:
                 base_dir_cand.append([home, '.pywikibot'])
 
@@ -475,9 +475,9 @@ def register_families_folder(folder_path: str,
 
 
 # Get the names of all known families, and initialize with empty dictionaries.
-# ‘families/’ is a subdirectory of the directory in which config.py is found.
+# 'families/' is a subdirectory of the directory in which config.py is found.
 register_families_folder(os.path.join(os.path.dirname(__file__), 'families'))
-# ‘families/’ can also be stored in the base directory
+# 'families/' can also be stored in the base directory
 register_families_folder(os.path.join(base_dir, 'families'),
                          not_exists_ok=True)
 

@@ -87,8 +87,6 @@ library_test_modules = {
     'file',
     'fixes',
     'flow',
-    'flow_edit',
-    'flow_thanks',
     'gui',
     'http',
     'i18n',
@@ -104,23 +102,28 @@ library_test_modules = {
     'memento',
     'mysql',
     'namespace',
+    'oauth',
     'page',
     'pagegenerators',
     'paraminfo',
     'plural',
     'proofreadpage',
+    'setup',
     'site',
     'site_decorators',
     'site_generators',
     'site_detect',
+    'site_login_logout',
     'site_obsoletesites',
     'siteinfo',
+    'superset',
     'sparql',
     'tests',
     'textlib',
     'thanks',
     'time',
     'timestripper',
+    'titletranslate',
     'token',
     'tools',
     'tools_chars',
@@ -132,6 +135,7 @@ library_test_modules = {
     'upload',
     'uploadbot',
     'user',
+    'version',
     'wikibase',
     'wikibase_edit',
     'wikiblame',
@@ -154,6 +158,7 @@ script_test_modules = {
     'interwikidata',
     'l10n',
     'make_dist',
+    'noreferences',
     'patrolbot',
     'protectbot',
     'pwb',
@@ -187,11 +192,11 @@ def _unknown_test_modules():
 extra_test_modules = _unknown_test_modules()
 
 if 'PYWIKIBOT_TEST_MODULES' in os.environ:
-    _enabled_test_modules = os.environ['PYWIKIBOT_TEST_MODULES'].split(',')
-    disabled_test_modules = (library_test_modules
-                             | extra_test_modules
-                             | script_test_modules
-                             - set(_enabled_test_modules))
+    enabled_test_modules = os.environ['PYWIKIBOT_TEST_MODULES'].split(',')
+else:
+    enabled_test_modules = chain(library_test_modules,
+                                 extra_test_modules,
+                                 script_test_modules)
 
 
 def unittest_print(*args, **kwargs):
@@ -222,9 +227,7 @@ def collector(loader=unittest.loader.defaultTestLoader):
                        f'  {disabled_tests!r}')
 
     modules = (module
-               for module in chain(library_test_modules,
-                                   extra_test_modules,
-                                   script_test_modules)
+               for module in enabled_test_modules
                if module not in disabled_test_modules)
 
     test_list = []

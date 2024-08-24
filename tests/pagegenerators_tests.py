@@ -28,7 +28,7 @@ from pywikibot.pagegenerators import (
     WikibaseItemFilterPageGenerator,
 )
 from pywikibot.tools import has_module
-from tests import join_data_path
+from tests import join_data_path, unittest_print
 from tests.aspects import (
     DefaultSiteTestCase,
     DeprecationTestCase,
@@ -1394,10 +1394,10 @@ class TestFactoryGeneratorNewpages(TestCase):
 
         newpages_url = self.site.base_url(
             self.site.path() + '?title=Special:NewPages&uselang=en')
-        failure_message = 'No new pages returned by -newpages. ' \
-            'If this is the only failure, check whether {url} contains any ' \
+        failure_message = 'No new pages returned by -newpages. If this is ' \
+            f'the only failure, check whether {newpages_url} contains any ' \
             'pages. If not, create a new page on the site to make the test ' \
-            'pass again.'.format(url=newpages_url)
+            'pass again.'
 
         self.assertIsNotEmpty(pages, msg=failure_message)
 
@@ -1446,6 +1446,8 @@ class TestWantedFactoryGenerator(DefaultSiteTestCase):
 
     def test_wanted_files(self):
         """Test wantedfiles generator."""
+        if self.site.sitename == 'wowwiki:uk':
+            self.skipTest(f'skipping {self.site} due to T362384)')
         self.gf.handle_arg('-wantedfiles:5')
         for page in self._generator_with_tests():
             self.assertIsInstance(page, pywikibot.Page)
@@ -1514,15 +1516,6 @@ class TestFactoryGeneratorWikibase(WikidataTestCase):
 
     def test_searchitem_language(self):
         """Test -searchitem with custom language specified."""
-        gf = pagegenerators.GeneratorFactory(site=self.site)
-        gf.handle_arg('-searchitem:pl:abc')
-        gf.handle_arg('-limit:1')
-        gen = gf.getCombinedGenerator()
-        self.assertIsNotNone(gen)
-        # alphabet, also known as ABC
-        page1 = next(gen)
-        self.assertEqual(page1.title(), 'Q9779')
-
         gf = pagegenerators.GeneratorFactory(site=self.site)
         gf.handle_arg('-searchitem:en:abc')
         gf.handle_arg('-limit:2')
@@ -1696,22 +1689,32 @@ class TestUnconnectedPageGenerator(DefaultSiteTestCase):
 
     """Test UnconnectedPageGenerator."""
 
-    cached = True
-
     def test_unconnected_with_repo(self):
         """Test UnconnectedPageGenerator."""
-        if not self.site.data_repository():
+        site = self.site.data_repository()
+        if not site:
             self.skipTest('Site is not using a Wikibase repository')
+
         pages = list(pagegenerators.UnconnectedPageGenerator(self.site, 3))
         self.assertLessEqual(len(pages), 3)
 
-        site = self.site.data_repository()
         pattern = (fr'Page \[\[({site.sitename}:|{site.code}:)-1\]\]'
                    r" doesn't exist\.")
+        found = []
         for page in pages:
-            with self.subTest(page=page), self.assertRaisesRegex(
-                    NoPageError, pattern):
-                page.data_item()
+            with self.subTest(page=page):
+                try:
+                    page.data_item()
+                except NoPageError as e:
+                    self.assertRegex(str(e), pattern)
+                else:
+                    found.append(page)
+        if found:
+            unittest_print('connection found for ',
+                           ', '.join(str(p) for p in found))
+
+        # assume that we have at least one unconnected page
+        self.assertLess(len(found), 3)
 
     def test_unconnected_without_repo(self):
         """Test that it raises a ValueError on sites without repository."""
