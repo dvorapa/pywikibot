@@ -26,8 +26,7 @@ class EditReplacementError(ChoiceException, UnhandledAnswer):
 
     def __init__(self) -> None:
         """Initializer."""
-        super().__init__('edit', 'e')
-        self.stop = True
+        super().__init__('edit', 'e', stop=True)
 
 
 class InteractiveUnlink(InteractiveReplace):
@@ -85,10 +84,7 @@ class BaseUnlinkBot(ExistingPageBot, AutomaticTWSummaryBot):
                     unlink_callback.current_text,
                     jumpIndex=unlink_callback.current_range[0])
                 # if user didn't press Cancel
-                if new_text:
-                    text = new_text
-                else:
-                    text = unlink_callback.current_text
+                text = new_text or unlink_callback.current_text
             else:
                 break
 

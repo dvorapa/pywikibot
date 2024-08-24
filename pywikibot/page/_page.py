@@ -9,7 +9,7 @@ various pages for Proofread Extensions are defined in
    itself, including its contents.
 """
 #
-# (C) Pywikibot team, 2008-2023
+# (C) Pywikibot team, 2008-2024
 #
 # Distributed under the terms of the MIT license.
 #
@@ -27,7 +27,8 @@ from pywikibot.exceptions import (
 )
 from pywikibot.page._basepage import BasePage
 from pywikibot.page._toolforge import WikiBlameMixin
-from pywikibot.tools import cached
+from pywikibot.site import Namespace
+from pywikibot.tools import cached, deprecated_args
 
 
 __all__ = ['Page']
@@ -58,7 +59,9 @@ class Page(BasePage, WikiBlameMixin):
         """
         return textlib.extract_templates_and_params(self.text, True, True)
 
-    def templatesWithParams(self):  # noqa: N802
+    def templatesWithParams(  # noqa: N802
+        self,
+    ) -> list[tuple[pywikibot.Page, list[str]]]:
         """Return templates used on this Page.
 
         The templates are extracted by :meth:`raw_extracted_templates`,
@@ -68,14 +71,14 @@ class Page(BasePage, WikiBlameMixin):
         All parameter keys and values for each template are stripped of
         whitespace.
 
-        :return: a list of tuples with one tuple for each template invocation
-            in the page, with the template Page as the first entry and a list
-            of parameters as the second entry.
-        :rtype: list of (pywikibot.page.Page, list)
+        :return: a list of tuples with one tuple for each template
+            invocation in the page, with the template Page as the first
+            entry and a list of parameters as the second entry.
         """
         # WARNING: may not return all templates used in particularly
         # intricate cases such as template substitution
-        titles = {t.title() for t in self.templates()}
+        titles = {t.title()
+                  for t in self.templates(namespaces=Namespace.TEMPLATE)}
         templates = self.raw_extracted_templates
         # backwards-compatibility: convert the dict returned as the second
         # element into a list in the format used by old scripts
@@ -83,7 +86,7 @@ class Page(BasePage, WikiBlameMixin):
         for template in templates:
             try:
                 link = pywikibot.Link(template[0], self.site,
-                                      default_namespace=10)
+                                      default_namespace=Namespace.TEMPLATE)
                 if link.canonical_title() not in titles:
                     continue
             except Error:
@@ -119,20 +122,23 @@ class Page(BasePage, WikiBlameMixin):
             result.append((pywikibot.Page(link, self.site), positional))
         return result
 
+    @deprecated_args(botflag='bot')  # since 9.3.0
     def set_redirect_target(
         self,
-        target_page,
+        target_page: pywikibot.Page | str,
         create: bool = False,
         force: bool = False,
         keep_section: bool = False,
         save: bool = True,
         **kwargs
     ):
-        """
-        Change the page's text to point to the redirect page.
+        """Change the page's text to point to the redirect page.
 
-        :param target_page: target of the redirect, this argument is required.
-        :type target_page: pywikibot.Page or string
+        .. versionchanged:: 9.3
+           *botflag* keyword parameter was renamed to *bot*.
+
+        :param target_page: target of the redirect, this argument is
+            required.
         :param create: if true, it creates the redirect even if the page
             doesn't exist.
         :param force: if true, it set the redirect target even the page
@@ -140,23 +146,22 @@ class Page(BasePage, WikiBlameMixin):
         :param keep_section: if the old redirect links to a section
             and the new one doesn't it uses the old redirect's section.
         :param save: if true, it saves the page immediately.
-        :param kwargs: Arguments which are used for saving the page directly
-            afterwards, like 'summary' for edit summary.
+        :param kwargs: Arguments which are used for saving the page
+            directly afterwards, like *summary* for edit summary.
         """
         if isinstance(target_page, str):
             target_page = pywikibot.Page(self.site, target_page)
         elif self.site != target_page.site:
             raise InterwikiRedirectPageError(self, target_page)
+
         if not self.exists() and not (create or force):
             raise NoPageError(self)
+
         if self.exists() and not self.isRedirectPage() and not force:
             raise IsNotRedirectPageError(self)
-        redirect_regex = self.site.redirect_regex
-        if self.exists():
-            old_text = self.get(get_redirect=True)
-        else:
-            old_text = ''
-        result = redirect_regex.search(old_text)
+
+        old_text = self.text
+        result = self.site.redirect_regex.search(old_text)
         if result:
             oldlink = result[1]
             if (keep_section and '#' in oldlink
@@ -169,8 +174,7 @@ class Page(BasePage, WikiBlameMixin):
             prefix = self.text[:result.start()]
             suffix = self.text[result.end():]
         else:
-            prefix = ''
-            suffix = ''
+            prefix = suffix = ''
 
         target_link = target_page.title(as_link=True, textlink=True,
                                         allow_interwiki=False)

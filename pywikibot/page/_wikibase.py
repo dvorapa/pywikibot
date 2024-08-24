@@ -48,7 +48,7 @@ from pywikibot.page._decorators import allow_asynchronous
 from pywikibot.page._filepage import FilePage
 from pywikibot.page._page import BasePage
 from pywikibot.site import DataSite, Namespace
-from pywikibot.tools import cached, first_upper
+from pywikibot.tools import cached, deprecated_args, first_upper
 
 
 __all__ = (
@@ -84,9 +84,10 @@ class WikibaseEntity:
     Each entity is identified by a data repository it belongs to
     and an identifier.
 
-    :cvar DATA_ATTRIBUTES: dictionary which maps data attributes (eg. 'labels',
-        'claims') to appropriate collection classes (eg. LanguageDict,
-        ClaimsCollection)
+    :cvar DATA_ATTRIBUTES: dictionary which maps data attributes
+        (e.g., 'labels', 'claims') to appropriate collection classes
+        (e.g., :class:`LanguageDict<pywikibot.page._collections.LanguageDict>`,
+        :class:`ClaimCollection<pywikibot.page._collections.ClaimCollection>`)
 
     :cvar entity_type: entity type identifier
     :type entity_type: str
@@ -476,8 +477,8 @@ class MediaInfo(WikibaseEntity):
                 error_message = str(exc)
                 if 'is not a file' in error_message:
                     raise NoWikibaseEntityError(self) from exc
-                else:
-                    raise Error(self) from exc
+
+                raise Error(self) from exc
 
             # Create _content. Format is same as with wbgetentities
             # https://commons.wikimedia.org/w/api.php?action=wbgetentities&ids=M20985340
@@ -583,7 +584,7 @@ class WikibasePage(BasePage, WikibaseEntity):
     There should be no need to instantiate this directly.
     """
 
-    _cache_attrs = BasePage._cache_attrs + ('_content', )
+    _cache_attrs = (*BasePage._cache_attrs, '_content')
 
     def __init__(self, site, title: str = '', **kwargs) -> None:
         """
@@ -924,8 +925,7 @@ class WikibasePage(BasePage, WikibaseEntity):
 
 class ItemPage(WikibasePage):
 
-    """
-    Wikibase entity of type 'item'.
+    """Wikibase entity of type 'item'.
 
     A Wikibase item may be defined by either a 'Q' id (qid),
     or by a site & title.
@@ -934,8 +934,8 @@ class ItemPage(WikibasePage):
     been looked up, the item is then defined by the qid.
     """
 
-    _cache_attrs = WikibasePage._cache_attrs + (
-        'labels', 'descriptions', 'aliases', 'claims', 'sitelinks')
+    _cache_attrs = (*WikibasePage._cache_attrs, 'labels', 'descriptions',
+                    'aliases', 'claims', 'sitelinks')
     entity_type = 'item'
     title_pattern = r'Q[1-9]\d*'
     DATA_ATTRIBUTES = {
@@ -1169,14 +1169,31 @@ class ItemPage(WikibasePage):
 
         return data
 
-    def getRedirectTarget(self):
-        """Return the redirect target for this page."""
-        target = super().getRedirectTarget()
+    def getRedirectTarget(self, *, ignore_section: bool = True):
+        """Return the redirect target for this page.
+
+        .. versionadded:: 9.3
+           *ignore_section* parameter
+
+        .. seealso:: :meth:`page.BasePage.getRedirectTarget`
+
+        :param ignore_section: do not include section to the target even
+            the link has one
+
+        :raises CircularRedirectError: page is a circular redirect
+        :raises InterwikiRedirectPageError: the redirect target is on
+            another site
+        :raises Error: target page has wrong content model
+        :raises IsNotRedirectPageError: page is not a redirect
+        :raises RuntimeError: no redirects found
+        :raises SectionError: the section is not found on target page
+            and *ignore_section* is not set
+        """
+        target = super().getRedirectTarget(ignore_section=ignore_section)
         cmodel = target.content_model
         if cmodel != 'wikibase-item':
-            raise Error('{} has redirect target {} with content model {} '
-                        'instead of wikibase-item'
-                        .format(self, target, cmodel))
+            raise Error(f'{self} has redirect target {target} with content '
+                        f'model {cmodel} instead of wikibase-item')
         return self.__class__(target.site, target.title(), target.namespace())
 
     def iterlinks(self, family=None):
@@ -1287,22 +1304,26 @@ class ItemPage(WikibasePage):
             self._isredir = True
             self._redirtarget = item
 
+    @deprecated_args(botflag='bot')  # since 9.3.0
     def set_redirect_target(
         self,
-        target_page,
+        target_page: ItemPage | str,
         create: bool = False,
         force: bool = False,
         keep_section: bool = False,
         save: bool = True,
         **kwargs
-    ):
-        """
-        Make the item redirect to another item.
+    ) -> None:
+        """Make the item redirect to another item.
 
-        You need to define an extra argument to make this work, like save=True
+        You need to define an extra argument to make this work, like
+        :code:`save=True`.
 
-        :param target_page: target of the redirect, this argument is required.
-        :type target_page: pywikibot.page.ItemPage or string
+        .. versionchanged:: 9.3
+           *botflag* keyword parameter was renamed to *bot*.
+
+        :param target_page: target of the redirect, this argument is
+            required.
         :param force: if true, it sets the redirect target even the page
             is not redirect.
         """
@@ -1310,13 +1331,16 @@ class ItemPage(WikibasePage):
             target_page = pywikibot.ItemPage(self.repo, target_page)
         elif self.repo != target_page.repo:
             raise InterwikiRedirectPageError(self, target_page)
+
         if self.exists() and not self.isRedirectPage() and not force:
             raise IsNotRedirectPageError(self)
+
         if not save or keep_section or create:
             raise NotImplementedError
+
         data = self.repo.set_redirect_target(
             from_item=self, to_item=target_page,
-            bot=kwargs.get('botflag', True))
+            bot=kwargs.get('bot', True))
         if data.get('success', 0):
             del self.latest_revision_id
             self._isredir = True
@@ -1415,8 +1439,7 @@ class Property:
 
 class PropertyPage(WikibasePage, Property):
 
-    """
-    A Wikibase entity in the property namespace.
+    """A Wikibase entity in the property namespace.
 
     Should be created as::
 
@@ -1427,8 +1450,8 @@ class PropertyPage(WikibasePage, Property):
         PropertyPage(DataSite, datatype='url')
     """
 
-    _cache_attrs = WikibasePage._cache_attrs + (
-        '_type', 'labels', 'descriptions', 'aliases', 'claims')
+    _cache_attrs = (*WikibasePage._cache_attrs, '_type', 'labels',
+                    'descriptions', 'aliases', 'claims')
     entity_type = 'property'
     title_pattern = r'P[1-9]\d*'
     DATA_ATTRIBUTES = {
@@ -2052,10 +2075,8 @@ class Claim(Property):
         if (isinstance(self.target, pywikibot.Coordinate)
                 and isinstance(value, str)):
             coord_args = [float(x) for x in value.split(',')]
-            if len(coord_args) >= 3:
-                precision = coord_args[2]
-            else:
-                precision = 0.0001  # Default value (~10 m at equator)
+            # Default value 0.0001 ~10 m at equator
+            precision = coord_args[2] if len(coord_args) >= 3 else 0.0001
             with suppress(TypeError):
                 if self.target.precision is not None:
                     precision = max(precision, self.target.precision)
@@ -2130,23 +2151,22 @@ class LexemePage(WikibasePage):
     >>> import pywikibot
     >>> repo = pywikibot.Site('wikidata')
     >>> L2 = pywikibot.LexemePage(repo, 'L2')  # create a Lexeme page
-    >>> list(L2.claims.keys())  # access the claims
-    ['P5402', 'P5831']
+    >>> list(L2.claims)  # access the claims
+    ['P5402', 'P5831', 'P12690']
     >>> len(L2.forms)  # access the forms
     2
     >>> F1 = L2.forms[0]  # access the first form
-    >>> list(F1.claims.keys())  # access its claims
+    >>> list(F1.claims)  # access its claims
     ['P898']
     >>> len(L2.senses)  # access the senses
     1
     >>> S1 = L2.senses[0]  # access the first sense
-    >>> list(S1.claims.keys())  # and its claims
+    >>> list(S1.claims)  # and its claims
     ['P5137', 'P5972', 'P2888']
     """
 
-    _cache_attrs = WikibasePage._cache_attrs + (
-        'lemmas', 'language', 'lexicalCategory', 'forms', 'senses',
-    )
+    _cache_attrs = (*WikibasePage._cache_attrs, 'lemmas', 'language',
+                    'lexicalCategory', 'forms', 'senses')
     entity_type = 'lexeme'
     title_pattern = r'L[1-9]\d*'
     DATA_ATTRIBUTES = {

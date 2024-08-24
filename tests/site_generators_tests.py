@@ -338,35 +338,53 @@ class TestSiteGenerators(DefaultSiteTestCase):
     def test_all_links(self):
         """Test the site.alllinks() method."""
         mysite = self.get_site()
-        if mysite.sitename == 'wikipedia:de':
-            self.skipTest(f'skipping test on {mysite} due to T359427')
         fwd = list(mysite.alllinks(total=10))
         uniq = list(mysite.alllinks(total=10, unique=True))
 
-        self.assertLessEqual(len(fwd), 10)
+        with self.subTest(msg='Test that unique links are in all links'):
+            self.assertLessEqual(len(fwd), 10)
+            self.assertLessEqual(len(uniq), len(fwd))
+            for link in fwd:
+                self.assertIsInstance(link, pywikibot.Page)
+                self.assertIn(link, uniq)
 
-        for link in fwd:
-            self.assertIsInstance(link, pywikibot.Page)
-            self.assertIn(link, uniq)
-        for page in mysite.alllinks(start='Link', total=5):
-            self.assertIsInstance(page, pywikibot.Page)
-            self.assertEqual(page.namespace(), 0)
-            self.assertGreaterEqual(page.title(), 'Link')
-        for page in mysite.alllinks(prefix='Fix', total=5):
-            self.assertIsInstance(page, pywikibot.Page)
-            self.assertEqual(page.namespace(), 0)
-            self.assertTrue(page.title().startswith('Fix'))
-        for page in mysite.alllinks(namespace=1, total=5):
-            self.assertIsInstance(page, pywikibot.Page)
-            self.assertEqual(page.namespace(), 1)
-        for page in mysite.alllinks(start='From', namespace=4, fromids=True,
-                                    total=5):
-            self.assertIsInstance(page, pywikibot.Page)
-            self.assertGreaterEqual(page.title(with_ns=False), 'From')
-            self.assertTrue(hasattr(page, '_fromid'))
-        errgen = mysite.alllinks(unique=True, fromids=True)
-        with self.assertRaises(Error):
-            next(errgen)
+        with self.subTest(msg='Test with start parameter'):
+            for page in mysite.alllinks(start='Link', total=5):
+                self.assertIsInstance(page, pywikibot.Page)
+                self.assertEqual(page.namespace(), 0)
+                self.assertGreaterEqual(page.title(), 'Link')
+
+        with self.subTest(msg='Test with prefix parameter'):
+            for page in mysite.alllinks(prefix='Fix', total=5):
+                self.assertIsInstance(page, pywikibot.Page)
+                self.assertEqual(page.namespace(), 0)
+                self.assertTrue(
+                    page.title().startswith('Fix'),
+                    msg=f"{page.title()} does not start with 'Fix'"
+                )
+
+        # increase timeout due to T359427/T359425
+        # ~ 47s are required on wikidata
+        config_timeout = pywikibot.config.socket_timeout
+        pywikibot.config.socket_timeout = (config_timeout[0], 60)
+        with self.subTest(msg='Test namespace parameter'):
+            for page in mysite.alllinks(namespace=1, total=5):
+                self.assertIsInstance(page, pywikibot.Page)
+                self.assertEqual(page.namespace(), 1)
+        pywikibot.config.socket_timeout = config_timeout
+
+        with self.subTest(msg='Test with fromids parameter'):
+            for page in mysite.alllinks(start='From', namespace=4,
+                                        fromids=True, total=5):
+                self.assertIsInstance(page, pywikibot.Page)
+                self.assertGreaterEqual(page.title(with_ns=False), 'From')
+                self.assertTrue(hasattr(page, '_fromid'))
+
+        with self.subTest(
+                msg='Test that Error is raised with unique and fromids'):
+            errgen = mysite.alllinks(unique=True, fromids=True)
+            with self.assertRaises(Error):
+                next(errgen)
 
     def test_all_categories(self):
         """Test the site.allcategories() method."""
@@ -551,12 +569,12 @@ class TestSiteGenerators(DefaultSiteTestCase):
 
         # starttime earlier than endtime
         with self.subTest(starttime=low, endtime=high, reverse=False), \
-             self.assertRaises(AssertionError):
+                self.assertRaises(AssertionError):
             mysite.blocks(total=5, starttime=low, endtime=high)
 
         # reverse: endtime earlier than starttime
         with self.subTest(starttime=high, endtime=low, reverse=True), \
-             self.assertRaises(AssertionError):
+                self.assertRaises(AssertionError):
             mysite.blocks(total=5, starttime=high, endtime=low, reverse=True)
 
     def test_exturl_usage(self):
@@ -633,21 +651,6 @@ class TestSiteGenerators(DefaultSiteTestCase):
                     self.fail(
                         f'NotImplementedError not raised for {item}')
 
-    def test_unconnected(self):
-        """Test site.unconnected_pages method."""
-        if not self.site.data_repository():
-            self.skipTest('Site is not using a Wikibase repository')
-        pages = list(self.site.unconnected_pages(total=3))
-        self.assertLessEqual(len(pages), 3)
-
-        site = self.site.data_repository()
-        pattern = (r'Page '
-                   r'\[\[({site.sitename}:|{site.code}:)-1\]\]'
-                   r" doesn't exist\.".format(site=site))
-        for page in pages:
-            with self.assertRaisesRegex(NoPageError, pattern):
-                page.data_item()
-
     def test_assert_valid_iter_params(self):
         """Test site.assert_valid_iter_params method."""
         func = self.site.assert_valid_iter_params
@@ -671,6 +674,38 @@ class TestSiteGenerators(DefaultSiteTestCase):
         self.assertIsNone(func('m', 1, 2, True, True))
         with self.assertRaises(AssertionError):
             func('m', 2, 1, True, True)
+
+
+class TestUnconnectedPages(DefaultSiteTestCase):
+
+    """Test unconnected_pages method without cache enabled."""
+
+    def test_unconnected(self):
+        """Test site.unconnected_pages method."""
+        site = self.site.data_repository()
+        if not site:
+            self.skipTest('Site is not using a Wikibase repository')
+
+        pages = list(self.site.unconnected_pages(total=3))
+        self.assertLessEqual(len(pages), 3)
+
+        pattern = (fr'Page \[\[({site.sitename}:|{site.code}:)-1\]\]'
+                   r" doesn't exist\.")
+        found = []
+        for page in pages:
+            with self.subTest(page=page):
+                try:
+                    page.data_item()
+                except NoPageError as e:
+                    self.assertRegex(str(e), pattern)
+                else:
+                    found.append(page)
+        if found:
+            unittest_print('connection found for ',
+                           ', '.join(str(p) for p in found))
+
+        # assume that we have at least one unconnected page
+        self.assertLess(len(found), 3)
 
 
 class TestSiteGeneratorsUsers(DefaultSiteTestCase):

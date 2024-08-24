@@ -382,7 +382,7 @@ class Family:
                 FamilyMaintenanceWarning,
                 stacklevel=2,
             )
-        for code in cls.langs.keys():
+        for code in cls.langs:
             if not all(x in CODE_CHARACTERS for x in code):
                 warnings.warn(
                     'Family {} code {} must be ASCII lowercase letters and '
@@ -453,8 +453,11 @@ class Family:
         """
         return self.archived_page_templates.get(code, ())
 
-    def disambig(self, code, fallback: str = '_default'):
-        """Return list of disambiguation templates."""
+    def disambig(self, code, fallback: str | None = '_default') -> list[str]:
+        """Return list of disambiguation templates.
+
+        :raises KeyError: unknown title for disambig template
+        """
         if code in self.disambiguationTemplates:
             return self.disambiguationTemplates[code]
 
@@ -712,8 +715,8 @@ class Family:
         """
         Do a conversion on the retrieved text from the Wiki.
 
-        For example a X-conversion in Esperanto
-        https://en.wikipedia.org/wiki/Esperanto_orthography#X-system.
+        For example a :wiki:`X-conversion in Esperanto
+        <Esperanto_orthography#X-system>`.
         """
         return getText
 
@@ -721,8 +724,8 @@ class Family:
         """
         Do a conversion on the text to insert on the Wiki.
 
-        For example a X-conversion in Esperanto
-        https://en.wikipedia.org/wiki/Esperanto_orthography#X-system.
+        For example a :wiki:`X-conversion in Esperanto
+        <Esperanto_orthography#X-system>`.
         """
         return putText
 
@@ -735,7 +738,7 @@ class Family:
 
         :return: mapping of old codes to new codes (or None)
         """
-        data = {code: None for code in self.interwiki_removals}
+        data = dict.fromkeys(self.interwiki_removals)
         data.update(self.interwiki_replacements)
         return types.MappingProxyType(data)
 

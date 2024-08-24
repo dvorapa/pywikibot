@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tests for the site module."""
 #
-# (C) Pywikibot team, 2008-2023
+# (C) Pywikibot team, 2008-2024
 #
 # Distributed under the terms of the MIT license.
 #
@@ -18,6 +18,8 @@ from contextlib import suppress
 import pywikibot
 from pywikibot import config
 from pywikibot.exceptions import (
+    APIError,
+    Error,
     IsNotRedirectPageError,
     NoPageError,
     PageInUseError,
@@ -70,8 +72,10 @@ class TestSiteObject(DefaultSiteTestCase):
     def test_repr(self):
         """Test __repr__."""
         code = self.site.family.obsolete.get(self.code) or self.code
-        expect = f'Site("{code}", "{self.family}")'
-        self.assertTrue(repr(self.site).endswith(expect))
+        expect = f"Site('{code}', '{self.family}')"
+        reprs = repr(self.site)
+        self.assertTrue(reprs.endswith(expect),
+                        f'\n{reprs} does not end with {expect}')
 
     def test_constructors(self):
         """Test cases for site constructors."""
@@ -389,7 +393,7 @@ class SiteSysopTestCase(DefaultSiteTestCase):
         if not mysite.has_right('deletedhistory'):
             self.skipTest(
                 "You don't have permission to view the deleted revisions "
-                'on {}.'.format(mysite))
+                f'on {mysite}.')
         mainpage = self.get_mainpage()
         gen = mysite.deletedrevs(total=10, titles=mainpage)
 
@@ -489,7 +493,7 @@ class SiteSysopTestCase(DefaultSiteTestCase):
         if not mysite.has_right('deletedhistory'):
             self.skipTest(
                 "You don't have permission to view the deleted revisions "
-                'on {}.'.format(mysite))
+                f'on {mysite}.')
         prop = ['ids', 'timestamp', 'flags', 'user', 'comment']
         gen = mysite.alldeletedrevisions(total=10, prop=prop)
 
@@ -506,6 +510,7 @@ class SiteSysopTestCase(DefaultSiteTestCase):
                           prop=prop):
             for item in mysite.alldeletedrevisions(
                 start='2008-10-11T01:02:03Z',
+                user=myuser,
                 total=5
             ):
                 for drev in item['revisions']:
@@ -517,6 +522,7 @@ class SiteSysopTestCase(DefaultSiteTestCase):
                           prop=prop):
             for item in mysite.alldeletedrevisions(
                 start='2008-10-11T01:02:03Z',
+                user=myuser,
                 total=5
             ):
                 for drev in item['revisions']:
@@ -566,8 +572,8 @@ class TestSiteSysopWrite(TestCase):
                          reason='Pywikibot unit test')
         self.assertIsNone(r)
         self.assertEqual(site.page_restrictions(page=p1),
-                         {'edit': ('sysop', 'infinity'),
-                          'move': ('autoconfirmed', 'infinity')})
+                         {'edit': ('sysop', 'infinite'),
+                          'move': ('autoconfirmed', 'infinite')})
 
         expiry = pywikibot.Timestamp.fromISOformat('2050-01-01T00:00:00Z')
         site.protect(protections={'edit': 'sysop', 'move': 'autoconfirmed'},
@@ -595,8 +601,8 @@ class TestSiteSysopWrite(TestCase):
                          reason='Pywikibot unit test')
         self.assertIsNone(r)
         self.assertEqual(site.page_restrictions(page=p1),
-                         {'edit': ('sysop', 'infinity'),
-                          'move': ('autoconfirmed', 'infinity')})
+                         {'edit': ('sysop', 'infinite'),
+                          'move': ('autoconfirmed', 'infinite')})
 
         p1 = pywikibot.Page(site, 'User:Unicodesnowman/ProtectTest')
         expiry = pywikibot.Timestamp.fromISOformat('2050-01-01T00:00:00Z')
@@ -618,13 +624,18 @@ class TestSiteSysopWrite(TestCase):
     def test_protect_exception(self):
         """Test that site.protect() throws an exception for invalid args."""
         site = self.get_site()
-        p1 = pywikibot.Page(site, 'User:Unicodesnowman/ProtectTest')
-        with self.assertRaises(AssertionError):
-            site.protect(protections={'anInvalidValue': 'sysop'},
-                         page=p1, reason='Pywikibot unit test')
-        with self.assertRaises(AssertionError):
-            site.protect(protections={'edit': 'anInvalidValue'},
-                         page=p1, reason='Pywikibot unit test')
+        page = pywikibot.Page(site, 'User:Unicodesnowman/ProtectTest')
+
+        with self.subTest(test='anInvalidType'), \
+            self.assertRaisesRegex(APIError,
+                                   'Invalid protection type "anInvalidType"'):
+            site.protect(protections={'anInvalidType': 'sysop'},
+                         page=page, reason='Pywikibot unit test')
+
+        with self.subTest(test='anInvalidLevel'), \
+                self.assertRaisesRegex(Error, 'Invalid protection level'):
+            site.protect(protections={'edit': 'anInvalidLevel'},
+                         page=page, reason='Pywikibot unit test')
 
     def test_delete(self):
         """Test the site.delete() and site.undelete() methods."""
@@ -700,6 +711,7 @@ class TestSiteSysopWrite(TestCase):
                         show='content|comment|user',
                         reason='pywikibot unit tests')
 
+    @unittest.expectedFailure  # T367309
     def test_revdel_file(self):
         """Test deleting and undeleting file revisions."""
         site = pywikibot.Site('test')
@@ -731,7 +743,7 @@ class TestSiteSysopWrite(TestCase):
 
         fp2 = pywikibot.FilePage(site, 'File:T276726.png')
         site.loadimageinfo(fp2, history=True)
-        for idx, v in fp2._file_revisions.items():
+        for v in fp2._file_revisions.values():
             if v['timestamp'] in (ts1, ts2):
                 self.assertTrue(hasattr(v, 'commenthidden'))
 
@@ -743,7 +755,7 @@ class TestSiteSysopWrite(TestCase):
 
         fp3 = pywikibot.FilePage(site, 'File:T276726.png')
         site.loadimageinfo(fp3, history=True)
-        for idx, v in fp3._file_revisions.items():
+        for v in fp3._file_revisions.values():
             if v['timestamp'] in (ts1, ts2):
                 self.assertFalse(hasattr(v, 'commenthidden'))
                 self.assertFalse(hasattr(v, 'userhidden'))

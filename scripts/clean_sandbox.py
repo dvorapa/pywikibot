@@ -214,15 +214,17 @@ class SandboxBot(Bot, ConfigParserBot):
         if not self.translated_content:
             raise RuntimeError(
                 'No content is given for sandbox pages, exiting.')
+
         if not self.generator:
             pages = []
             for item in sandbox_titles:
                 p = self.site.page_from_repository(item)
                 if p is not None:
                     pages.append(p)
-            if not pages:
-                pywikibot.bot.suggest_help(missing_generator=True)
+
+            if pywikibot.bot.suggest_help(missing_generator=not pages):
                 sys.exit()
+
             self.generator = pages
 
     def run(self) -> None:
@@ -236,8 +238,9 @@ class SandboxBot(Bot, ConfigParserBot):
                                + sandbox_page.title(as_link=True))
                 if sandbox_page.isRedirectPage():
                     pywikibot.warning(
-                        '{} is a redirect page, cleaning it anyway'
-                        .format(sandbox_page.title(as_link=True)))
+                        f'{sandbox_page.title(as_link=True)} is a redirect'
+                        ' page, cleaning it anyway'
+                    )
                 try:
                     text = sandbox_page.text
                     if self.opt.summary:
@@ -245,12 +248,14 @@ class SandboxBot(Bot, ConfigParserBot):
                     else:
                         translated_msg = i18n.twtranslate(
                             self.site, 'clean_sandbox-cleaned')
+
                     subst = 'subst:' in self.translated_content
                     pos = text.find(self.translated_content.strip())
+                    latest_user = sandbox_page.latest_revision.user
                     if text.strip() == self.translated_content.strip():
                         pywikibot.info(
                             'The sandbox is still clean, no change necessary.')
-                    elif subst and sandbox_page.userName() == self.site.user():
+                    elif subst and latest_user == self.site.user():
                         pywikibot.info(
                             'The sandbox might be clean, no change necessary.')
                     elif pos != 0 and not subst:
@@ -272,8 +277,10 @@ class SandboxBot(Bot, ConfigParserBot):
                                            'sandbox cleaned.')
                         else:  # wait for the rest
                             pywikibot.info(
-                                'Sandbox edited {:.1f} minutes ago...'
-                                .format(edit_delta.seconds / 60.0))
+                                'Sandbox edited '
+                                f'{edit_delta.seconds / 60.0:.1f} minutes'
+                                ' ago...'
+                            )
                             pywikibot.info(
                                 f'Sleeping for {delta.seconds // 60} minutes.')
                             pywikibot.sleep(delta.seconds)

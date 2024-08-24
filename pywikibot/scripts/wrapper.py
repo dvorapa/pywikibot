@@ -30,12 +30,14 @@ for tests to set the default site (see :phab:`T216825`)::
 
     python pwb.py -lang:de bot_tests -v
 
+.. seealso:: :mod:`pwb` entry point
 .. versionchanged:: 7.0
-   pwb wrapper was added to the Python site package lib
+   pwb wrapper was added to the Python site package lib.
 .. versionchanged:: 7.7
-   pwb wrapper is able to set ``PYWIKIBOT_TEST_...`` environment variables
+   pwb wrapper is able to set ``PYWIKIBOT_TEST_...`` environment variables,
+   see :ref:`Environment variables`.
 .. versionchanged:: 8.0
-   renamed to wrapper.py
+   renamed to wrapper.py.
 """
 #
 # (C) Pywikibot team, 2012-2024
@@ -137,8 +139,8 @@ def run_python_file(filename: str, args: list[str], package=None):
     for key, value in environ:  # pragma: no cover
         os.environ[key] = value
 
-    sys.argv = [filename] + args
-    pwb.argvu = [Path(filename).stem] + args
+    sys.argv = [filename, *args]
+    pwb.argvu = [Path(filename).stem, *args]
     sys.path.insert(0, os.path.dirname(filename))
 
     try:
@@ -312,8 +314,10 @@ except RuntimeError as e:  # pragma: no cover
         # we need to re-start the entire process. Ask the user to do so.
         print('Now, you have to re-execute the command to start your script.')
         sys.exit(1)
-except ImportError as e:  # raised in textlib or backports
-    sys.exit(e)
+except ModuleNotFoundError as module:  # raised in textlib or backports
+    print(f'\n{module.msg}\nPlease install it with\n\n'
+          f'    pip install {module.name}')
+    sys.exit()
 
 
 def find_alternates(filename, script_paths):
@@ -386,7 +390,7 @@ def find_filename(filename):
         """Search for filename in given paths within 'root' base directory."""
         for file_package in paths:
             package = file_package.split('.')
-            path = package + [filename]
+            path = [*package, filename]
             testpath = root.joinpath(*path)
             if testpath.exists():
                 return str(testpath)

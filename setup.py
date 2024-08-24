@@ -17,7 +17,7 @@
   ``pywikibot.__metadata__.py`` and adding developmental identifier
 - upload this patchset to Gerrit and merge it.
 
-.. warning: do not upload a development release to pypi.
+.. warning:: do not upload a development release to pypi.
 """
 #
 # (C) Pywikibot team, 2009-2024
@@ -45,7 +45,10 @@ extra_deps = {
     'wikitextparser': ['wikitextparser>=0.47.0'],
     'mysql': ['PyMySQL >= 1.0.0'],
     # vulnerability found in Pillow<8.1.2 but toolforge uses 5.4.1
-    'Tkinter': ['Pillow>=8.1.2, != 10.0, != 10.1'],
+    'Tkinter': [
+        'Pillow>=8.1.2, != 10.0, != 10.1; python_version < "3.13"',
+        'Pillow>=10.4; python_version >= "3.13"',
+    ],
     'mwoauth': ['mwoauth!=0.3.1,>=0.2.4'],
     'html': ['beautifulsoup4>=4.7.1'],
     'http': ['fake-useragent>=1.4.0'],
@@ -61,10 +64,10 @@ extra_deps = {
         'flake8-print>=5.0.0',
         'flake8-quotes>=3.3.2',
         'flake8-raise',
-        'flake8-string-format',
         'flake8-tuple>=0.4.1',
         'flake8-no-u-prefixed-strings>=0.2',
-        'pep8-naming>=0.13.3',
+        'pep8-naming==0.13.3; python_version < "3.8"',
+        'pep8-naming>=0.14.0; python_version >= "3.8"',
     ],
     'hacking': [
         'hacking',
@@ -88,7 +91,8 @@ extra_deps.update({'scripts': [i for k, v in script_deps.items() for i in v]})
 # packages which are mandatory
 dependencies = [
     'importlib_metadata ; python_version < "3.8"',
-    'mwparserfromhell>=0.5.2',
+    'mwparserfromhell>=0.5.2; python_version != "3.13"',
+    'wikitextparser; python_version == "3.13"',
     'packaging',
     'requests>=2.21.0',
 ]
@@ -99,7 +103,7 @@ test_deps = ['mock']
 # Add all dependencies as test dependencies,
 # so all scripts can be compiled for script_tests, etc.
 if 'PYSETUP_TEST_EXTRAS' in os.environ:  # pragma: no cover
-    test_deps += [i for k, v in extra_deps.items() if k != 'flake8' for i in v]
+    test_deps += [i for v in extra_deps.values() for i in v]
 
 # These extra dependencies are needed other unittest fails to load tests.
 test_deps += extra_deps['eventstreams']
