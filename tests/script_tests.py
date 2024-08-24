@@ -85,6 +85,7 @@ auto_run_script_set = {
     'category_redirect',
     'checkimages',
     'clean_sandbox',
+    'commons_information',
     'create_isbn_edition',
     'delinker',
     'login',
@@ -146,8 +147,8 @@ def collector(loader=unittest.loader.defaultTestLoader):
        to fallback to its own discover() ordering of unit tests.
     """
     if unrunnable_script_set:  # pragma: no cover
-        unittest_print('Skipping execution of unrunnable scripts:\n  {!r}'
-                       .format(unrunnable_script_set))
+        unittest_print('Skipping execution of unrunnable scripts:\n'
+                       f'{unrunnable_script_set!r}')
 
     test_pattern = 'tests.script_tests.TestScript{}.test_{}'
 
@@ -202,7 +203,7 @@ class ScriptTestMeta(MetaTestCaseClass):
                     'For global options use -help:global or run pwb'
                 global_args = ['-pwb_close_matches:1']
 
-                cmd = global_args + [script_name] + args
+                cmd = [*global_args, script_name, *args]
                 data_in = script_input.get(script_name)
                 if isinstance(self._timeout, bool):
                     do_timeout = self._timeout
@@ -257,14 +258,14 @@ class ScriptTestMeta(MetaTestCaseClass):
                     exit_codes = [0, 1, -9]
                     if not out_result and not err_result:
                         unittest_print(' auto-run script unresponsive after '
-                                       '{} seconds'.format(timeout), end=' ')
+                                       f'{timeout} seconds', end=' ')
                     elif 'SIMULATION: edit action blocked' in err_result:
                         unittest_print(' auto-run script simulated edit '
                                        'blocked', end=' ')
                     else:
-                        unittest_print(
-                            ' auto-run script stderr within {} seconds: {!r}'
-                            .format(timeout, err_result), end='  ')
+                        unittest_print(' auto-run script stderr within '
+                                       f'{timeout} seconds: {err_result!r}',
+                                       end='  ')
                     unittest_print(f" exit code: {result['exit_code']}",
                                    end=' ')
 
@@ -318,12 +319,6 @@ class ScriptTestMeta(MetaTestCaseClass):
                     f'{script_name} has dependencies; skipping'
                 )(dct[test_name])
 
-            # Disable test by default in pytest
-            if script_name in unrunnable_script_set:
-                # flag them as an expectedFailure due to py.test (T135594)
-                dct[test_name] = unittest.expectedFailure(dct[test_name])
-                dct[test_name].__test__ = False
-
         return super().__new__(cls, name, bases, dct)
 
 
@@ -363,6 +358,7 @@ class TestScriptSimulate(DefaultSiteTestCase, PwbTestCase,
     _expected_failures = {
         'catall',          # stdout user interaction
         'checkimages',
+        'commons_information',  # no empty out_result
         'revertbot',
         'transwikiimport',
     }
@@ -370,14 +366,18 @@ class TestScriptSimulate(DefaultSiteTestCase, PwbTestCase,
     _allowed_failures = {
         'blockpageschecker',  # not localized for some test sites
         'category_redirect',
+        'claimit',
         'clean_sandbox',
+        'coordinate_import',
         'delinker',
         'disambredir',
+        'illustrate_wikidata',
         'misspelling',  # T94681
         'noreferences',
         'nowcommons',
         'patrol',
         'shell',
+        'speedy_delete',
         'unusedfiles',  # not localized for default sites
         'upload',  # raises custom ValueError
         'watchlist',  # not logged in
@@ -411,13 +411,11 @@ class TestScriptGenerator(DefaultSiteTestCase, PwbTestCase,
         'create_isbn_edition',
         'dataextend',
         'data_ingestion',
-        'delete',
         'delinker',
         'djvutext',
         'download_dump',
         'harvest_template',
         'image',  # Foobar has no valid extension
-        'imagetransfer',
         'interwiki',
         'listpages',
         'login',
@@ -447,6 +445,8 @@ class TestScriptGenerator(DefaultSiteTestCase, PwbTestCase,
 
     _allowed_failures = {
         'basic',
+        'delete',  # T368859
+        'imagetransfer',  # T368859
         'newitem',
         'nowcommons',
     }

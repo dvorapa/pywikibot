@@ -15,7 +15,7 @@ __init__.py, and a message bundle called 'pywikibot' containing messages.
 See :py:obj:`twtranslate` for more information on the messages.
 """
 #
-# (C) Pywikibot team, 2004-2023
+# (C) Pywikibot team, 2004-2024
 #
 # Distributed under the terms of the MIT license.
 #
@@ -613,7 +613,7 @@ def translate(code: str | pywikibot.site.BaseSite,
     else:
         codes = [code]
         if fallback is True:
-            codes += _altlang(code) + ['_default', 'en']
+            codes += [*_altlang(code), '_default', 'en']
         elif fallback is not False:
             assert not isinstance(fallback, bool)
             codes.extend(fallback)
@@ -657,7 +657,7 @@ def get_bot_prefix(
 ) -> str:
     """Get the bot prefix string like 'Bot: ' including space delimiter.
 
-    .. note: If *source* is a str and ``config.bot_prefix`` is set to
+    .. note:: If *source* is a str and ``config.bot_prefix`` is set to
        None, it cannot be determined whether the current user is a bot
        account. In this cas the prefix will be returned.
     .. versionadded:: 8.1
@@ -793,7 +793,7 @@ def twtranslate(
     # modes are caught with the KeyError.
     langs = [lang]
     if fallback:
-        langs += _altlang(lang) + ['en']
+        langs += [*_altlang(lang), 'en']
     for alt in langs:
         trans = _get_translation(alt, twtitle)
         if trans:
@@ -876,11 +876,11 @@ def bundles(stem: bool = False) -> Generator[Path | str, None, None]:
     >>> from pywikibot import i18n
     >>> bundles = sorted(i18n.bundles(stem=True))
     >>> len(bundles)
-    38
+    39
     >>> bundles[:4]
     ['add_text', 'archivebot', 'basic', 'blockpageschecker']
     >>> bundles[-5:]
-    ['undelete', 'unprotect', 'unusedfiles', 'weblinkchecker', 'welcome']
+    ['unlink', 'unprotect', 'unusedfiles', 'weblinkchecker', 'welcome']
     >>> 'pywikibot' in bundles
     True
 
@@ -913,7 +913,7 @@ def known_languages() -> list[str]:
     >>> i18n.known_languages()[-10:]
     ['vo', 'vro', 'wa', 'war', 'xal', 'xmf', 'yi', 'yo', 'yue', 'zh']
     >>> len(i18n.known_languages())
-    254
+    255
 
     The implementation is roughly equivalent to:
 

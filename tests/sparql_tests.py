@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Test cases for the SPARQL API."""
 #
-# (C) Pywikibot team, 2016-2022
+# (C) Pywikibot team, 2016-2024
 #
 # Distributed under the terms of the MIT license.
 #
@@ -157,8 +157,9 @@ class TestSparql(WikidataTestCase):
     def testGetItems(self, mock_method):
         """Test item list retrieval via SPARQL."""
         mock_method.return_value = Container(
-            SQL_RESPONSE_CONTAINER % '{0}, {1}, {1}'.format(ITEM_Q498787,
-                                                            ITEM_Q677525))
+            SQL_RESPONSE_CONTAINER % (f'{ITEM_Q498787}, {ITEM_Q677525}, '
+                                      f'{ITEM_Q677525}')
+        )
         with skipping(pywikibot.exceptions.TimeoutError):
             q = sparql.SparqlQuery()
         res = q.get_items('SELECT * WHERE { ?x ?y ?z }', 'cat')

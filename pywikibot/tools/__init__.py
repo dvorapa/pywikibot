@@ -52,6 +52,7 @@ from pywikibot.tools._deprecate import (
     add_decorated_full_name,
     add_full_name,
     deprecate_arg,
+    deprecate_positionals,
     deprecated,
     deprecated_args,
     get_wrapper_depth,
@@ -69,6 +70,7 @@ __all__ = (
     'add_decorated_full_name',
     'add_full_name',
     'deprecate_arg',
+    'deprecate_positionals',
     'deprecated',
     'deprecated_args',
     'get_wrapper_depth',
@@ -639,7 +641,7 @@ def merge_unique_dicts(*args, **kwargs):
 
     .. versionadded:: 3.0
     """
-    args = list(args) + [dict(kwargs)]
+    args = [*list(args), dict(kwargs)]
     conflicts = set()
     result = {}
     for arg in args:

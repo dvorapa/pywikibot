@@ -42,7 +42,7 @@ The following generators and filters are supported:
 
 &params;
 """
-# (C) Pywikibot team, 2008-2023
+# (C) Pywikibot team, 2008-2024
 #
 # Distributed under the terms of the MIT license.
 #
@@ -214,12 +214,12 @@ class RefLink:
 
     def refTitle(self) -> str:
         """Return the <ref> with its new title."""
-        return '<ref{r.name}>[{r.link} {r.title}<!-- {r.comment} -->]</ref>' \
-               .format(r=self)
+        return (f'<ref{self.name}>[{self.link} {self.title}'
+                f'<!-- {self.comment} -->]</ref>')
 
     def refLink(self) -> str:
         """No title has been found, return the unbracketed link."""
-        return '<ref{r.name}>{r.link}</ref>'.format(r=self)
+        return f'<ref{self.name}>{self.link}</ref>'
 
     def refDead(self):
         """Dead link, tag it with a {{dead link}}."""
@@ -407,10 +407,8 @@ class DuplicateReferences:
             if v[IX.reflist]:
                 name = f'"{name}"'
 
-            text = re.sub(
-                r'<ref name\s*=\s*(?P<quote>["\']?)\s*{}\s*(?P=quote)\s*/>'
-                .format(ref),
-                f'<ref name={name} />', text)
+            text = re.sub(rf'<ref name\s*=\s*(?P<quote>["\']?)\s*{ref}\s*'
+                          r'(?P=quote)\s*/>', f'<ref name={name} />', text)
         return text
 
 
@@ -438,7 +436,7 @@ class ReferencesRobot(SingleSiteBot, ConfigParserBot, ExistingPageBot):
         # Check
         manual = 'mw:Manual:Pywikibot/refLinks'
         code = None
-        for alt in [self.site.code] + i18n._altlang(self.site.code):
+        for alt in [self.site.code, *i18n._altlang(self.site.code)]:
             if alt in localized_msg:
                 code = alt
                 break
@@ -451,10 +449,7 @@ class ReferencesRobot(SingleSiteBot, ConfigParserBot, ExistingPageBot):
             self.msg = i18n.twtranslate(self.site, 'reflinks-msg', locals())
 
         local = i18n.translate(self.site, badtitles)
-        if local:
-            bad = f'({globalbadtitles}|{local})'
-        else:
-            bad = globalbadtitles
+        bad = f'({globalbadtitles}|{local})' if local else globalbadtitles
 
         self.titleBlackList = re.compile(bad, re.I | re.S | re.X)
         self.norefbot = noreferences.NoReferencesBot(verbose=False)
@@ -466,8 +461,10 @@ class ReferencesRobot(SingleSiteBot, ConfigParserBot, ExistingPageBot):
             if self.stop_page.exists():
                 self.stop_page_rev_id = self.stop_page.latest_revision_id
             else:
-                pywikibot.warning('The stop page {} does not exist'
-                                  .format(self.stop_page.title(as_link=True)))
+                pywikibot.warning(
+                    f'The stop page {self.stop_page.title(as_link=True)} does'
+                    ' not exist'
+                )
 
         # Regex to grasp content-type meta HTML tag in HTML source
         self.META_CONTENT = re.compile(
@@ -556,7 +553,6 @@ class ReferencesRobot(SingleSiteBot, ConfigParserBot, ExistingPageBot):
         raw_text = textlib.removeDisabledParts(new_text)
         # for each link to change
         for match in linksInRef.finditer(raw_text):
-
             link = match['url']
             if 'jstor.org' in link:
                 # TODO: Clean URL blacklist
@@ -610,9 +606,10 @@ class ReferencesRobot(SingleSiteBot, ConfigParserBot, ExistingPageBot):
                         continue
 
                 if r.status_code != HTTPStatus.OK:
-                    pywikibot.stdout('HTTP error ({}) for {} on {}'
-                                     .format(r.status_code, ref.url,
-                                             page.title(as_link=True)))
+                    pywikibot.stdout(
+                        f'HTTP error ({r.status_code}) for {ref.url} on '
+                        f'{page.title(as_link=True)}'
+                    )
                     # 410 Gone, indicates that the resource has been
                     # purposely removed
                     if r.status_code == HTTPStatus.GONE \
@@ -649,10 +646,12 @@ class ReferencesRobot(SingleSiteBot, ConfigParserBot, ExistingPageBot):
 
             if meta_content:
                 tag = None
-                encodings = [encoding] if encoding else []
-                encodings += list(page.site.encodings())
+                # use a dict to keep the order
+                encodings = {encoding: None} if encoding else {}
+                encodings.update(dict.fromkeys(page.site.encodings()))
+
                 for enc in encodings:
-                    with suppress(UnicodeDecodeError):
+                    with suppress(UnicodeDecodeError, LookupError):
                         tag = meta_content.group().decode(enc)
                         break
 

@@ -116,10 +116,12 @@ else:
     removesuffix = str.removesuffix  # type: ignore[assignment]
 
 
-# bpo-38200
 if PYTHON_VERSION < (3, 10) or SPHINX_RUNNING:
     from itertools import tee
 
+    NoneType = type(None)
+
+    # bpo-38200
     def pairwise(iterable):
         """Return successive overlapping pairs taken from the input iterable.
 
@@ -133,12 +135,13 @@ if PYTHON_VERSION < (3, 10) or SPHINX_RUNNING:
         return zip(a, b)
 else:
     from itertools import pairwise  # type: ignore[no-redef]
+    from types import NoneType
 
 
 # gh-98363
 if PYTHON_VERSION < (3, 13) or SPHINX_RUNNING:
     def batched(iterable, n: int, *,
-                strict: bool = False) -> Generator[tuple, None, None]:
+                strict: bool = False) -> Generator[tuple]:
         """Batch data from the *iterable* into tuples of length *n*.
 
         .. note:: The last batch may be shorter than *n* if *strict* is
@@ -177,9 +180,13 @@ if PYTHON_VERSION < (3, 13) or SPHINX_RUNNING:
         :param strict: raise a ValueError if the final batch is shorter
             than *n*.
         :raise ValueError: batched(): incomplete batch
+        :raise TypeError: *n* cannot be interpreted as an integer
         """
         msg = 'batched(): incomplete batch'
         if PYTHON_VERSION < (3, 12):
+            if not isinstance(n, int):
+                raise TypeError(f'{type(n).__name__!r} object cannot be'
+                                ' interpreted as an integer')
             group = []
             for item in iterable:
                 group.append(item)

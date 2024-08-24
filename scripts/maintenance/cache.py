@@ -270,9 +270,8 @@ def process_entries(cache_path, func, use_accesstime: bool | None = None,
         # Skip foreign python specific directory
         *_, version = cache_path.partition('-')
         if version and version[-1] != str(PYTHON_VERSION[0]):
-            pywikibot.error(
-                "Skipping {} directory, can't read content with python {}"
-                .format(cache_path, PYTHON_VERSION[0]))
+            pywikibot.error(f"Skipping {cache_path} directory, can't read "
+                            f'content with python {PYTHON_VERSION[0]}')
             continue
 
         try:
@@ -302,18 +301,14 @@ def process_entries(cache_path, func, use_accesstime: bool | None = None,
         try:
             entry._rebuild()
         except Exception:
-            pywikibot.error('Problems loading {} with key {}, {!r}'
-                            .format(entry.filename, entry.key,
-                                    entry._parsed_key))
+            pywikibot.error(f'Problems loading {entry.filename} with key '
+                            f'{entry.key}, {entry._parsed_key!r}')
             pywikibot.exception()
             continue
 
         if func is None or func(entry):
             if output_func or action_func is None:
-                if output_func is None:
-                    output = entry
-                else:
-                    output = output_func(entry)
+                output = entry if output_func is None else output_func(entry)
                 if output is not None:
                     pywikibot.info(output)
             if action_func:
@@ -473,10 +468,7 @@ def main():
             cache_paths += [
                 os.path.join(userpath, f) for f in folders]
 
-    if delete:
-        action_func = CacheEntry._delete
-    else:
-        action_func = None
+    action_func = CacheEntry._delete if delete else None
 
     if output:
         output_func = _parse_command(output, 'output')

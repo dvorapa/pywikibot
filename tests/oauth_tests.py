@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 """Test OAuth functionality."""
 #
-# (C) Pywikibot team, 2015-2023
+# (C) Pywikibot team, 2015-2024
 #
 # Distributed under the terms of the MIT license.
 #
 from __future__ import annotations
 
 import os
+import time
 from contextlib import suppress
 
+import pywikibot
+from pywikibot import config
+from pywikibot.exceptions import EditConflictError
 from pywikibot.login import OauthLoginManager
 from tests.aspects import (
     DefaultSiteTestCase,
@@ -44,6 +48,48 @@ class OAuthSiteTestCase(TestCase):
         self.assertLength(tokens, 4)
         self.consumer_token = tokens[:2]
         self.access_token = tokens[2:]
+
+
+class OAuthEditTest(OAuthSiteTestCase):
+
+    """Run edit test with OAuth enabled."""
+
+    family = 'wikipedia'
+    code = 'test'
+
+    write = True
+
+    def setUp(self):
+        """Set up test by checking site and initialization."""
+        super().setUp()
+        self._authenticate = config.authenticate
+        oauth_tokens = self.consumer_token + self.access_token
+        config.authenticate[self.site.hostname()] = oauth_tokens
+
+    def tearDown(self):
+        """Tear down test by resetting config.authenticate."""
+        super().tearDown()
+        config.authenticate = self._authenticate
+
+    def test_edit(self):
+        """Test editing to a page."""
+        self.site.login()
+        self.assertTrue(self.site.logged_in())
+        title = f'User:{self.site.username()}/edit test'
+        ts = str(time.time())
+        p = pywikibot.Page(self.site, title)
+        try:
+            p.site.editpage(p, appendtext='\n' + ts)
+        except EditConflictError as e:
+            self.assertEqual(e.page, p)
+        else:
+            revision_id = p.latest_revision_id
+            p = pywikibot.Page(self.site, title)
+            t = p.text
+            if revision_id == p.latest_revision_id:
+                self.assertTrue(p.text.endswith(ts))
+            else:
+                self.assertIn(ts, t)
 
 
 class TestOauthLoginManger(DefaultSiteTestCase, OAuthSiteTestCase):

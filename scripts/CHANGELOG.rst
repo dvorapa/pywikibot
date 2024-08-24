@@ -1,6 +1,115 @@
 Scripts Changelog
 =================
 
+9.4.0
+-----
+
+delinker
+^^^^^^^^
+
+* Use :pylib:`difflib.get_close_matches()<difflib#difflib.get_close_matches>`
+  to find the closest image match
+* Add ``-category`` option to work from given category and look for the
+  lastest file deletion first(:phab:`T372206`)
+* Check whether image exists first (:phab:`T372106`)
+
+unlink
+^^^^^^
+
+* unlink script was recovered
+
+unusedfiles
+^^^^^^^^^^^
+
+* L10N updates
+* :mod:`flow` support was dropped, it never worked (:phab:`T372477`)
+
+
+9.3.1
+-----
+
+reflinks
+^^^^^^^^
+
+*  Ignore LookupError when decoding meta content (:phab:`T371687`)
+
+
+9.3.0
+-----
+
+delinker
+^^^^^^^^
+
+* Ignore file extension check (:phab:`T352237`)
+
+fixing_redirects
+^^^^^^^^^^^^^^^^
+
+* Ignore :exc:`SectionError` in fixing_redirects.py script (:phab:`T370295`)
+
+interwiki
+^^^^^^^^^
+
+* ``-wiktionary`` option was removed
+
+redirect
+^^^^^^^^
+
+* Show the current redirect target with redirect summary (:phab:`T254839`)
+
+
+9.2.0
+-----
+
+addwikis
+^^^^^^^^
+
+* This maintenance script was added to add wikis to the Family.codes set
+
+commons_information
+^^^^^^^^^^^^^^^^^^^
+
+* Do not remove valid description parts of Information template (:phab:`T364640`)
+* Use transclusions of Information template as default generator
+* Preload pages to make the script upto 10 times faster
+
+illustrate_wikidata
+^^^^^^^^^^^^^^^^^^^
+
+* ``-always`` option is supported
+
+interwikidata
+^^^^^^^^^^^^^
+
+* Do not create an option named None (:phab:`T366409`)
+
+noreferences
+^^^^^^^^^^^^
+
+* L10N updates
+
+9.1.0
+-----
+
+colors
+^^^^^^
+
+* Fix TypeError with :func:`backports.batched` (:phab:`T362035`)
+
+noreferences
+^^^^^^^^^^^^
+
+* L10N updates
+* Show an error message and leave if script is not localized (:phab:`T362103`)
+
+replace
+^^^^^^^
+
+* Permit strings as exceptions for fixes
+* Do not apply replacements multiple times  (:phab:`T363047`)
+* Respect 'text-contains' from fixes dictionaries (:phab:`T142324`)
+
+
 9.0.0
 -----
 

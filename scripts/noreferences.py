@@ -29,7 +29,7 @@ bandwidth. Instead, use the -xml parameter, or use another way to generate
 a list of affected articles
 """
 #
-# (C) Pywikibot team, 2007-2023
+# (C) Pywikibot team, 2007-2024
 #
 # Distributed under the terms of the MIT license.
 #
@@ -37,11 +37,12 @@ from __future__ import annotations
 
 import re
 from functools import partial
+from pathlib import Path
 
 import pywikibot
 from pywikibot import i18n, pagegenerators, textlib
 from pywikibot.bot import AutomaticTWSummaryBot, ExistingPageBot, SingleSiteBot
-from pywikibot.exceptions import LockedPageError
+from pywikibot.exceptions import LockedPageError, TranslationError
 from pywikibot.pagegenerators import XMLDumpPageGenerator
 
 
@@ -51,12 +52,15 @@ docuReplacements = {
     '&params;': pagegenerators.parameterHelp,
 }
 
-# References sections are usually placed before further reading / external
-# link sections. This dictionary defines these sections, sorted by priority.
-# For example, on an English wiki, the script would place the "References"
-# section in front of the "Further reading" section, if that existed.
-# Otherwise, it would try to put it in front of the "External links" section,
-# or if that fails, the "See also" section, etc.
+placeBeforeSections: dict[str, list[str]]
+"""References sections are usually placed before further reading /
+external link sections. This dictionary defines these sections, sorted
+by priority. For example, on an English wiki, the script would place the
+"References" section in front of the "Further reading" section, if that
+existed. Otherwise, it would try to put it in front of the
+"External links" section, or if that fails, the "See also" section, etc.
+"""
+
 placeBeforeSections = {
     'ar': [              # no explicit policy on where to put the references
         'وصلات خارجية',
@@ -207,6 +211,10 @@ placeBeforeSections = {
         'حوالا',
         'خارجي ڳنڌڻا',
     ],
+    'simple': [
+        'Other websites',
+        'Sources',
+    ],
     'sk': [
         'Pozri aj',
     ],
@@ -240,10 +248,30 @@ placeBeforeSections = {
     ],
 }
 
-# Titles of sections where a reference tag would fit into.
-# The first title should be the preferred one: It's the one that will be
-# used when a new section has to be created. Section titles can be regex
-# patterns except of the first.
+PLACE_AFTER_SECTIONS: dict[str, list[str]]
+"""References sections can also be placed after a given section. This
+dictionary defines these sections, sorted by priority. For example, on
+Simple wiki, the script would place the "References" section after the
+"Notes" section, if that existed. The PLACE_AFTER_SECTIONS is priorized
+over the placing of the "placeBeforeSections" sections.
+
+.. attention:: not implemented yet.
+"""
+
+# TODO: not implemented yet.
+PLACE_AFTER_SECTIONS = {
+    'simple': [
+        'Notes',
+    ],
+}
+
+referencesSections: dict[str, dict[str, list[str]]]
+"""Titles of sections where a reference tag would fit into. The first
+title should be the preferred one: It's the one that will be used when
+a new section has to be created. Section titles can be regex patterns
+except of the first.
+"""
+
 referencesSections = {
     'wikipedia': {
         'ar': [             # not sure about which ones are preferred.
@@ -384,6 +412,9 @@ referencesSections = {
         'sd': [
             'حوالا',
         ],
+        'simple': [
+            'References',
+        ],
         'sk': [
             'Referencie',
         ],
@@ -418,8 +449,11 @@ referencesSections = {
 referencesSections['wiktionary'] = dict(referencesSections['wikipedia'])
 referencesSections['wiktionary'].update(cs=['poznámky', 'reference'])
 
-# Templates which include a <references /> tag. If there is no such template
-# on your wiki, you don't have to enter anything here.
+referencesTemplates: dict[str, dict[str, list[str]]]
+"""Templates which include a <references /> tag. If there is no such
+template on your wiki, you don't have to enter anything here.
+"""
+
 referencesTemplates = {
     'wikipedia': {
         'ar': ['مراجع', 'المراجع', 'ثبت المراجع',
@@ -463,11 +497,10 @@ referencesTemplates = {
                'Noot', 'FootnotesSmall'],
         'pl': ['Przypisy', 'Przypisy-lista', 'Uwagi'],
         'pt': ['Notas', 'ref-section', 'Referências', 'Reflist'],
-        'ru': ['Reflist', 'Ref-list', 'Refs', 'Sources',
-               'Примечания', 'Список примечаний',
-               'Сноска', 'Сноски'],
+        'ru': ['Reflist', 'Примечания', 'Список примечаний', 'Сноски'],
         'sd': ['Reflist', 'Refs', 'Reference',
                'حوالا'],
+        'simple': ['Reflist'],
         'sr': ['Reflist', 'Референце', 'Извори', 'Рефлист'],
         'szl': ['Przipisy', 'Připisy'],
         'th': ['รายการอ้างอิง'],
@@ -477,8 +510,11 @@ referencesTemplates = {
     },
 }
 
-# Text to be added instead of the <references /> tag.
-# Define this only if required by your wiki.
+referencesSubstitute: dict[str, dict[str, list[str]]]
+"""Text to be added instead of the <references /> tag. Define this only
+if required by your wiki.
+"""
+
 referencesSubstitute = {
     'wikipedia': {
         'ar': '{{مراجع}}',
@@ -497,6 +533,7 @@ referencesSubstitute = {
         'pl': '{{Przypisy}}',
         'ru': '{{примечания}}',
         'sd': '{{حوالا}}',
+        'simple': '{{reflist}}',
         'sr': '{{reflist}}',
         'szl': '{{Przipisy}}',
         'th': '{{รายการอ้างอิง}}',
@@ -505,11 +542,13 @@ referencesSubstitute = {
     },
 }
 
-# Sites where no title is required for references template
-# as it is already included there
-noTitleRequired = ['be', 'szl']
+noTitleRequired: list[str] = ['be', 'szl']
+"""Sites where no title is required for references template as it is
+already included there
+"""
 
-maintenance_category = 'Q6483427'
+#: The maintenance category to retrieve pages for processing
+maintenance_category: str = 'Q6483427'
 
 _ref_regex = re.compile('</ref>', re.IGNORECASE)
 _references_regex = re.compile('<references.*?/>', re.IGNORECASE)
@@ -611,7 +650,7 @@ class NoReferencesBot(AutomaticTWSummaryBot, SingleSiteBot, ExistingPageBot):
         # Is there an existing section where we can add the references tag?
         # Set the edit summary key for this case
         self.summary_key = 'noreferences-add-tag'
-        for section in i18n.translate(self.site, referencesSections):
+        for section in i18n.translate(self.site, referencesSections) or []:
             sectionR = re.compile(fr'\r?\n=+ *{section} *=+ *\r?\n')
             index = 0
             while index < len(oldText):
@@ -637,19 +676,19 @@ class NoReferencesBot(AutomaticTWSummaryBot, SingleSiteBot, ExistingPageBot):
                     break
 
         # Create a new section for the references tag
-        for section in i18n.translate(self.site, placeBeforeSections):
+        for section in i18n.translate(self.site, placeBeforeSections) or []:
             # Find out where to place the new section
-            sectionR = re.compile(r'\r?\n(?P<ident>=+) *{} *(?P=ident) *\r?\n'
-                                  .format(section))
+            sectionR = re.compile(
+                rf'\r?\n(?P<ident>=+) *{section} *(?P=ident) *\r?\n')
             index = 0
             while index < len(oldText):
                 match = sectionR.search(oldText, index)
                 if match:
                     if textlib.isDisabled(oldText, match.start()):
                         pywikibot.info(
-                            'Existing {} section is commented out, '
+                            f'Existing {section} section is commented out, '
                             "won't add the references in front of it."
-                            .format(section))
+                        )
                         index = match.end()
                     else:
                         pywikibot.info(f'Adding references section before '
@@ -681,10 +720,12 @@ class NoReferencesBot(AutomaticTWSummaryBot, SingleSiteBot, ExistingPageBot):
         # so templatePattern must be fixed
         templatePattern = r'\r?\n{{((?!}}).)+?}}\s*'
         commentPattern = r'<!--((?!-->).)*?-->\s*'
-        metadataR = re.compile(r'(\r?\n)?({}|{}|{}|{})$'
-                               .format(categoryPattern, interwikiPattern,
-                                       templatePattern, commentPattern),
-                               re.DOTALL)
+        metadataR = re.compile(
+            r'(\r?\n)?'
+            f'({categoryPattern}|{interwikiPattern}|{templatePattern}|'
+            f'{commentPattern})$',
+            re.DOTALL
+        )
         tmpText = oldText
         while True:
             match = metadataR.search(tmpText)
@@ -699,24 +740,34 @@ class NoReferencesBot(AutomaticTWSummaryBot, SingleSiteBot, ExistingPageBot):
         index = len(tmpText)
         return self.createReferenceSection(oldText, index)
 
-    def createReferenceSection(self, oldText, index, ident: str = '==') -> str:
+    def createReferenceSection(self,
+                               oldText: str,
+                               index: int,
+                               ident: str = '==') -> str:
         """Create a reference section and insert it into the given text.
 
+        .. versionchanged:: 9.1
+           raise :exc:`exceptions.TranslationError` if script is not
+           localized for the current site.
+
         :param oldText: page text that is going to be be amended
-        :type oldText: str
-        :param index: the index of oldText where the reference section should
-            be inserted at
-        :type index: int
-        :param ident: symbols to be inserted before and after reference section
-            title
+        :param index: the index of oldText where the reference section
+            should be inserted at
+        :param ident: symbols to be inserted before and after reference
+            section title
         :return: the amended page text with reference section added
+        :raises TranslationError: script is not localized for the
+            current site
         """
+        title = i18n.translate(self.site, referencesSections)
         if self.site.code in noTitleRequired:
             ref_section = f'\n\n{self.referencesText}\n'
+        elif title:
+            ref_section = (f'\n\n{ident} {title[0]} {ident}\n'
+                           f'{self.referencesText}\n')
         else:
-            ref_section = '\n\n{ident} {title} {ident}\n{text}\n'.format(
-                title=i18n.translate(self.site, referencesSections)[0],
-                ident=ident, text=self.referencesText)
+            raise TranslationError(f'{Path(__file__).name} script is not '
+                                   f'localized for {self.site}')
         return oldText[:index].rstrip() + ref_section + oldText[index:]
 
     def skip_page(self, page):
@@ -724,16 +775,20 @@ class NoReferencesBot(AutomaticTWSummaryBot, SingleSiteBot, ExistingPageBot):
         if super().skip_page(page):
             return True
 
-        if self.site.sitename == 'wikipedia:en' and page.isIpEdit():
+        if self.site.sitename == 'wikipedia:en' and page.latest_revision.anon:
             pywikibot.warning(
-                'Page {} is edited by IP. Possible vandalized'
-                .format(page.title(as_link=True)))
+                f'Page {page} is edited by IP. Possible vandalized')
             return True
 
         return False
 
     def treat_page(self) -> None:
-        """Run the bot."""
+        """Run the bot.
+
+        .. versionchanged:: 9.1
+           print error message and close :attr:`bot.BaseBot.generator`
+           if :exc:`exceptions.TranslationError` was raised.
+        """
         page = self.current_page
         try:
             text = page.text
@@ -742,7 +797,13 @@ class NoReferencesBot(AutomaticTWSummaryBot, SingleSiteBot, ExistingPageBot):
             return
 
         if self.lacksReferences(text):
-            self.put_current(self.addReferences(text))
+            try:
+                newtext = self.addReferences(text)
+            except TranslationError as e:
+                pywikibot.error(e)
+                self.generator.close()
+            else:
+                self.put_current(newtext)
 
 
 def main(*args: str) -> None:
@@ -779,11 +840,8 @@ def main(*args: str) -> None:
         if cat:
             gen = cat.articles(namespaces=genFactory.namespaces or [0])
 
-    if gen:
-        bot = NoReferencesBot(generator=gen, **options)
-        bot.run()
-    else:
-        pywikibot.bot.suggest_help(missing_generator=True)
+    bot = NoReferencesBot(generator=gen, **options)
+    bot.run()
 
 
 if __name__ == '__main__':

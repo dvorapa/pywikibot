@@ -3,7 +3,7 @@
 Do not import classes directly from here but from specialbots.
 """
 #
-# (C) Pywikibot team, 2003-2023
+# (C) Pywikibot team, 2003-2024
 #
 # Distributed under the terms of the MIT license.
 #
@@ -21,6 +21,7 @@ import requests
 import pywikibot
 import pywikibot.comms.http as http
 from pywikibot import config
+from pywikibot.backports import Callable
 from pywikibot.bot import BaseBot, QuitKeyboardInterrupt
 from pywikibot.exceptions import APIError, FatalServerError, NoPageError
 
@@ -28,6 +29,27 @@ from pywikibot.exceptions import APIError, FatalServerError, NoPageError
 class UploadRobot(BaseBot):
 
     """Upload bot."""
+
+    post_processor: Callable[[str, str | None], None] | None = None
+    """If this attribute is set to a callable, the :meth:`run` method
+    calls it after upload. The parameters passed to the callable is the
+    origin *file_url* passed to the :meth:`upload` method and the
+    *filename* returned from that method. It can be used like this:
+
+    .. code-block:: python
+
+       def summarize(old: str, new: str | None) -> None:
+           if new is None:
+               print(f'{old} was ignored')
+           else:
+               print(f'{old} was uploaded as {new}')
+
+       bot = UploadRobot('Myfile.bmp')
+       bot.post_processor = summarize
+       bot.run()
+
+    .. versionadded:: 9.1
+    """
 
     def __init__(self, url: list[str] | str, *,
                  url_encoding=None,
@@ -48,7 +70,6 @@ class UploadRobot(BaseBot):
 
         .. versionchanged:: 6.2
            asynchronous upload is used if *asynchronous* parameter is set
-
         .. versionchanged:: 6.4
            *force_if_shared* parameter was added
 
@@ -56,7 +77,6 @@ class UploadRobot(BaseBot):
             to local files.
         :param description: Description of file for its page. If multiple files
             are uploading the same description is used for every file.
-        :type description: str
         :param use_filename: Specify title of the file's page. If multiple
             files are uploading it asks to change the name for second, third,
             etc. files, otherwise the last file will overwrite the other.
@@ -68,7 +88,7 @@ class UploadRobot(BaseBot):
             would be overwritten or another mistake would be risked. Set it to
             an array of warning codes to selectively ignore specific warnings.
         :param target_site: Set the site to upload to. If target site is not
-            given it's taken from user config file (user_config.py).
+            given it's taken from user config file (user-config.py).
         :type target_site: object
         :param aborts: List of the warning types to abort upload on. Set to
             True to abort on any warning.
@@ -82,11 +102,10 @@ class UploadRobot(BaseBot):
         :param force_if_shared: Upload the file even if it's currently
             shared to the target site (e.g. when moving from Commons to another
             wiki)
-        :keyword always: Disables any input, requires that either
+        :keyword bool always: Disables any input, requires that either
             ignore_warning or aborts are set to True and that the
             description is also set. It overwrites verify_description to
             False and keep_filename to True.
-        :type always: bool
         """
         super().__init__(**kwargs)
         if self.opt.always:
@@ -270,13 +289,13 @@ class UploadRobot(BaseBot):
                 if self.opt.always:
                     pywikibot.info('File format is not one of [{}]'
                                    .format(' '.join(allowed_formats)))
-                    continue
 
-                if not pywikibot.input_yn(
-                        'File format is not one of [{}], but {!r}. Continue?'
-                        .format(' '.join(allowed_formats), ext),
-                        default=False):
-                    continue
+                elif pywikibot.input_yn(
+                        'File format is not one of [{}], but {!r}. Skip?'
+                        .format(' '.join(allowed_formats), ext)):
+                    return None
+
+                continue
 
             potential_file_page = pywikibot.FilePage(self.target_site,
                                                      filename)
@@ -452,7 +471,7 @@ class UploadRobot(BaseBot):
     def run(self):
         """Run bot.
 
-        .. versionchanged: 9.1
+        .. versionchanged:: 9.1
            count uploads.
         """
         if self.skip_run():
@@ -464,6 +483,8 @@ class UploadRobot(BaseBot):
                 self.counter['read'] += 1
                 if filename:
                     self.counter['upload'] += 1
+                if callable(self.post_processor):
+                    self.post_processor(file_url, filename)
         except QuitKeyboardInterrupt:
             pywikibot.info(f'\nUser quit {type(self).__name__} bot run...')
         except KeyboardInterrupt:
