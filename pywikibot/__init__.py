@@ -160,7 +160,7 @@ def Site(code: str | None = None,  # noqa: N802
     >>> site_1 is site_2
     True
     >>> site_1
-    APISite("fr", "wikisource")
+    APISite('fr', 'wikisource')
 
     :class:`APISite<pywikibot.site._apisite.APISite>` is the default
     interface. Refer :py:obj:`pywikibot.site` for other interface types.
@@ -231,8 +231,8 @@ def Site(code: str | None = None,  # noqa: N802
             tmp = __import__('pywikibot.site', fromlist=[interface])
         except ImportError:
             raise ValueError(f'Invalid interface name: {interface}')
-        else:
-            interface = getattr(tmp, interface)
+
+        interface = getattr(tmp, interface)
 
     if not issubclass(interface, _BaseSite):
         warning(f'Site called with interface={interface.__name__}')
@@ -269,7 +269,7 @@ from pywikibot.page import (  # noqa: E402
 )
 
 
-def showDiff(oldtext: str,  # noqa: 134
+def showDiff(oldtext: str,  # noqa: N802
              newtext: str,
              context: int = 0) -> None:
     """

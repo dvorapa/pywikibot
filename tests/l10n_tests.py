@@ -51,20 +51,20 @@ class TestValidTemplateMeta(MetaTestCaseClass):
                 if (package == PACKAGES[0] and site.code in ['simple', 'test2']
                         or package == PACKAGES[1] and site.code == 'test'):
                     raise unittest.SkipTest(
-                        "{site} wiki has '{site.lang}' language code but "
-                        "missing template for package '{package}'. Must be "
+                        f"{site} wiki has '{site.lang}' language code but "
+                        f"missing template for package '{package}'. Must be "
                         'solved by the corresponding script.'
-                        .format(site=site, package=package))
+                    )
 
                 # check whether template exists
                 title = templates[0][0]
                 page = pywikibot.Page(site, title, ns=10)
                 self.assertTrue(
                     page.exists(),
-                    msg='Invalid L10N in package "{package}"\n'
-                    'template "{title}" does not exist for lang '
-                    '"{site.lang}" on site "{site}"'
-                    .format(package=package, title=title, site=site))
+                    msg=f'Invalid L10N in package "{package}"\n'
+                    f'template "{title}" does not exist for lang '
+                    f'"{site.lang}" on site "{site}"'
+                )
 
             return test_template
 
@@ -96,8 +96,9 @@ class TestValidTemplate(TestCase, metaclass=TestValidTemplateMeta):
         """Skip test gracefully if i18n package is missing."""
         super().setUpClass()
         if not i18n.messages_available():
-            raise unittest.SkipTest("i18n messages package '{}' not available."
-                                    .format(i18n._messages_package_name))
+            raise unittest.SkipTest(
+                f'i18n messages package {i18n._messages_package_name!r} not'
+                ' available.')
 
 
 class TestPackages(TestCase):
@@ -126,7 +127,7 @@ class TestPackages(TestCase):
                     bundle = i18n._get_bundle(lang, dirname)
                     if lang in ('en', 'qqq'):
                         self.assertIsNotEmpty(bundle)
-                    for key in bundle.keys():
+                    for key in bundle:
                         if key == '@metadata':
                             continue
                         self.assertTrue(

@@ -11,7 +11,7 @@ import os
 import sys
 import unittest
 import warnings
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from subprocess import PIPE, Popen, TimeoutExpired
 from typing import Any
 
@@ -239,10 +239,15 @@ class DryParamInfo(dict):
 
     def __getitem__(self, name):
         """Return dry data or a dummy parameter block."""
-        try:
+        with suppress(KeyError):
             return super().__getitem__(name)
-        except KeyError:
-            return {'name': name, 'limit': None}
+
+        result = {'name': name, 'prefix': '', 'limit': {}}
+
+        if name == 'query+templates':
+            result['limit'] = {'max': 1}
+
+        return result
 
 
 class DummySiteinfo:
@@ -322,9 +327,8 @@ class DryRequest(CachedRequest):
         """Never invalidate cached data."""
         return False
 
-    def _write_cache(self, data):
-        """Never write data."""
-        return
+    def _write_cache(self, data) -> None:
+        """Never write data but just do nothing."""
 
     def submit(self):
         """Prevented method."""
@@ -354,11 +358,10 @@ class DrySite(pywikibot.site.APISite):
         if self.family.name == 'wikisource':
             extensions.append({'name': 'ProofreadPage'})
         self._siteinfo._cache['extensions'] = (extensions, True)
-        aliases = []
-        for alias in ('PrefixIndex', ):
-            # TODO: Not all follow that scheme (e.g. "BrokenRedirects")
-            aliases.append(
-                {'realname': alias.capitalize(), 'aliases': [alias]})
+
+        # TODO: Not all follow that scheme (e.g. "BrokenRedirects")
+        aliases = [{'realname': alias.capitalize(), 'aliases': [alias]}
+                   for alias in ('PrefixIndex', )]
         self._siteinfo._cache['specialpagealiases'] = (aliases, True)
         self._msgcache = {'*': 'dummy entry', 'hello': 'world'}
 
@@ -418,7 +421,7 @@ class DrySite(pywikibot.site.APISite):
     def login(self, *args, cookie_only=False, **kwargs):
         """Overwrite login which is called when a site is initialized.
 
-        .. versionadded: 8.0.4
+        .. versionadded:: 8.0.4
         """
         if cookie_only:
             return
@@ -551,7 +554,9 @@ def empty_sites():
 
 
 @contextmanager
-def skipping(*exceptions: BaseException, msg: str | None = None):
+def skipping(*exceptions: BaseException,
+             msg: str | None = None,
+             code: str | None = None):
     """Context manager to skip test on specified exceptions.
 
     For example Eventstreams raises ``NotImplementedError`` if no
@@ -579,13 +584,25 @@ def skipping(*exceptions: BaseException, msg: str | None = None):
     .. note:: The last sample uses Python 3.10 syntax.
 
     .. versionadded:: 6.2
+    .. versionchanged:: 9.3
+       *code* parameter was added
 
-    :param msg: Optional skipping reason
     :param exceptions: Exceptions to let test skip
+    :param msg: Optional skipping reason
+    :param code: if *exceptions* is a single :exc:`APIError` you can
+        specify the :attr:`APIError.code` for the right match to be
+        skipped.
     """
     try:
         yield
     except exceptions as e:
+        if code:
+            if len(exceptions) != 1 \
+               or not hasattr(e, 'code') \
+               or e.code != code:
+                raise
+            msg = e.info
+
         if msg is None:
             msg = e
         raise unittest.SkipTest(msg)

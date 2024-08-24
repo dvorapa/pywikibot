@@ -10,6 +10,7 @@ import datetime
 import re
 import time
 import typing
+import webbrowser
 from collections import OrderedDict, defaultdict
 from contextlib import suppress
 from textwrap import fill
@@ -324,16 +325,14 @@ class APISite(
         """
         if not hasattr(self, '_userinfo'):
             return False
+
         if 'anon' in self.userinfo or not self.userinfo.get('id'):
             return False
 
         if not self.userinfo.get('name'):
             return False
 
-        if self.userinfo['name'] != self.username():
-            return False
-
-        return True
+        return self.userinfo['name'] == self.username()
 
     def is_oauth_token_available(self) -> bool:
         """Check whether OAuth token is set for this site."""
@@ -410,7 +409,7 @@ class APISite(
 
         if self.is_oauth_token_available():
             if self.userinfo['name'] == self.username():
-                error_msg = (f'Logging in on {self} via OAuth failed')
+                error_msg = f'Logging in on {self} via OAuth failed'
             elif self.username() is None:
                 error_msg = ('No username has been defined in your '
                              'user config file: you have to add in this '
@@ -471,10 +470,12 @@ class APISite(
         if self.is_oauth_token_available():
             pywikibot.warning('Using OAuth suppresses logout function')
 
-        req_params = {'action': 'logout', 'token': self.tokens['csrf']}
-        uirequest = self.simple_request(**req_params)
-        uirequest.submit()
-        self._loginstatus = login.LoginStatus.NOT_LOGGED_IN
+        # check if already logged out to avoid requiring logging in
+        if self._loginstatus != login.LoginStatus.NOT_LOGGED_IN:
+            req_params = {'action': 'logout', 'token': self.tokens['csrf']}
+            uirequest = self.simple_request(**req_params)
+            uirequest.submit()
+            self._loginstatus = login.LoginStatus.NOT_LOGGED_IN
 
         # Reset tokens and user properties
         del self.userinfo
@@ -489,8 +490,13 @@ class APISite(
         """File extensions enabled on the wiki.
 
         .. versionadded:: 8.4
+        .. versionchanged:: 9.2
+           also include extensions from the image repository
         """
-        return sorted(e['ext'] for e in self.siteinfo.get('fileextensions'))
+        ext = self.siteinfo.get('fileextensions')
+        if self.has_image_repository:
+            ext.extend(self.image_repository().siteinfo.get('fileextensions'))
+        return sorted({e['ext'] for e in ext})
 
     @property
     def maxlimit(self) -> int:
@@ -1270,8 +1276,7 @@ class APISite(
     @property
     def has_image_repository(self) -> bool:
         """Return True if site has a shared image repository like Commons."""
-        code, fam = self.shared_image_repository()
-        return bool(code or fam)
+        return self.image_repository() is not None
 
     @property
     def has_data_repository(self) -> bool:
@@ -1587,20 +1592,28 @@ class APISite(
     def getredirtarget(
         self,
         page: BasePage,
+        *,
+        ignore_section: bool = True
     ) -> pywikibot.page.Page:
-        """
-        Return page object for the redirect target of page.
+        """Return page object for the redirect target of page.
+
+        .. versionadded:: 9.3
+           *ignore_section* parameter
+
+        .. seealso:: :meth:`page.BasePage.getRedirectTarget`
 
         :param page: page to search redirects for
+        :param ignore_section: do not include section to the target even
+            the link has one
         :return: redirect target of page
 
-        :raises pywikibot.exceptions.IsNotRedirectPageError: page is not a
-            redirect
+        :raises CircularRedirectError: page is a circular redirect
+        :raises InterwikiRedirectPageError: the redirect target is on
+            another site
+        :raises IsNotRedirectPageError: page is not a redirect
         :raises RuntimeError: no redirects found
-        :raises pywikibot.exceptions.CircularRedirectError: page is a circular
-            redirect
-        :raises pywikibot.exceptions.InterwikiRedirectPageError: the redirect
-            target is on another site
+        :raises SectionError: the section is not found on target page
+            and *ignore_section* is not set
         """
         if not self.page_isredirect(page):
             raise IsNotRedirectPageError(page)
@@ -1619,13 +1632,14 @@ class APISite(
             raise RuntimeError(
                 f"getredirtarget: No 'redirects' found for page {title}.")
 
-        redirmap = {item['from']: {'title': item['to'],
-                                   'section': '#'
-                                   + item['tofragment']
-                                   if 'tofragment' in item
-                                   and item['tofragment']
-                                   else ''}
-                    for item in result['query']['redirects']}
+        redirmap = {
+            item['from']: {
+                'title': item['to'],
+                'section': '#' + item['tofragment']
+                if item.get('tofragment') else ''
+            }
+            for item in result['query']['redirects']
+        }
 
         # Normalize title
         for item in result['query'].get('normalized', []):
@@ -1644,7 +1658,7 @@ class APISite(
         if 'pages' not in result['query']:
             # No "pages" element might indicate a circular redirect
             # Check that a "to" link is also a "from" link in redirmap
-            for _from, _to in redirmap.items():
+            for _to in redirmap.values():
                 if _to['title'] in redirmap:
                     raise CircularRedirectError(page)
 
@@ -1680,6 +1694,11 @@ class APISite(
             target = pywikibot.FilePage(target)
         elif ns == Namespace.CATEGORY:
             target = pywikibot.Category(target)
+
+        if not ignore_section:
+            # get the content; this raises SectionError if section is not found
+            target.text
+
         page._redirtarget = target
         return page._redirtarget
 
@@ -1754,7 +1773,7 @@ class APISite(
         data = data.get('query', data)
 
         user_tokens = {}
-        if 'tokens' in data and data['tokens']:
+        if data.get('tokens'):
             user_tokens = {removesuffix(key, 'token'): val
                            for key, val in data['tokens'].items()
                            if val != '+\\'}
@@ -1966,7 +1985,6 @@ class APISite(
         'spamblacklist': SpamblacklistError,
         'abusefilter-disallowed': AbuseFilterDisallowedError,
     }
-    _ep_text_overrides = {'appendtext', 'prependtext', 'undo'}
 
     @need_right('edit')
     def editpage(
@@ -1984,47 +2002,81 @@ class APISite(
     ) -> bool:
         """Submit an edit to be saved to the wiki.
 
-        .. seealso:: :api:`Edit`
+        .. seealso::
+           - :api:`Edit`
+           - :meth:`BasePage.save()<page.BasePage.save>`
+             (should be preferred)
 
         :param page: The Page to be saved.
             By default its .text property will be used
             as the new text to be saved to the wiki
-        :param summary: the edit summary
+        :param summary: The edit summary for the modification (optional,
+            but most wikis strongly encourage its use)
         :param minor: if True (default), mark edit as minor
-        :param notminor: if True, override account preferences to mark edit
-            as non-minor
+        :param notminor: if True, override account preferences to mark
+            edit as non-minor
         :param recreate: if True (default), create new page even if this
             title has previously been deleted
         :param createonly: if True, raise an error if this title already
             exists on the wiki
-        :param nocreate: if True, raise an error if the page does not exist
-        :param watch: Specify how the watchlist is affected by this edit, set
-            to one of "watch", "unwatch", "preferences", "nochange":
-            * watch: add the page to the watchlist
-            * unwatch: remove the page from the watchlist
-            * preferences: use the preference settings (default)
-            * nochange: don't change the watchlist
+        :param nocreate: if True, raise a :exc:`exceptions.NoCreateError`
+            exception if the page does not exist
+        :param watch: Specify how the watchlist is affected by this edit,
+            set to one of ``watch``, ``unwatch``, ``preferences``,
+            ``nochange``:
+
+            * watch --- add the page to the watchlist
+            * unwatch --- remove the page from the watchlist
+            * preferences --- use the preference settings (default)
+            * nochange --- don't change the watchlist
+
+            If None (default), follow bot account's default settings
         :param bot: if True, mark edit with bot flag
-        :keyword text: Overrides Page.text
-        :type text: str
-        :keyword section: Edit an existing numbered section or
+
+        :keyword str text: Overrides Page.text
+        :keyword int | str section: Edit an existing numbered section or
             a new section ('new')
-        :type section: int or str
-        :keyword prependtext: Prepend text. Overrides Page.text
-        :type text: str
-        :keyword appendtext: Append text. Overrides Page.text.
-        :type text: str
-        :keyword undo: Revision id to undo. Overrides Page.text
-        :type undo: int
+        :keyword str prependtext: Prepend text. Overrides Page.text
+        :keyword str appendtext: Append text. Overrides Page.text.
+        :keyword int undo: Revision id to undo. Overrides Page.text
+
         :return: True if edit succeeded, False if it failed
-        :raises pywikibot.exceptions.Error: No text to be saved
-        :raises pywikibot.exceptions.NoPageError: recreate is disabled and page
-            does not exist
-        :raises pywikibot.exceptions.CaptchaError: config.solve_captcha is
-            False and saving the page requires solving a captcha
+
+        :raises AbuseFilterDisallowedError: This action has been
+            automatically identified as harmful, and therefore disallowed
+        :raises CaptchaError: :ref:`config.solve_captcha
+            <Account Settings>` is False and saving the
+            page requires solving a captcha
+        :raises CascadeLockedPageError: The page is protected with
+            protection cascade
+        :raises EditConflictError: an edit confict occurred
+        :raises Error: No text to be saved or API editing not enabled on
+            site or user is not authorized to edit, create pages or
+            create image redirects on site or bot is not logged in and
+            anon users are not authorized to edit, create pages or to
+            create image redirects or the edit was filtered or the
+            content is too big
+        :raises KeyError: No 'result' found in API response
+        :raises LockedNoPageError: The page title is protected
+        :raises LockedPageError: The page has been protected to prevent
+            editing or other actions
+        :raises NoCreateError: The page you specified doesn't exist and
+            *nocreate* is set
+        :raises NoPageError: *recreate* is disabled and page does not
+            exist
+        :raises PageCreatedConflictError: The page you tried to create
+            has been created already
+        :raises PageDeletedConflictError: The page has been deleted in
+            meantime
+        :raises SpamblacklistError: The title is blacklisted as spam
+        :raises TitleblacklistError: The title is blacklisted
+        :raises ValueError: *text* keyword is used with one of the
+            override keywords *appendtext*, *prependtext* or *undo* or
+            more than one of the override keywords are used or no *text*
+            keyword is used together with *section* keyword.
         """
         basetimestamp = True
-        text_overrides = self._ep_text_overrides.intersection(kwargs.keys())
+        text_overrides = {'appendtext', 'prependtext', 'undo'} & kwargs.keys()
 
         if text_overrides:
             if 'text' in kwargs:
@@ -2058,12 +2110,21 @@ class APISite(
         token = self.tokens['csrf']
         if bot is None:
             bot = self.has_right('bot')
-        params = dict(action='edit', title=page,
-                      text=text, token=token, summary=summary, bot=bot,
-                      recreate=recreate, createonly=createonly,
-                      nocreate=nocreate, minor=minor,
-                      notminor=not minor and notminor,
-                      **kwargs)
+
+        params = dict(
+            action='edit',
+            title=page,
+            text=text,
+            token=token,
+            summary=summary,
+            bot=bot,
+            recreate=recreate,
+            createonly=createonly,
+            nocreate=nocreate,
+            minor=minor,
+            notminor=not minor and notminor,
+            **kwargs
+        )
 
         if basetimestamp and 'basetimestamp' not in kwargs:
             params['basetimestamp'] = basetimestamp
@@ -2080,15 +2141,17 @@ class APISite(
         try:
             while True:
                 try:
-                    result = req.submit()
-                    pywikibot.debug(f'editpage response: {result}')
+                    response = req.submit()
+                    pywikibot.debug(f'editpage response: {response}')
                 except APIError as err:
                     if err.code.endswith('anon') and self.logged_in():
                         pywikibot.debug(f"editpage: received '{err.code}' "
                                         f'even though bot is logged in')
+
                     if err.code == 'abusefilter-warning':
                         pywikibot.warning(f'{err.info}\nRetrying.')
                         continue
+
                     if err.code in self._ep_errors:
                         exception = self._ep_errors[err.code]
                         if isinstance(exception, str):
@@ -2101,37 +2164,47 @@ class APISite(
                             raise Error(
                                 exception.format_map(errdata)
                             ) from None
+
                         if issubclass(exception, AbuseFilterDisallowedError):
                             raise exception(page, info=err.info) from None
+
                         if issubclass(exception, SpamblacklistError):
                             urls = ', '.join(err.other[err.code]['matches'])
                             raise exception(page, url=urls) from None
+
                         raise exception(page) from None
+
                     pywikibot.debug(f'editpage: Unexpected error code '
-                                    f"'{err.code}' received.")
+                                    f'{err.code!r} received.')
                     raise
 
-                assert 'edit' in result and 'result' in result['edit'], result
+                try:
+                    result = response['edit']['result']
+                except KeyError:
+                    raise KeyError(
+                        f"No 'result' key found in response\n{response}")
 
-                if result['edit']['result'] == 'Success':
-                    if 'nochange' in result['edit']:
+                if result == 'Success':
+                    if 'nochange' in response['edit']:
                         # null edit, page not changed
-                        pywikibot.log(f'Page [[{page.title()}]] saved without '
-                                      f'any changes.')
+                        pywikibot.log(
+                            f'Page {page} saved without any changes.')
                         return True
-                    page.latest_revision_id = result['edit']['newrevid']
+
+                    page.latest_revision_id = response['edit']['newrevid']
                     # See:
                     # https://www.mediawiki.org/wiki/API:Wikimania_2006_API_discussion#Notes
                     # not safe to assume that saved text is the same as sent
                     del page.text
                     return True
 
-                if result['edit']['result'] == 'Failure':
-                    if 'captcha' in result['edit']:
+                if result == 'Failure':
+                    captcha = response['edit'].get('captcha')
+                    if captcha is not None:
                         if not pywikibot.config.solve_captcha:
                             raise CaptchaError('captcha encountered while '
                                                'config.solve_captcha is False')
-                        captcha = result['edit']['captcha']
+
                         req['captchaid'] = captcha['id']
 
                         if captcha['type'] in ['math', 'simple']:
@@ -2139,39 +2212,36 @@ class APISite(
                             continue
 
                         if 'url' in captcha:
-                            import webbrowser
-                            webbrowser.open('{}://{}{}'
-                                            .format(self.protocol(),
-                                                    self.hostname(),
-                                                    captcha['url']))
+                            webbrowser.open(
+                                f'{self.protocol()}://{self.hostname()}'
+                                f"{captcha['url']}"
+                            )
                             req['captchaword'] = pywikibot.input(
                                 'Please view CAPTCHA in your browser, '
-                                'then type answer here:')
+                                'then type answer here:'
+                            )
                             continue
 
                         pywikibot.error(f'editpage: unknown CAPTCHA response '
                                         f'{captcha}, page not saved')
                         break
 
-                    if 'spamblacklist' in result['edit']:
+                    if 'spamblacklist' in response['edit']:
                         raise SpamblacklistError(
-                            page, result['edit']['spamblacklist']) from None
-
-                    if 'code' in result['edit'] and 'info' in result['edit']:
-                        pywikibot.error(
-                            'editpage: {}\n{}, '
-                            .format(result['edit']['code'],
-                                    result['edit']['info']))
+                            page, response['edit']['spamblacklist']) from None
+                    code = response['edit'].get('code')
+                    info = response['edit'].get('info')
+                    if code is not None and info is not None:
+                        pywikibot.error(f'editpage: {code}\n{info}')
                         break
 
                     pywikibot.error(
-                        f'editpage: unknown failure reason {result}')
+                        f'editpage: unknown failure reason {response}')
                     break
 
-                pywikibot.error(
-                    "editpage: Unknown result code '{}' received; "
-                    'page not saved'.format(result['edit']['result']))
-                pywikibot.log(str(result))
+                pywikibot.error(f'editpage: Unknown result code {result!r}'
+                                ' received; page not saved')
+                pywikibot.log(str(response))
                 break
 
         finally:
@@ -2514,7 +2584,7 @@ class APISite(
 
         Requires appropriate privileges.
 
-        .. seealso: :api:`Delete`
+        .. seealso:: :api:`Delete`
 
         Page to be deleted can be given either as Page object or as pageid.
         To delete a specific version of an image the oldimage identifier
@@ -2707,9 +2777,10 @@ class APISite(
         """(Un)protect a wiki page. Requires *protect* right.
 
         .. seealso::
-           - :api:`Protect`
+           - :meth:`page.BasePage.protect`
            - :meth:`protection_types`
            - :meth:`protection_levels`
+           - :api:`Protect`
 
         :param protections: A dict mapping type of protection to
             protection level of that type. Refer :meth:`protection_types`
@@ -2728,11 +2799,15 @@ class APISite(
         protections_list = [ptype + '=' + level
                             for ptype, level in protections.items()
                             if level is not None]
-        parameters = merge_unique_dicts(kwargs, action='protect', title=page,
-                                        token=token,
-                                        protections=protections_list,
-                                        reason=reason,
-                                        expiry=expiry)
+        parameters = merge_unique_dicts(
+            kwargs,
+            action='protect',
+            title=page,
+            token=token,
+            protections=protections_list,
+            reason=reason,
+            expiry=expiry or None,  # pass None instead of empty str
+        )
 
         req = self.simple_request(**parameters)
         try:

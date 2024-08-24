@@ -28,7 +28,7 @@ all of them, but be careful if you do.
 
 You may disable cosmetic changes by adding the all unwanted languages to
 the `dictionary cosmetic_changes_disable` in your user config file
-(`user_config.py`). It should contain a tuple of languages for each site
+(`user-config.py`). It should contain a tuple of languages for each site
 where you wish to disable cosmetic changes. You may use it with
 `cosmetic_changes_mylang_only` is False, but you can also disable your
 own language. This also overrides the settings in the dictionary
@@ -51,7 +51,7 @@ or by adding a list to the given one::
                                      'your_script_name_2']
 """
 #
-# (C) Pywikibot team, 2006-2023
+# (C) Pywikibot team, 2006-2024
 #
 # Distributed under the terms of the MIT license.
 #
@@ -64,7 +64,7 @@ from typing import Any
 from urllib.parse import urlparse, urlunparse
 
 import pywikibot
-from pywikibot import exceptions, textlib
+from pywikibot import exceptions, i18n, textlib
 from pywikibot.backports import Callable, Match, Pattern
 from pywikibot.site import Namespace
 from pywikibot.textlib import (
@@ -173,6 +173,20 @@ deprecatedTemplates = {
     }
 }
 
+main_sortkey = {
+    '_default': ' ',
+    'ar': '*',
+}
+"""Sort key to specify the main article within a category.
+
+The sort key must be one of ``' '``, ``'!'``, ``'*'``, ``'#'`` and is
+used like a pipe link but sorts the page in front of the alphabetical
+order. This dict is used in
+:meth:`CosmeticChangesToolkit.standardizePageFooter`.
+
+.. versionadded:: 9.3
+"""
+
 
 class CANCEL(IntEnum):
 
@@ -248,7 +262,7 @@ class CosmeticChangesToolkit:
         self.namespace = page.namespace()
 
         self.show_diff = show_diff
-        self.template = (self.namespace == Namespace.TEMPLATE)
+        self.template = self.namespace == Namespace.TEMPLATE
         self.talkpage = self.namespace >= 0 and self.namespace % 2 == 1
         self.ignore = ignore
 
@@ -309,10 +323,10 @@ class CosmeticChangesToolkit:
                 pywikibot.error(e)
                 return False
             raise
-        else:
-            if self.show_diff:
-                pywikibot.showDiff(text, new_text)
-            return new_text
+
+        if self.show_diff:
+            pywikibot.showDiff(text, new_text)
+        return new_text
 
     def fixSelfInterwiki(self, text: str) -> str:
         """
@@ -327,22 +341,27 @@ class CosmeticChangesToolkit:
         return text
 
     def standardizePageFooter(self, text: str) -> str:
-        """
-        Standardize page footer.
+        """Standardize page footer.
 
-        Makes sure that interwiki links and categories are put
-        into the correct position and into the right order. This
-        combines the old instances of standardizeInterwiki
-        and standardizeCategories.
+        Makes sure that interwiki links and categories are put into the
+        correct position and into the right order.
 
-        The page footer consists of the following parts
-        in that sequence:
+        The page footer consists of the following parts in that sequence:
+
         1. categories
         2. additional information depending on the local site policy
         3. interwiki
-        """
-        assert self.title is not None
 
+        .. versionchanged:: 9.3
+           uses :attr:`main_sortkey` to determine the sort key for the
+           main article within a category. If the main article has a
+           sort key already, it will not be changed any longer.
+
+        :param text: text to be modified
+        :return: the modified *text*
+        :raises ValueError: wrong value of sortkey in
+            :attr:`main_sortkey` for the given site
+        """
         categories = []
         interwiki_links = {}
 
@@ -373,11 +392,21 @@ class CosmeticChangesToolkit:
             # TODO: Sort categories in alphabetic order, e.g. using
             # categories.sort()? (T100265)
             # TODO: Get main categories from Wikidata?
-            main = pywikibot.Category(self.site, 'Category:' + self.title,
-                                      sort_key=' ')
+            main = pywikibot.Category(self.site, 'Category:' + self.title)
             if main in categories:
-                categories.pop(categories.index(main))
+                main = categories.pop(categories.index(main))
+                if main.sortKey:
+                    sortkey = main.sortKey
+                else:
+                    sortkey = i18n.translate(self.site, main_sortkey,
+                                             fallback=['_default'])
+                    if sortkey not in [' ', '*', '!', '#']:
+                        raise ValueError(
+                            f'sort key for {self.site} is {sortkey} but must'
+                            "be one of ' ', '*', '!', '#'")
+                main = pywikibot.Category(main, sort_key=sortkey)
                 categories.insert(0, main)
+
             text = textlib.replaceCategoryLinks(text, categories,
                                                 site=self.site)
 
@@ -901,10 +930,7 @@ class CosmeticChangesToolkit:
             for template in deprecatedTemplates[
                     self.site.family.name][self.site.code]:
                 old, new = template
-                if new is None:
-                    new = ''
-                else:
-                    new = '{{%s}}' % new
+                new = '{{%s}}' % new if new else ''
 
                 text = textlib.replaceExcept(
                     text,

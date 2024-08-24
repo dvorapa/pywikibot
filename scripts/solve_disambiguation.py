@@ -75,7 +75,7 @@ To complete a move of a page, one can use:
 
 """
 #
-# (C) Pywikibot team, 2003-2023
+# (C) Pywikibot team, 2003-2024
 #
 # Distributed under the terms of the MIT license.
 #
@@ -107,7 +107,8 @@ from pywikibot.exceptions import (
     NoPageError,
     PageSaveRelatedError,
 )
-from pywikibot.tools import first_lower, first_upper, issue_deprecation_warning
+from pywikibot.site import Namespace
+from pywikibot.tools import first_lower, first_upper
 from pywikibot.tools.formatter import SequenceOutputter
 
 
@@ -412,7 +413,7 @@ class ReferringPageGeneratorWithIgnore:
         self.minimum = minimum
         self.main_only = main_only
 
-    def __iter__(self) -> Generator[pywikibot.Page, None, None]:
+    def __iter__(self) -> Generator[pywikibot.Page]:
         """Yield pages."""
         # TODO: start yielding before all referring pages have been found
         refs = list(self.page.getReferences(with_template_inclusion=False,
@@ -610,7 +611,7 @@ class DisambiguationRobot(SingleSiteBot):
     }
 
     # refer -help message for complete options documentation
-    disambig_options = {
+    available_options = {
         'always': None,  # always perform the same action
         'pos': [],  # add possibilities as alternative disambig
         'just': True,  # just and only use the possibilities given with command
@@ -621,82 +622,12 @@ class DisambiguationRobot(SingleSiteBot):
         'min': 0,  # minimum number of pages on a disambig
     }
 
-    # needed for argument cleanup
-    available_options = disambig_options
-
     def __init__(self, *args, **kwargs) -> None:
         """Initializer."""
-        self._clean_args(args, kwargs)
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         self.ignores = set()
         self.summary = None
         self.dn_template_str = i18n.translate(self.site, dn_template)
-
-    def _clean_args(self, args, kwargs) -> None:
-        """Cleanup positional and keyword arguments.
-
-        Replace positional arguments with keyword arguments.
-        Replace old keywords with new keywords which are given by
-        argument handling.
-
-        This also fixes arguments which aren't currently used by
-        BaseDisambigBot abstract class but was introduced for the old
-        DisambiguationRobot to prevent multiple deprecation warnings.
-        """
-        # New keys of positional arguments
-        keys = ('always', 'pos', 'just', 'dnskip', 'generator', 'primary',
-                'main', 'first', 'min')
-
-        # Keys mapping from old argument name to new keywords.
-        # The ordering of dics is not safe for Python < 3.7. Therefore
-        # we need a dict in addition to key above.
-        keymap = {
-            'alternatives': 'pos',
-            'getAlternatives': 'just',
-            'dnSkip': 'dnskip',
-            'main_only': 'main',
-            'first_only': 'first',
-            'minimum': 'min',
-        }
-
-        # Replace positional arguments with keyword arguments
-        for i, arg in enumerate(args):
-            key = keys[i]
-            issue_deprecation_warning(
-                f'Positional argument {i + 1} ({arg})',
-                f'keyword argument "{key}={arg}"',
-                since='6.0.0')
-            if key in kwargs:
-                pywikibot.warning('{!r} is given as keyword argument {!r} '
-                                  'already; ignoring {!r}'
-                                  .format(key, arg, kwargs[key]))
-            else:
-                kwargs[key] = arg
-
-        # replace old keywords to new
-        for key in list(kwargs):
-            if key in keymap:
-                newkey = keymap[key]
-                issue_deprecation_warning(
-                    f'{key!r} argument of {self.__class__.__name__}',
-                    repr(newkey), since='6.0.0')
-                kwargs[newkey] = kwargs.pop(key)
-
-        # Expand available_options
-        # Currently scripts may have its own options set
-        added_keys = []
-        for key in keys:
-            if key != 'generator' and key not in self.available_options:
-                added_keys.append(key)
-                self.available_options[key] = self.disambig_options[key]
-        if added_keys:
-            pywikibot.warning("""\
-The following keys were added to available_options:
-{options}.
-Either add them to available_options setting of {classname}
-bot class or use available_options.update() to use default settings from
-DisambiguationRobot""".format(options=added_keys,
-                              classname=self.__class__.__name__))
 
     def checkContents(self, text: str) -> str | None:  # noqa: N802
         """
@@ -742,14 +673,14 @@ DisambiguationRobot""".format(options=added_keys,
         # group linktrail is the link trail, that's letters after ]] which
         # are part of the word.
         # note: the definition of 'letter' varies from language to language.
-        self.linkR = re.compile(r"""
+        self.linkR = re.compile(rf"""
             \[\[  (?P<title>     [^\[\]\|#]*)
                   (?P<section> \#[^\]\|]*)?
                (\|(?P<label>     [^\]]*))?  \]\]
-            (?P<linktrail>{})""".format(linktrail), flags=re.X)
+            (?P<linktrail>{linktrail})""", flags=re.X)
 
     @staticmethod
-    def firstlinks(page) -> Generator[str, None, None]:
+    def firstlinks(page) -> Generator[str]:
         """Return a list of first links of every line beginning with `*`.
 
         When a disambpage is full of unnecessary links, this may be useful
@@ -828,13 +759,13 @@ DisambiguationRobot""".format(options=added_keys,
         try:
             text = ref_page.get()
         except IsRedirectPageError:
-            pywikibot.info('{} is a redirect to {}'
-                           .format(ref_page.title(), disamb_page.title()))
+            pywikibot.info(
+                f'{ref_page.title()} is a redirect to {disamb_page.title()}')
             if disamb_page.isRedirectPage():
                 target = self.opt.pos[0]
                 if pywikibot.input_yn(
-                    'Do you want to make redirect {} point to {}?'
-                    .format(ref_page.title(), target),
+                    f'Do you want to make redirect {ref_page.title()} point '
+                    f'to {target}?',
                         default=False, automatic_quit=False):
                     redir_text = f'#{self.site.redirect()} [[{target}]]'
                     try:
@@ -865,9 +796,8 @@ DisambiguationRobot""".format(options=added_keys,
         else:
             ignore_reason = self.checkContents(text)
             if ignore_reason:
-                pywikibot.info(
-                    '\n\nSkipping {} because it contains {}.\n\n'
-                    .format(ref_page.title(), ignore_reason))
+                pywikibot.info(f'\n\nSkipping {ref_page.title()} because it '
+                               f'contains {ignore_reason}.\n\n')
             else:
                 include = True
 
@@ -997,10 +927,7 @@ DisambiguationRobot""".format(options=added_keys,
                     # or like this: [[page_title]]trailing_chars
                     link_text = page_title
 
-                if m['section'] is None:
-                    section = ''
-                else:
-                    section = m['section']
+                section = m['section'] or ''
 
                 trailing_chars = m['linktrail']
                 if trailing_chars:
@@ -1068,9 +995,8 @@ DisambiguationRobot""".format(options=added_keys,
                         '', link_text[len(new_page_title):]) == '')
                     and (not section)
                 ):
-                    newlink = '[[{}]]{}'.format(
-                        link_text[:len(new_page_title)],
-                        link_text[len(new_page_title):])
+                    newlink = (f'[[{link_text[:len(new_page_title)]}]]'
+                               f'{link_text[len(new_page_title):]}')
                 else:
                     newlink = f'[[{new_page_title}{section}|{link_text}]]'
                 text = text[:m.start()] + newlink + text[m.end():]
@@ -1107,7 +1033,8 @@ DisambiguationRobot""".format(options=added_keys,
             if primary:
                 primary_page = pywikibot.Page(page.site,
                                               'Template:' + primary)
-            if primary and primary_page in page.templates():
+            if primary and primary_page in page.itertemplates(
+                    namespaces=Namespace.TEMPLATE):
                 baseTerm = page.title()
                 for template, params in page.templatesWithParams():
                     if params and template == primary_page:
@@ -1165,7 +1092,7 @@ or press enter to quit:""")
                     except NoPageError:
                         pywikibot.info(
                             'Page does not exist; using first '
-                            'link in page {}.'.format(page.title()))
+                            f'link in page {page.title()}.')
                         links = page.linkedPages()[:1]
                         links = [correctcap(link, page.get())
                                  for link in links]
@@ -1328,9 +1255,9 @@ def main(*args: str) -> None:
             else:
                 page = pywikibot.Page(pywikibot.Link(value, site))
                 if page.exists() or pywikibot.input_yn(
-                    'Possibility {} does not actually exist. Use it anyway?'
-                    .format(page.title()), default=False,
-                        automatic_quit=False):
+                    f'Possibility {page.title()} does not actually exist.'
+                    ' Use it anyway?',
+                        default=False, automatic_quit=False):
                     alternatives.append(page.title())
         elif arg == '-just':
             options['just'] = False
@@ -1351,10 +1278,6 @@ def main(*args: str) -> None:
             generator_factory.handle_arg(argument)
 
     generator = generator_factory.getCombinedGenerator(generator)
-    if not generator:
-        pywikibot.bot.suggest_help(missing_generator=True)
-        return
-
     bot = DisambiguationRobot(generator=generator, pos=alternatives, **options)
     bot.run()
 

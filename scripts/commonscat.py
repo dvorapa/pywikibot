@@ -38,7 +38,7 @@ For example to go through all categories:
 # *Found one template. Add this template
 # *Found more templates. Ask the user <- still have to implement this
 #
-# (C) Pywikibot team, 2008-2023
+# (C) Pywikibot team, 2008-2024
 #
 # Distributed under the terms of the MIT license.
 #
@@ -50,6 +50,7 @@ import pywikibot
 from pywikibot import i18n, pagegenerators
 from pywikibot.bot import ConfigParserBot, ExistingPageBot
 from pywikibot.exceptions import InvalidTitleError
+from pywikibot.site import Namespace
 from pywikibot.textlib import add_text
 
 
@@ -249,8 +250,8 @@ class CommonscatBot(ConfigParserBot, ExistingPageBot):
         """Skip category redirects."""
         if page.isCategoryRedirect():
             pywikibot.warning(
-                'Page {page} on {page.site} is a category redirect. '
-                'Skipping.'.format(page=page))
+                f'Page {page} on {page.site} is a category redirect. '
+                'Skipping.')
             return True
         return super().skip_page(page)
 
@@ -264,8 +265,9 @@ class CommonscatBot(ConfigParserBot, ExistingPageBot):
 
         for template in templates_to_ignore:
             if not isinstance(template, tuple):
-                for pageTemplate in page.templates():
-                    if pageTemplate.title(with_ns=False) == template:
+                for page_template in page.itertemplates(
+                        namespaces=Namespace.TEMPLATE):
+                    if page_template.title(with_ns=False) == template:
                         return True
             else:
                 for inPageTemplate, params in page.templatesWithParams():
@@ -299,8 +301,8 @@ class CommonscatBot(ConfigParserBot, ExistingPageBot):
 
             if currentCommonscatTarget == checkedCommonscatTarget:
                 # The current commonscat link is good
-                pywikibot.info('Commonscat link at {} to Category:{} is ok'
-                               .format(page.title(), currentCommonscatTarget))
+                pywikibot.info(f'Commonscat link at {page.title()} to '
+                               f'Category:{currentCommonscatTarget} is ok')
                 return
 
             if checkedCommonscatTarget:
@@ -401,10 +403,9 @@ class CommonscatBot(ConfigParserBot, ExistingPageBot):
 
             checkedCommonscat = self.checkCommonscatLink(commonscatLink[1])
             if checkedCommonscat:
-                pywikibot.info(
-                    'Found link for {} at [[{}:{}]] to {}.'
-                    .format(page.title(), ipage.site.code, ipage.title(),
-                            checkedCommonscat))
+                pywikibot.info(f'Found link for {page.title()} at '
+                               f'[[{ipage.site.code}:{ipage.title()}]] to '
+                               f'{checkedCommonscat}.')
                 return checkedCommonscat
         return ''
 
@@ -494,9 +495,9 @@ class CommonscatBot(ConfigParserBot, ExistingPageBot):
 
                 if not m:
                     pywikibot.info(
-                        "getCommonscat: {} deleted by {}. Couldn't find "
-                        'move target in "{}"'
-                        .format(commonsPage, loguser, logcomment))
+                        f'getCommonscat: {commonsPage} deleted by {loguser}. '
+                        f'Couldn\'t find move target in "{logcomment}"'
+                    )
                     break
 
                 if m['newcat1']:
@@ -512,7 +513,7 @@ class CommonscatBot(ConfigParserBot, ExistingPageBot):
                 commonsPage.getRedirectTarget().title(with_ns=False))
 
         if (pywikibot.Page(commonsPage.site, 'Template:Category redirect')
-                in commonsPage.templates()):
+                in commonsPage.itertemplates(namespaces=Namespace.TEMPLATE)):
             pywikibot.log(
                 'getCommonscat: The category is a category redirect')
             for template, param in commonsPage.templatesWithParams():

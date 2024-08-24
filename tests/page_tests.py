@@ -17,11 +17,13 @@ import pywikibot
 import pywikibot.page
 from pywikibot import config
 from pywikibot.exceptions import (
+    APIError,
     Error,
     InvalidTitleError,
     IsNotRedirectPageError,
     IsRedirectPageError,
     NoPageError,
+    SectionError,
     TimeoutError,
     UnknownExtensionError,
 )
@@ -189,9 +191,8 @@ class TestPageObjectEnglish(TestCase):
         family_name = (site.family.name + ':'
                        if pywikibot.config.family != site.family.name
                        else '')
-        self.assertEqual(str(mainpage), '[[{}{}:{}]]'
-                                        .format(family_name, site.code,
-                                                mainpage.title()))
+        self.assertEqual(str(mainpage),
+                         f'[[{family_name}{site.code}:{mainpage.title()}]]')
         self.assertLess(mainpage, maintalk)
 
     def testHelpTitle(self):
@@ -271,7 +272,7 @@ class TestPageObjectEnglish(TestCase):
             'File:Example #3.jpg',  # file extension in section
         ):
             with self.subTest(title=title), \
-                 self.assertRaises(ValueError):
+                    self.assertRaises(ValueError):
                 pywikibot.FilePage(site, title)
 
     def testImageAndDataRepository(self):
@@ -465,15 +466,20 @@ class TestPageObject(DefaultSiteTestCase):
         # we only check that the returned objects are of correct type.
         self.assertIsInstance(mainpage.get(), str)
         self.assertIsInstance(mainpage.latest_revision_id, int)
-        self.assertIsInstance(mainpage.userName(), str)
-        self.assertIsInstance(mainpage.isIpEdit(), bool)
+
+        with suppress_warnings(
+            r'pywikibot\.page\._basepage.BasePage\.\w+ is deprecated since '
+            r'release [89]\.[03]\.0; use latest_revision\..+ instead\.',
+                FutureWarning):
+            self.assertIsInstance(mainpage.userName(), str)
+            self.assertIsInstance(mainpage.isIpEdit(), bool)
+            self.assertIsInstance(mainpage.editTime(), pywikibot.Timestamp)
+
         self.assertIsInstance(mainpage.exists(), bool)
         self.assertIsInstance(mainpage.isRedirectPage(), bool)
         self.assertIsInstance(mainpage.isDisambig(), bool)
         self.assertIsInstance(mainpage.has_permission(), bool)
         self.assertIsInstance(mainpage.botMayEdit(), bool)
-        self.assertIsInstance(mainpage.latest_revision.timestamp,
-                              pywikibot.Timestamp)
         self.assertIsInstance(mainpage.permalink(), str)
 
     def test_talk_page(self):
@@ -701,9 +707,8 @@ class TestPageBotMayEdit(TestCase):
         self.page = pywikibot.Page(self.site,
                                    'not_existent_page_for_pywikibot_tests')
         if self.page.exists():
-            self.skipTest(
-                'Page {} exists! Change page name in tests/page_tests.py'
-                .format(self.page.title()))
+            self.skipTest(f'Page {self.page.title()} exists! Change page name'
+                          ' in tests/page_tests.py')
 
     def tearDown(self):
         """Cleanup cache."""
@@ -974,6 +979,7 @@ class TestPageRedirects(TestCase):
 
     def testPageGet(self):
         """Test ``Page.get()`` on different types of pages."""
+        fail_msg = '{page!r}.get() raised {error!r} unexpectedly!'
         site = self.get_site('en')
         p1 = pywikibot.Page(site, 'User:Legoktm/R2')
         p2 = pywikibot.Page(site, 'User:Legoktm/R1')
@@ -983,11 +989,29 @@ class TestPageRedirects(TestCase):
                 'testing suite.')
         self.assertEqual(p1.get(), text)
         with self.assertRaisesRegex(IsRedirectPageError,
-                                    r'{} is a redirect page\.'
-                                    .format(re.escape(str(p2)))):
+                                    rf'{re.escape(str(p2))} is a redirect '
+                                    rf'page\.'):
             p2.get()
+
+        try:
+            p2.get(get_redirect=True)
+        except (IsRedirectPageError, NoPageError, SectionError) as e:
+            self.fail(fail_msg.format(page=p2, error=e))
+
         with self.assertRaisesRegex(NoPageError, NO_PAGE_RE):
             p3.get()
+
+        page = pywikibot.Page(site, 'User:Legoktm/R2#Section')
+        with self.assertRaisesRegex(SectionError,
+                                    "'Section' is not a valid section"):
+            page.get()
+
+        site = pywikibot.Site('mediawiki')
+        page = pywikibot.Page(site, 'Manual:Pywikibot/2.0 #See_also')
+        try:
+            page.get()
+        except (IsRedirectPageError, NoPageError, SectionError) as e:
+            self.fail(fail_msg.format(page=page, error=e))
 
     def test_set_redirect_target(self):
         """Test set_redirect_target method."""
@@ -999,8 +1023,8 @@ class TestPageRedirects(TestCase):
 
         text = p2.get(get_redirect=True)
         with self.assertRaisesRegex(IsNotRedirectPageError,
-                                    r'{} is not a redirect page\.'
-                                    .format(re.escape(str(p1)))):
+                                    rf'{re.escape(str(p1))} is not a redirect '
+                                    rf'page\.'):
             p1.set_redirect_target(p2)
         with self.assertRaisesRegex(NoPageError, NO_PAGE_RE):
             p3.set_redirect_target(p2)
@@ -1044,7 +1068,6 @@ class TestPageDelete(TestCase):
 
     family = 'wikipedia'
     code = 'test'
-
     write = True
     rights = 'delete'
 
@@ -1054,11 +1077,11 @@ class TestPageDelete(TestCase):
         p = pywikibot.Page(site, 'User:Unicodesnowman/DeleteTest')
         # Ensure the page exists
         p.text = 'pywikibot unit test page'
-        p.save('Pywikibot unit test', botflag=True)
+        p.save('Pywikibot unit test', bot=True)
 
         # Test deletion
         res = p.delete(reason='Pywikibot unit test', prompt=False, mark=False)
-        self.assertEqual(p._pageid, 0)
+        self.assertEqual(p.pageid, 0)
         self.assertEqual(res, 1)
         with self.assertRaisesRegex(NoPageError, NO_PAGE_RE):
             p.get(force=True)
@@ -1119,8 +1142,8 @@ class TestPageProtect(TestCase):
         p1.protect(protections={'edit': 'sysop', 'move': 'autoconfirmed'},
                    reason='Pywikibot unit test')
         self.assertEqual(p1.protection(),
-                         {'edit': ('sysop', 'infinity'),
-                          'move': ('autoconfirmed', 'infinity')})
+                         {'edit': ('sysop', 'infinite'),
+                          'move': ('autoconfirmed', 'infinite')})
 
         p1.protect(protections={'edit': '', 'move': ''},
                    reason='Pywikibot unit test')
@@ -1134,8 +1157,8 @@ class TestPageProtect(TestCase):
         p1.protect(protections={'edit': 'sysop', 'move': 'autoconfirmed'},
                    reason='Pywikibot unit test')
         self.assertEqual(p1.protection(),
-                         {'edit': ('sysop', 'infinity'),
-                          'move': ('autoconfirmed', 'infinity')})
+                         {'edit': ('sysop', 'infinite'),
+                          'move': ('autoconfirmed', 'infinite')})
 
         p1.protect(reason='Pywikibot unit test')
         self.assertEqual(p1.protection(), {})
@@ -1148,8 +1171,8 @@ class TestPageProtect(TestCase):
         p1.protect(protections={'edit': 'sysop', 'move': 'autoconfirmed'},
                    reason='Pywikibot unit test')
         self.assertEqual(p1.protection(),
-                         {'edit': ('sysop', 'infinity'),
-                          'move': ('autoconfirmed', 'infinity')})
+                         {'edit': ('sysop', 'infinite'),
+                          'move': ('autoconfirmed', 'infinite')})
         # workaround
         p1 = pywikibot.Page(site, 'User:Unicodesnowman/ProtectTest')
         p1.protect(protections={'edit': '', 'move': ''},
@@ -1251,12 +1274,16 @@ class TestShortLink(TestCase):
 
         site = self.get_site()
         p1 = pywikibot.Page(site, 'User:Framawiki/pwb_tests/shortlink')
-        with self.subTest(parameters='defaulted'):
+
+        with self.subTest(parameters='defaulted'), \
+             skipping(APIError, code='urlshortener-ratelimit'):
             self.assertEqual(p1.create_short_link(), 'https://w.wiki/3Cy')
-        with self.subTest(with_protocol=True):
+        with self.subTest(with_protocol=True), \
+             skipping(APIError, code='urlshortener-ratelimit'):
             self.assertEqual(p1.create_short_link(with_protocol=True),
                              'https://w.wiki/3Cy')
-        with self.subTest(permalink=True):
+        with self.subTest(permalink=True), \
+             skipping(APIError, code='urlshortener-ratelimit'):
             self.assertEqual(p1.create_short_link(permalink=True,
                                                   with_protocol=False),
                              'w.wiki/3Cz')

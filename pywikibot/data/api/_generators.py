@@ -19,8 +19,13 @@ from warnings import warn
 
 import pywikibot
 from pywikibot import config
-from pywikibot.backports import Callable
-from pywikibot.exceptions import Error, InvalidTitleError, UnsupportedPageError
+from pywikibot.backports import Callable, Iterable
+from pywikibot.exceptions import (
+    Error,
+    InvalidTitleError,
+    UnknownSiteError,
+    UnsupportedPageError,
+)
 from pywikibot.site import Namespace
 from pywikibot.tools import deprecated
 from pywikibot.tools.collections import GeneratorWrapper
@@ -936,10 +941,20 @@ def _update_categories(page, categories):
 
 
 def _update_langlinks(page, langlinks) -> None:
-    """Update page langlinks."""
-    links = {pywikibot.Link.langlinkUnsafe(link['lang'], link['*'],
-                                           source=page.site)
-             for link in langlinks}
+    """Update page langlinks.
+
+    .. versionadded:: 9.3
+       only add a language link if it is found in the family file.
+
+    :meta public:
+    """
+    links = set()
+    for langlink in langlinks:
+        with suppress(UnknownSiteError):
+            link = pywikibot.Link.langlinkUnsafe(langlink['lang'],
+                                                 langlink['*'],
+                                                 source=page.site)
+            links.add(link)
 
     if hasattr(page, '_langlinks'):
         page._langlinks |= links
@@ -963,25 +978,42 @@ def _update_coordinates(page, coordinates) -> None:
     page._coords = coords
 
 
-def update_page(page, pagedict: dict, props=None):
-    """Update attributes of Page object page, based on query data in pagedict.
+def update_page(page: pywikibot.Page,
+                pagedict: dict[str, Any],
+                props: Iterable[str] | None = None) -> None:
+    """
+    Update attributes of Page object *page*, based on query data in *pagedict*.
 
     :param page: object to be updated
-    :type page: pywikibot.page.Page
-    :param pagedict: the contents of a "page" element of a query response
-    :param props: the property names which resulted in pagedict. If a missing
-        value in pagedict can indicate both 'false' and 'not present' the
-        property which would make the value present must be in the props
-        parameter.
-    :type props: iterable of string
-    :raises pywikibot.exceptions.InvalidTitleError: Page title is invalid
-    :raises pywikibot.exceptions.UnsupportedPageError: Page with namespace < 0
-        is not supported yet
+    :param pagedict: the contents of a *page* element of a query
+        response
+    :param props: the property names which resulted in *pagedict*. If a
+        missing value in *pagedict* can indicate both 'false' and
+        'not present' the property which would make the value present
+        must be in the *props* parameter.
+    :raises InvalidTitleError: Page title is invalid
+    :raises UnsupportedPageError: Page with namespace < 0 is not
+        supported yet
     """
     _update_pageid(page, pagedict)
     _update_contentmodel(page, pagedict)
 
     props = props or []
+
+    # test for pagedict content only and call updater function
+    for element in ('coordinates', 'revisions'):
+        if element in pagedict:
+            updater = globals()['_update_' + element]
+            updater(page, pagedict[element])
+
+    # test for pagedict and props contents, call updater or set attribute
+    for element in ('categories', 'langlinks', 'templates'):
+        if element in pagedict:
+            updater = globals()['_update_' + element]
+            updater(page, pagedict[element])
+        elif element in props:
+            setattr(page, '_' + element, set())
+
     if 'info' in props:
         page._isredir = 'redirect' in pagedict
 
@@ -990,9 +1022,6 @@ def update_page(page, pagedict: dict, props=None):
 
     if 'protection' in pagedict:
         _update_protection(page, pagedict)
-
-    if 'revisions' in pagedict:
-        _update_revisions(page, pagedict['revisions'])
 
     if 'lastrevid' in pagedict:
         page.latest_revision_id = pagedict['lastrevid']
@@ -1005,24 +1034,6 @@ def update_page(page, pagedict: dict, props=None):
 
     if 'categoryinfo' in pagedict:
         page._catinfo = pagedict['categoryinfo']
-
-    if 'templates' in pagedict:
-        _update_templates(page, pagedict['templates'])
-    elif 'templates' in props:
-        page._templates = set()
-
-    if 'categories' in pagedict:
-        _update_categories(page, pagedict['categories'])
-    elif 'categories' in props:
-        page._categories = set()
-
-    if 'langlinks' in pagedict:
-        _update_langlinks(page, pagedict['langlinks'])
-    elif 'langlinks' in props:
-        page._langlinks = set()
-
-    if 'coordinates' in pagedict:
-        _update_coordinates(page, pagedict['coordinates'])
 
     if 'pageimage' in pagedict:
         page._pageimage = pywikibot.FilePage(page.site, pagedict['pageimage'])

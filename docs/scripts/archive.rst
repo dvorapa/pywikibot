@@ -119,7 +119,7 @@ imagecopy\_self script
 **Script to copy self published files from English Wikipedia to Commons**
 
 This bot is based on imagecopy.py and intended to be used to empty out
-https://en.wikipedia.org/wiki/Category:Self-published_work
+:wiki:`Category:Self-published_work`
 
 This bot uses a graphical interface and may not work from commandline
 only environment.
@@ -254,12 +254,6 @@ table2wiki script
 **Nifty script to convert HTML-tables to MediaWiki's own syntax**
 
 
-unlink script
-=============
-
-**This bot unlinks a page on every page that links to it**
-
-
 wikisourcetext script
 =====================
 
@@ -274,4 +268,3 @@ As alternative, if '-ocr' option is selected,
 OCR tool will be used to get text.
 In this case, also already existing pages with quality value 'Not Proofread'
 can be treated. '-force' will override existing page in this case.
-
