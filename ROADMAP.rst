@@ -1,7 +1,7 @@
 Current Release Changes
 =======================
 
-* (no changes yet)
+* *no changes yet*
 
 Current Deprecations
 ====================
