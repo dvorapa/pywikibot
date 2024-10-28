@@ -56,7 +56,6 @@ needs_sphinx = '8.1.1'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'notfound.extension',
     'sphinx_copybutton',
     'sphinx_tabs.tabs',
     'sphinx.ext.autodoc',
@@ -565,7 +564,7 @@ def pywikibot_script_docstring_fixups(app, what, name, obj, options, lines):
             if match:
                 opt, sp, desc = match.groups()
                 desc = re.sub(r'\[(float|int|str)\]', r'*(\1)*', desc)
-                if ':' in opt or ' ' in opt:
+                if ':' in opt or ' ' in opt and ', ' not in opt:
                     length = len(opt + sp)
                     lines[index] = f':kbd:`{opt}`'
                 else:
