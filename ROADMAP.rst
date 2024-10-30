@@ -1,11 +1,14 @@
 Current Release Changes
 =======================
 
-* No longer raise :exc:`exceptions.UnsupportedPageError` within :meth:`data.api.PageGenerator.result` (:phab:`T377651`)
+* (no changes yet)
+
 
 Current Deprecations
 ====================
 
+* 9.5.0: :meth:`DataSite.getPropertyType()<pywikibot.site._datasite.DataSite.getPropertyType>` will be removed
+  in favour of :meth:`DataSite.get_property_type()<pywikibot.site._datasite.DataSite.get_property_type>`
 * 9.4.0: :mod:`flow` support is deprecated and will be removed (:phab:`T371180`)
 * 9.3.0: :meth:`page.BasePage.userName` and :meth:`page.BasePage.isIpEdit` are deprecated in favour of
   ``user`` or ``anon`` attributes of :attr:`page.BasePage.latest_revision` property
