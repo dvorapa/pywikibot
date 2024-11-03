@@ -95,9 +95,9 @@ class DataSite(APISite):
         if entity_type in self._entity_namespaces:
             return self._entity_namespaces[entity_type]
         raise EntityTypeUnknownError(
-            '{!r} does not support entity type "{}" '
-            "or it doesn't have its own namespace"
-            .format(self, entity_type))
+            f'{self!r} does not support entity type "{entity_type}" '
+            " or it doesn't have its own namespace"
+        )
 
     @property
     def item_namespace(self):
@@ -221,15 +221,14 @@ class DataSite(APISite):
                     ident = p._defined_by()
                     for key in ident:
                         req[key].append(ident[key])
+                elif (p.site == self
+                      and p.namespace() in self._entity_namespaces.values()):
+                    req['ids'].append(p.title(with_ns=False))
                 else:
-                    if p.site == self and p.namespace() in (
-                            self._entity_namespaces.values()):
-                        req['ids'].append(p.title(with_ns=False))
-                    else:
-                        assert p.site.has_data_repository, \
-                            'Site must have a data repository'
-                        req['sites'].append(p.site.dbName())
-                        req['titles'].append(p._link._text)
+                    assert p.site.has_data_repository, \
+                        'Site must have a data repository'
+                    req['sites'].append(p.site.dbName())
+                    req['titles'].append(p._link._text)
 
             req = self.simple_request(action='wbgetentities', **req)
             data = req.submit()
@@ -893,7 +892,7 @@ class DataSite(APISite):
             if 'value' not in result_hash:
                 # There should be an APIError occurred already
                 raise RuntimeError("Unexpected missing 'value' in query data:"
-                                   '\n{}'.format(result_hash))
+                                   f'\n{result_hash}')
             results.append(result_hash['value'])
         return results
 
@@ -1007,8 +1006,8 @@ class DataSite(APISite):
             if arg in ['summary', 'tags']:
                 params[arg] = kwargs[arg]
             else:
-                warn('Unknown parameter {} for action {}, ignored'
-                     .format(arg, action), UserWarning, 2)
+                warn(f'Unknown parameter {arg} for action {action}, ignored',
+                     UserWarning, 2)
 
         req = self.simple_request(**params)
         return req.submit()

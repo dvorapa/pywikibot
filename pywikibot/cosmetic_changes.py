@@ -318,8 +318,9 @@ class CosmeticChangesToolkit:
             new_text = self._change(text)
         except Exception as e:
             if self.ignore == CANCEL.PAGE:
-                pywikibot.warning('Skipped "{}", because an error occurred.'
-                                  .format(self.title))
+                pywikibot.warning(
+                    f'Skipped "{self.title}", because an error occurred.'
+                )
                 pywikibot.error(e)
                 return False
             raise
@@ -334,8 +335,9 @@ class CosmeticChangesToolkit:
         Remove their language code prefix.
         """
         if not self.talkpage and pywikibot.calledModuleName() != 'interwiki':
-            interwikiR = re.compile(r'\[\[(?: *:)? *{} *: *([^\[\]\n]*)\]\]'
-                                    .format(self.site.code))
+            interwikiR = re.compile(
+                rf'\[\[(?: *:)? *{self.site.code} *: *([^\[\]\n]*)\]\]'
+            )
             text = interwikiR.sub(r'[[\1]]', text)
         return text
 
@@ -527,7 +529,7 @@ class CosmeticChangesToolkit:
         exceptions = ['comment', 'nowiki', 'pre', 'syntaxhighlight']
         regex = re.compile(
             FILE_LINK_REGEX % '|'.join(self.site.namespaces[6]),
-            flags=re.X)
+            flags=re.VERBOSE)
         return textlib.replaceExcept(
             text, regex, replace_magicword, exceptions)
 
@@ -640,8 +642,8 @@ class CosmeticChangesToolkit:
             # instead of a pipelink
             elif (firstcase_label.startswith(firstcase_title)
                   and trailR.sub('', label[len(titleWithSection):]) == ''):
-                newLink = '[[{}]]{}'.format(label[:len(titleWithSection)],
-                                            label[len(titleWithSection):])
+                newLink = (f'[[{label[:len(titleWithSection)]}]]'
+                           f'{label[len(titleWithSection):]}')
 
             else:
                 # Try to capitalize the first letter of the title.
@@ -727,7 +729,7 @@ class CosmeticChangesToolkit:
         if self.site.code in skip_templates:
             for template in skip_templates[self.site.code]:
                 skip_regexes.append(
-                    re.compile(r'\{\{\s*%s\s*\}\}' % template, re.I))
+                    re.compile(r'\{\{\s*%s\s*\}\}' % template, re.IGNORECASE))
         # empty lists
         skip_regexes.append(re.compile(r'(?m)^[\*#] *$'))
 
@@ -987,9 +989,8 @@ class CosmeticChangesToolkit:
 
                 # Match first a non space in the title to prevent that multiple
                 # spaces at the end without title will be matched by it
-                title_regex = (r'(?P<link>[^{sep}]+?)'
-                               r'(\s+(?P<title>[^\s].*?))'
-                               .format(sep=separator))
+                title_regex = (rf'(?P<link>[^{separator}]+?)'
+                               r'(\s+(?P<title>[^\s].*?))')
                 url_regex = fr'\[\[?{url}?\s*\]\]?'
                 text = textlib.replaceExcept(
                     text,
@@ -1139,8 +1140,7 @@ class CosmeticChangesToolkit:
         faChrs = 'ءاآأإئؤبپتثجچحخدذرزژسشصضطظعغفقکگلمنوهیةيك' + digits['fa']
 
         # not to let bot edits in latin content
-        exceptions.append(re.compile('[^{fa}] *?"*? *?, *?[^{fa}]'
-                                     .format(fa=faChrs)))
+        exceptions.append(re.compile(f'[^{faChrs}] *?"*? *?, *?[^{faChrs}]'))
         text = textlib.replaceExcept(text, ',', '،', exceptions,
                                      site=self.site)
         if self.site.code == 'ckb':
