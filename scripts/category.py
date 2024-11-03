@@ -197,7 +197,7 @@ docuReplacements = {'&params;': pagegenerators.parameterHelp}  # noqa: N816
 
 CFD_TEMPLATE_REGEX = re.compile(r'<!--\s*BEGIN CFD TEMPLATE\s*-->.*?'
                                 r'<!--\s*END CFD TEMPLATE\s*-->\n?',
-                                flags=re.I | re.M | re.S)
+                                flags=re.IGNORECASE | re.MULTILINE | re.DOTALL)
 
 cfd_templates = {
     'wikipedia': {
@@ -531,7 +531,7 @@ class CategoryAddBot(CategoryPreprocess):
                 if self.includeonly == ['includeonly']:
                     tagname = 'includeonly'
                 tagnameregexp = re.compile(fr'(.*)(<\/{tagname}>)',
-                                           re.I | re.DOTALL)
+                                           re.IGNORECASE | re.DOTALL)
                 categorytitle = catpl.title(
                     as_link=True, allow_interwiki=False)
                 if tagnameregexp.search(text):
@@ -700,17 +700,16 @@ class CategoryMoveRobot(CategoryPreprocess):
         elif deletion_comment == self.DELETION_COMMENT_SAME_AS_EDIT_COMMENT:
             # Use the edit comment as the deletion comment.
             self.deletion_comment = self.comment
+        # Deletion comment is set to internationalized default.
+        elif self.newcat:
+            # Category is moved.
+            self.deletion_comment = i18n.twtranslate(self.site,
+                                                     'category-was-moved',
+                                                     template_vars)
         else:
-            # Deletion comment is set to internationalized default.
-            if self.newcat:
-                # Category is moved.
-                self.deletion_comment = i18n.twtranslate(self.site,
-                                                         'category-was-moved',
-                                                         template_vars)
-            else:
-                # Category is deleted.
-                self.deletion_comment = i18n.twtranslate(
-                    self.site, 'category-was-disbanded')
+            # Category is deleted.
+            self.deletion_comment = i18n.twtranslate(
+                self.site, 'category-was-disbanded')
         self.move_comment = move_comment if move_comment else self.comment
 
     def run(self) -> None:
