@@ -377,7 +377,6 @@ from typing import Any
 
 import pywikibot  # API interface to Wikidata
 from pywikibot.config import verbose_output as verbose
-from pywikibot.data import api
 from pywikibot.tools import first_upper
 
 
@@ -696,39 +695,39 @@ def get_language_preferences() -> list[str]:
     return main_languages
 
 
-def item_is_in_list(statement_list: list, itemlist: list[str]) -> str:
+def item_is_in_list(statement_list: list, itemlist: list[str]) -> bool:
     """Verify if statement list contains at least one item from the itemlist.
 
     param statement_list: Statement list
     param itemlist: List of values (string)
-    return: Matching or empty string
+    return: Whether the item matches
     """
     for seq in statement_list:
         with suppress(AttributeError):  # Ignore NoneType error
             isinlist = seq.getTarget().getID()
             if isinlist in itemlist:
-                return isinlist
-    return ''
+                return True
+    return False
 
 
-def item_has_label(item, label: str) -> str:
+def item_has_label(item, label: str) -> bool:
     """Verify if the item has a label.
 
     :param item: Item
     :param label: Item label
-    :return: Matching string
+    :return: Whether the item has a label
     """
     label = unidecode(label).casefold()
     for lang in item.labels:
         if unidecode(item.labels[lang]).casefold() == label:
-            return item.labels[lang]
+            return True
 
     for lang in item.aliases:
         for seq in item.aliases[lang]:
             if unidecode(seq).casefold() == label:
-                return seq
+                return True
 
-    return ''   # Must return "False" when no label
+    return False
 
 
 def is_in_value_list(statement_list: list, valuelist: list[str]) -> bool:
@@ -781,32 +780,12 @@ def get_item_list(item_name: str,
     :param instance_id: Instance ID
     :return: Set of items
     """
-    pywikibot.debug(f'Search label: {item_name.encode("utf-8")}')
-    # TODO: try to use search_entities instead?
-    params = {
-        'action': 'wbsearchentities',
-        'format': 'json',
-        'type': 'item',
-        # All languages are searched, but labels are in native language
-        'strictlanguage': False,
-        'language': mainlang,
-        'uselang': mainlang,  # (primary) Search language
-        'search': item_name,  # Get item list from label
-        'limit': 20,  # Should be reasonable value
-    }
-    request = api.Request(site=repo, parameters=params)
-    result = request.submit()
-    pywikibot.debug(result)
-
-    if 'search' not in result:
-        return set()
-
     # Ignore accents and case
     item_name_canon = unidecode(item_name).casefold()
 
     item_list = set()
-    # Loop though items
-    for res in result['search']:
+    # Loop though items, total should be reasonable value
+    for res in repo.search_entities(item_name, mainlang, total=20):
         item = get_item_page(res['id'])
 
         # Matching instance
@@ -833,7 +812,8 @@ def get_item_list(item_name: str,
 def get_item_with_prop_value(prop: str, propval: str) -> set[str]:
     """Get list of items that have a property/value statement.
 
-    .. seealso:: :api:`Search`
+    .. seealso:: :meth:`Site.search()
+       <pywikibot.site._generators.GeneratorsMixin.search>`
 
     :param prop: Property ID
     :param propval: Property value
@@ -843,33 +823,19 @@ def get_item_with_prop_value(prop: str, propval: str) -> set[str]:
     pywikibot.debug(f'Search statement: {srsearch}')
     item_name_canon = unidecode(propval).casefold()
     item_list = set()
-    # TODO: use APISite.search instead?
-    params = {
-        'action': 'query',  # Statement search
-        'list': 'search',
-        'srsearch': srsearch,
-        'srwhat': 'text',
-        'format': 'json',
-        'srlimit': 50,  # Should be reasonable value
-    }
-    request = api.Request(site=repo, parameters=params)
-    result = request.submit()
-    # https://www.wikidata.org/w/api.php?action=query&list=search&srwhat=text&srsearch=P212:978-94-028-1317-3
-    # https://www.wikidata.org/w/index.php?search=P212:978-94-028-1317-3
 
-    if 'query' in result and 'search' in result['query']:
-        # Loop though items
-        for row in result['query']['search']:
-            qnumber = row['title']
-            item = get_item_page(qnumber)
+    # Loop though items
+    for row in repo.search(srsearch, where='text', total=50):
+        qnumber = row['title']
+        item = get_item_page(qnumber)
 
-            if prop not in item.claims:
-                continue
+        if prop not in item.claims:
+            continue
 
-            for seq in item.claims[prop]:
-                if unidecode(seq.getTarget()).casefold() == item_name_canon:
-                    item_list.add(item)  # Found match
-                    break
+        for seq in item.claims[prop]:
+            if unidecode(seq.getTarget()).casefold() == item_name_canon:
+                item_list.add(item)  # Found match
+                break
 
     pywikibot.log(item_list)
     return item_list
