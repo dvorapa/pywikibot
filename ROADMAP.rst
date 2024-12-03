@@ -1,17 +1,13 @@
 Current Release Changes
 =======================
 
-* Implement param *with_sort_key* in :meth:`page.BasePage.categories` (:phab:`T75561`)
-* Python 3.7 support will be discontinued and probably this is the last version supporting it
-* Add :meth:`page.BasePage.get_revision` method
-* Retry :meth:`data.sparql.SparqlQuery.query` on internal server error (500) (:phab:`T378788`)
-* Extract :meth:`APISite.linktrail()<pywikibot.site._apisite.APISite.linktrail>`
-  for hr-wiki (:phab:`T378787`)
-
+* (no changes yet)
 
 Current Deprecations
 ====================
 
+* 9.6.0: :meth:`BaseSite.languages()<pywikibot.site._basesite.BaseSite.languages>` will be removed in favour of
+  :attr:`BaseSite.codes<pywikibot.site._basesite.BaseSite.codes>`
 * 9.5.0: :meth:`DataSite.getPropertyType()<pywikibot.site._datasite.DataSite.getPropertyType>` will be removed
   in favour of :meth:`DataSite.get_property_type()<pywikibot.site._datasite.DataSite.get_property_type>`
 * 9.4.0: :mod:`flow` support is deprecated and will be removed (:phab:`T371180`)
