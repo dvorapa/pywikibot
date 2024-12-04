@@ -1,11 +1,32 @@
 Current Release Changes
 =======================
 
+**Improvements**
+
 * (no changes yet)
+
+**Bugfixes**
+
+* (no changes yet)
+
+**Breaking changes and code cleanups**
+
+* :mod:`tools.threading` classes no longer can be imported from :mod:`tools`
+* :mod:`tools.itertools` datatypes no longer can be imported from :mod:`tools`
+* :mod:`tools.collections` datatypes no longer can be imported from :mod:`tools`
+* ``svn_rev_info`` and ``getversion_svn`` of :mod:`version` module were be removed.
+  SVN repository is no longer supported. (:phab:`T362484`)
+* Old color escape sequences like ``\03{color}`` were dropped in favour of new color format like ``<<color>>``
+* ``tools.formatter.color_format()`` was removed; the new color literals can be used instead
+* RedirectPageBot and NoRedirectPageBot bot classes were removed in favour of
+  :attr:`use_redirects<bot.BaseBot.use_redirects>` attribute
+* Python 3.7 support was dropped (:phab:`T378893`)
+
 
 Current Deprecations
 ====================
 
+* 10.0.0: *importlib_metadata* of :mod:`backports` is deprecated
 * 9.6.0: :meth:`BaseSite.languages()<pywikibot.site._basesite.BaseSite.languages>` will be removed in favour of
   :attr:`BaseSite.codes<pywikibot.site._basesite.BaseSite.codes>`
 * 9.5.0: :meth:`DataSite.getPropertyType()<pywikibot.site._datasite.DataSite.getPropertyType>` will be removed
@@ -34,7 +55,11 @@ Current Deprecations
 * 9.0.0: ``iteritems`` method of :class:`data.api.Request` will be removed in favour of ``items``
 * 9.0.0: ``SequenceOutputter.output()`` is deprecated in favour of :attr:`tools.formatter.SequenceOutputter.out`
   property
-* 9.0.0: *nullcontext* context manager and *SimpleQueue* queue of :mod:`backports` are derecated
+* 9.0.0: *nullcontext* context manager and *SimpleQueue* queue of :mod:`backports` are deprecated
+
+Pending removal in Pywikibot 11
+-------------------------------
+
 * 8.4.0: *modules_only_mode* parameter of :class:`data.api.ParamInfo`, its *paraminfo_keys* class attribute
   and its preloaded_modules property will be removed
 * 8.4.0: *dropdelay* and *releasepid* attributes of :class:`throttle.Throttle` will be removed
@@ -65,15 +90,8 @@ Current Deprecations
 Pending removal in Pywikibot 10
 -------------------------------
 
-* 9.6.0: Python 3.7 support is deprecated and will be dropped with Pywikibot 10
-* 9.1.0: :func:`version.svn_rev_info` and :func:`version.getversion_svn` will be removed. SVN is no longer supported.
-  (:phab:`T362484`)
-* 7.7.0: :mod:`tools.threading` classes should no longer imported from :mod:`tools`
-* 7.6.0: :mod:`tools.itertools` datatypes should no longer imported from :mod:`tools`
-* 7.6.0: :mod:`tools.collections` datatypes should no longer imported from :mod:`tools`
 * 7.5.0: :mod:`textlib`.tzoneFixedOffset class will be removed in favour of :class:`time.TZoneFixedOffset`
 * 7.4.0: ``FilePage.usingPages()`` was renamed to :meth:`using_pages()<pywikibot.FilePage.using_pages>`
-* 7.3.0: Old color escape sequences like ``\03{color}`` is deprecated in favour of new color format like <<color>>
 * 7.3.0: ``linktrail`` method of :class:`family.Family` is deprecated; use :meth:`APISite.linktrail()
   <pywikibot.site._apisite.APISite.linktrail>` instead
 * 7.2.0: Positional arguments *decoder*, *layer* and *newline* for :mod:`logging` functions were dropped; keyword
@@ -81,9 +99,6 @@ Pending removal in Pywikibot 10
 * 7.2.0: ``tb`` parameter of :func:`exception()<pywikibot.logging.exception>` function was renamed to ``exc_info``
 * 7.2.0: XMLDumpOldPageGenerator is deprecated in favour of a ``content`` parameter of
   :func:`XMLDumpPageGenerator<pagegenerators.XMLDumpPageGenerator>` (:phab:`T306134`)
-* 7.2.0: RedirectPageBot and NoRedirectPageBot bot classes are deprecated in favour of
-  :attr:`use_redirects<bot.BaseBot.use_redirects>` attribute
-* 7.2.0: :func:`tools.formatter.color_format<tools.formatter.color_format>` is deprecated and will be removed
 * 7.1.0: Unused ``get_redirect`` parameter of :meth:`Page.getOldVersion()<page.BasePage.getOldVersion>` will be removed
 * 7.0.0: User.isBlocked() method is renamed to is_blocked for consistency
 * 7.0.0: A boolean watch parameter in Page.save() is deprecated and will be desupported
