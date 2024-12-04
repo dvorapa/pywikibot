@@ -3,6 +3,8 @@
 .. deprecated:: 9.0
    The *nullcontext* context manager; use ``contextlib.nullcontext``
    instead. The *SimpleQueue* queue; use ``queue.SimpleQueue`` instead.
+.. deprecated:: 10.0
+   The *importlib_metadata* lib. Import ``importlib.metadata`` instead.
 """
 #
 # (C) Pywikibot team, 2014-2024
@@ -36,9 +38,7 @@ else:
     )
 
 
-if PYTHON_VERSION < (3, 7, 2):
-    from typing import Dict as OrderedDict
-elif PYTHON_VERSION < (3, 9):
+if PYTHON_VERSION < (3, 9):
     from typing import OrderedDict
 else:
     from collections import OrderedDict
@@ -207,12 +207,6 @@ else:
     from itertools import batched  # type: ignore[no-redef]
 
 
-try:
-    import importlib.metadata as importlib_metadata
-except ImportError:
-    import importlib_metadata
-
-
 # import ModuleDeprecationWrapper here to prevent circular import
 from pywikibot.tools import ModuleDeprecationWrapper  # noqa: E402
 
@@ -224,3 +218,6 @@ wrapper.add_deprecated_attr('nullcontext',
 wrapper.add_deprecated_attr('SimpleQueue',
                             replacement_name='queue.SimpleQueue',
                             since='9.0.0')
+wrapper.add_deprecated_attr('importlib_metadata',
+                            replacement_name='importlib.metadata',
+                            since='10.0.0')
