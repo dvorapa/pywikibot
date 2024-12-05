@@ -11,6 +11,12 @@ Current Release Changes
 
 **Breaking changes and code cleanups**
 
+* A boolean *watch* parameter in :meth:`page.BasePage.save` is desupported
+* ``XMLDumpOldPageGenerator`` was removed in favour of a ``content`` parameter of
+  :func:`pagegenerators.XMLDumpPageGenerator` (:phab:`T306134`)
+* :meth:`pywikibot.User.is_blocked` method was renamed from ``isBlocked`` for consistency
+* Values of :meth:`APISite.allpages()<pywikibot.site._generators.GeneratorsMixin.allpages>`
+  parameter filterredir must be True, False or None
 * :mod:`tools.threading` classes no longer can be imported from :mod:`tools`
 * :mod:`tools.itertools` datatypes no longer can be imported from :mod:`tools`
 * :mod:`tools.collections` datatypes no longer can be imported from :mod:`tools`
@@ -26,12 +32,13 @@ Current Release Changes
 Current Deprecations
 ====================
 
+* 10.0.0: *includeredirects* parameter of :func:`pagegenerators.AllpagesPageGenerator` and
+  :func:`pagegenerators.PrefixingPageGenerator` is deprecated and should be replaced by *filterredir*
 * 10.0.0: *importlib_metadata* of :mod:`backports` is deprecated
 * 9.6.0: :meth:`BaseSite.languages()<pywikibot.site._basesite.BaseSite.languages>` will be removed in favour of
   :attr:`BaseSite.codes<pywikibot.site._basesite.BaseSite.codes>`
 * 9.5.0: :meth:`DataSite.getPropertyType()<pywikibot.site._datasite.DataSite.getPropertyType>` will be removed
   in favour of :meth:`DataSite.get_property_type()<pywikibot.site._datasite.DataSite.get_property_type>`
-* 9.4.0: :mod:`flow` support is deprecated and will be removed (:phab:`T371180`)
 * 9.3.0: :meth:`page.BasePage.userName` and :meth:`page.BasePage.isIpEdit` are deprecated in favour of
   ``user`` or ``anon`` attributes of :attr:`page.BasePage.latest_revision` property
 * 9.2.0: Imports of :mod:`logging` functions from :mod:`bot` module is deprecated and will be desupported
@@ -90,6 +97,7 @@ Pending removal in Pywikibot 11
 Pending removal in Pywikibot 10
 -------------------------------
 
+* 9.4.0: :mod:`flow` support is deprecated and will be removed (:phab:`T371180`)
 * 7.5.0: :mod:`textlib`.tzoneFixedOffset class will be removed in favour of :class:`time.TZoneFixedOffset`
 * 7.4.0: ``FilePage.usingPages()`` was renamed to :meth:`using_pages()<pywikibot.FilePage.using_pages>`
 * 7.3.0: ``linktrail`` method of :class:`family.Family` is deprecated; use :meth:`APISite.linktrail()
@@ -97,12 +105,6 @@ Pending removal in Pywikibot 10
 * 7.2.0: Positional arguments *decoder*, *layer* and *newline* for :mod:`logging` functions were dropped; keyword
   arguments must be used instead.
 * 7.2.0: ``tb`` parameter of :func:`exception()<pywikibot.logging.exception>` function was renamed to ``exc_info``
-* 7.2.0: XMLDumpOldPageGenerator is deprecated in favour of a ``content`` parameter of
-  :func:`XMLDumpPageGenerator<pagegenerators.XMLDumpPageGenerator>` (:phab:`T306134`)
 * 7.1.0: Unused ``get_redirect`` parameter of :meth:`Page.getOldVersion()<page.BasePage.getOldVersion>` will be removed
-* 7.0.0: User.isBlocked() method is renamed to is_blocked for consistency
-* 7.0.0: A boolean watch parameter in Page.save() is deprecated and will be desupported
 * 7.0.0: baserevid parameter of editSource(), editQualifier(), removeClaims(), removeSources(), remove_qualifiers()
   DataSite methods will be removed
-* 7.0.0: Values of APISite.allpages() parameter filterredir other than True, False and None are deprecated
-* 7.0.0: The i18n identifier 'cosmetic_changes-append' will be removed in favour of 'pywikibot-cosmetic-changes'
