@@ -290,7 +290,7 @@ class Family:
     **Examples:**
 
     Allowing linking *to* ``pt`` 102 namespace from any other lang 0
-    namepace is:
+    namespace is:
 
     .. code-block:: Python
 
@@ -1075,7 +1075,7 @@ class WikibaseFamily(Family):
         return 'DataSite'
 
     def entity_sources(self, code: str) -> dict[str, tuple[str, str]]:
-        """Provide reopsitory site information for entity types.
+        """Provide repository site information for entity types.
 
         The result must be structured as follows:
 
@@ -1098,7 +1098,7 @@ class DefaultWikibaseFamily(WikibaseFamily):
 
     """A base class for a Wikimedia Wikibase Family.
 
-    This class holds defauls for :meth:`calendarmodel`,
+    This class holds defaults for :meth:`calendarmodel`,
     :meth:`default_globe` and :meth:`globes` to prevent code duplication.
 
     .. warning:: Possibly you have to adjust the repository site in

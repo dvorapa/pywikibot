@@ -258,7 +258,7 @@ class TestWbTime(WbRepresentationTestCase):
         # some aliases here
         decade = pywikibot.WbTime.PRECISION['decade']
         century = pywikibot.WbTime.PRECISION['century']
-        millenia = pywikibot.WbTime.PRECISION['millenia']
+        millennium = pywikibot.WbTime.PRECISION['millennium']
         t = pywikibot.WbTime(site=repo, year=2010, month=1, day=1, hour=12,
                              minute=43, second=12)
         t2 = pywikibot.WbTime(site=repo, year=2010, month=1, day=1, hour=12,
@@ -287,7 +287,7 @@ class TestWbTime(WbRepresentationTestCase):
                               precision=century)
         t10 = pywikibot.WbTime(site=repo, year=2010, month=1, day=1, hour=12,
                                minute=43, second=12,
-                               precision=millenia)
+                               precision=millennium)
         t11 = pywikibot.WbTime(site=repo, year=2010, month=1, day=1, hour=12,
                                minute=43, second=12, timezone=-300,
                                precision=pywikibot.WbTime.PRECISION['day'])
@@ -324,10 +324,10 @@ class TestWbTime(WbRepresentationTestCase):
                                           precision=century).normalize())
         self.assertEqual(t10.normalize(),
                          pywikibot.WbTime(site=repo, year=3000,
-                                          precision=millenia))
+                                          precision=millennium))
         self.assertEqual(t10.normalize(),
                          pywikibot.WbTime(site=repo, year=2010,
-                                          precision=millenia).normalize())
+                                          precision=millennium).normalize())
         t11_normalized = t11.normalize()
         t12_normalized = t12.normalize()
         self.assertEqual(t11_normalized.timezone, 0)
@@ -878,8 +878,8 @@ class TestWbGeoShapeNonDry(WbRepresentationTestCase):
             pywikibot.WbGeoShape('A string', self.get_repo())
 
     def test_WbGeoShape_error_on_non_exitant_page(self):
-        """Test WbGeoShape error handling of a non-existant page."""
-        page = Page(self.commons, 'Non-existant page... really')
+        """Test WbGeoShape error handling of a non-existent page."""
+        page = Page(self.commons, 'Non-existent page... really')
         regex = r'^Page \[\[.+?\]\] must exist\.$'
         with self.assertRaisesRegex(ValueError, regex):
             pywikibot.WbGeoShape(page, self.get_repo())
@@ -953,8 +953,8 @@ class TestWbTabularDataNonDry(WbRepresentationTestCase):
             pywikibot.WbTabularData('A string', self.get_repo())
 
     def test_WbTabularData_error_on_non_exitant_page(self):
-        """Test WbTabularData error handling of a non-existant page."""
-        page = Page(self.commons, 'Non-existant page... really')
+        """Test WbTabularData error handling of a non-existent page."""
+        page = Page(self.commons, 'Non-existent page... really')
         regex = r'^Page \[\[.+?\]\] must exist\.$'
         with self.assertRaisesRegex(ValueError, regex):
             pywikibot.WbTabularData(page, self.get_repo())
