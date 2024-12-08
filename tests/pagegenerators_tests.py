@@ -911,7 +911,7 @@ class TestFactoryGenerator(DefaultSiteTestCase):
         gf = pagegenerators.GeneratorFactory()
         gf.handle_arg('-intersect')
 
-        # check wether the generator works for both directions
+        # check whether the generator works for both directions
         patterns = ['Python 3.7-dev', 'Pywikibot 7.0.dev']
         for index in range(2):
             with self.subTest(index=index):
@@ -919,7 +919,7 @@ class TestFactoryGenerator(DefaultSiteTestCase):
                 gen = gf.getCombinedGenerator(gen=patterns[index - 1])
                 self.assertEqual(''.join(gen), 'Pyot 7.dev')
 
-        # check wether the generator works for a very long text
+        # check whether the generator works for a very long text
         patterns.append('PWB 7+ unittest developed with a very long text.')
         with self.subTest(patterns=patterns):
             gf.gens = patterns
@@ -1618,7 +1618,7 @@ class PageGeneratorIntersectTestCase(GeneratorIntersectTestCase,
              pagegenerators.NewpagesPageGenerator(site=site, total=10)])
 
     def test_intersect_newpages_and_recentchanges(self):
-        """Test intersection betweem newpages and recentchanges."""
+        """Test intersection between newpages and recentchanges."""
         site = self.get_site()
         self.assertEqualItertools(
             [pagegenerators.NewpagesPageGenerator(site=site, total=50),
