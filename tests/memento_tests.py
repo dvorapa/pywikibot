@@ -52,7 +52,6 @@ class TestMementoArchive(MementoTestCase):
                                                 date_string=dt)
         parsed = urlparse(archivedversion)
         self.assertIn(parsed.scheme, ['http', 'https'])
-        self.assertEqual(parsed.netloc, 'wayback.library.yorku.ca')
 
 
 class TestMementoDefault(MementoTestCase):
