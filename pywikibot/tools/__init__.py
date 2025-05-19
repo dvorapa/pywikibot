@@ -1,18 +1,15 @@
 """Miscellaneous helper functions (not wiki-dependent)."""
 #
-# (C) Pywikibot team, 2008-2024
+# (C) Pywikibot team, 2008-2025
 #
 # Distributed under the terms of the MIT license.
 #
 from __future__ import annotations
 
 import abc
-import bz2
-import gzip
 import hashlib
 import importlib.metadata
 import ipaddress
-import lzma
 import os
 import re
 import stat
@@ -42,6 +39,14 @@ from pywikibot.tools._deprecate import (
     remove_last_args,
 )
 from pywikibot.tools._unidata import _first_upper_exception
+
+
+try:  # Python 3.14+
+    from compression import bz2, gzip, lzma
+except ModuleNotFoundError:
+    import bz2
+    import gzip
+    import lzma
 
 
 __all__ = (
@@ -87,6 +92,7 @@ def is_ip_address(value: str) -> bool:
 
     .. versionadded:: 6.1
        Was renamed from ``is_IP()``.
+    .. seealso:: :func:`is_ip_network`
 
     :param value: value to check
     """
@@ -101,6 +107,7 @@ def is_ip_network(value: str) -> bool:
     """Check if a value is a valid range of IPv4 or IPv6 addresses.
 
     .. versionadded:: 9.0
+    .. seealso:: :func:`is_ip_address`
 
     :param value: value to check
     """
