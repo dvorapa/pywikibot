@@ -9,10 +9,11 @@ from __future__ import annotations
 
 import unittest
 from contextlib import suppress
+from unittest.mock import patch
 
 import pywikibot
 from scripts import delete
-from tests.aspects import ScriptMainTestCase
+from tests.aspects import DefaultSiteTestCase, ScriptMainTestCase
 from tests.utils import empty_sites
 
 
@@ -78,7 +79,6 @@ class TestDeletionBotUser(ScriptMainTestCase):
         cls.page.text = 'Pywikibot deletion test.'
         cls.page.save('Pywikibot unit test')
 
-    @unittest.expectedFailure  # T367299
     def test_delete_mark(self) -> None:
         """Test marking User:Unicodesnowman/DeleteMark for deletion."""
         delete.main('-page:User:Unicodesnowman/DeleteMark', '-always',
@@ -90,18 +90,22 @@ class TestDeletionBotUser(ScriptMainTestCase):
             'Pywikibot deletion test.')
 
 
-class TestDeletionBot(ScriptMainTestCase):
+class TestDeletionBot(DefaultSiteTestCase):
 
     """Test deletionbot with patching to make it non-write."""
 
-    family = 'wikipedia'
-    code = 'test'
-
-    cached = True
-    login = True
+    net = False
 
     delete_args = []
     undelete_args = []
+
+    @classmethod
+    def setUpClass(cls):
+        """Patch APISite.login."""
+        patcher = patch.object(pywikibot.site.APISite, 'login')
+        cls.addClassCleanup(patcher.stop)
+        patcher.start()
+        super().setUpClass()
 
     def setUp(self):
         """Set up unit test."""
