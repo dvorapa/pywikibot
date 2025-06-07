@@ -159,7 +159,6 @@ are also in 'Pneumatics' category.
 #
 from __future__ import annotations
 
-import codecs
 import math
 import os
 import pickle
@@ -302,7 +301,7 @@ class CategoryPreprocess(BaseBot):
 
         tmpl: Sequence = []
         with suppress(KeyError):
-            tmpl, _loc = moved_links[page.site.code]
+            tmpl, _loc = i18n.translate(page.site.code, moved_links)
 
         if not isinstance(tmpl, list):
             tmpl = [tmpl]
@@ -1413,7 +1412,7 @@ class CategoryTreeRobot:
         pywikibot.info()
         if self.filename:
             pywikibot.info('Saving results in ' + self.filename)
-            with codecs.open(self.filename, 'a', encoding='utf-8') as f:
+            with open(self.filename, 'a', encoding='utf-8') as f:
                 f.write(tree)
         else:
             pywikibot.stdout(tree)
