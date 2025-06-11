@@ -83,7 +83,7 @@ class BaseSite(ComparableMixin):
                     pywikibot.config.mylang = self.__code
                     warn('Global configuration variable "mylang" changed to '
                          f'"{self.__code}" while instantiating site {self}',
-                         UserWarning)
+                         UserWarning, stacklevel=2)
             else:
                 error_msg = (f"Language '{self.__code}' does not exist in "
                              f'family {self.__family.name}')
@@ -97,7 +97,7 @@ class BaseSite(ComparableMixin):
 
     @property
     @deprecated(since='8.5.0')
-    def use_hard_category_redirects(self):
+    def use_hard_category_redirects(self) -> bool:
         """Hard redirects are used for this site.
 
         Originally create as property for future use for a proposal to
@@ -306,7 +306,7 @@ class BaseSite(ComparableMixin):
         """Return list of localized PAGENAMEE tags for the site."""
         return ['PAGENAMEE']
 
-    def lock_page(self, page, block: bool = True):
+    def lock_page(self, page, block: bool = True) -> None:
         """Lock page for writing. Must be called before writing any page.
 
         We don't want different threads trying to write to the same page

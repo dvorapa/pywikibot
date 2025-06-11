@@ -531,7 +531,6 @@ class InterwikiBotConfig:
         elif arg == 'skipfile':
             skip_page_gen = pagegenerators.TextIOPageGenerator(value)
             self.skip.update(skip_page_gen)
-            del skip_page_gen
         elif arg == 'neverlink':
             self.neverlink += value.split(',')
         elif arg == 'ignore':
@@ -540,7 +539,6 @@ class InterwikiBotConfig:
         elif arg == 'ignorefile':
             ignore_page_gen = pagegenerators.TextIOPageGenerator(value)
             self.ignore.update(ignore_page_gen)
-            del ignore_page_gen
         elif arg == 'showpage':
             self.showtextlink += self.showtextlinkadd
         elif arg == 'graph':
@@ -1057,7 +1055,7 @@ class Subject(interwiki_graph.Subject):
                     if self.conf.hintsareright:
                         self.hintedsites.add(page.site)
 
-    def redir_checked(self, page, counter):
+    def redir_checked(self, page, counter) -> bool:
         """Check and handle redirect. Return True if check is done."""
         if page.isRedirectPage():
             redirect_target = page.getRedirectTarget()
@@ -1284,7 +1282,7 @@ class Subject(interwiki_graph.Subject):
             self.reportInterwikilessPage(page)
         self.askForHints(counter)
 
-    def isDone(self):
+    def isDone(self) -> bool:
         """Return True if all the work for this subject has completed."""
         return not self.todo
 
@@ -1406,7 +1404,7 @@ class Subject(interwiki_graph.Subject):
 
         return result
 
-    def finish(self):
+    def finish(self) -> None:
         """Round up the subject, making any necessary changes.
 
         This should be called exactly once after the todo collection has
@@ -1430,7 +1428,7 @@ class Subject(interwiki_graph.Subject):
 
         self.post_processing()
 
-    def post_processing(self):
+    def post_processing(self) -> None:
         """Some finishing processes to be done."""
         pywikibot.info(f'======Post-processing {self.origin}======')
         # Assemble list of accepted interwiki links
@@ -1460,7 +1458,7 @@ class Subject(interwiki_graph.Subject):
         if config.interwiki_backlink:
             self.reportBacklinks(new, updatedSites)
 
-    def process_limit_two(self, new, updated):
+    def process_limit_two(self, new, updated) -> None:
         """Post process limittwo."""
         lclSite = self.origin.site
         lclSiteDone = False
@@ -1510,7 +1508,7 @@ class Subject(interwiki_graph.Subject):
                     except GiveUpOnPage:
                         break
 
-    def process_unlimited(self, new, updated):
+    def process_unlimited(self, new, updated) -> None:
         """Post process unlimited."""
         for (site, page) in new.items():
             # if we have an account for this site
