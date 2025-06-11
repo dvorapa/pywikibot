@@ -12,6 +12,7 @@ import types
 import unittest
 from collections import defaultdict
 from contextlib import suppress
+from typing import NoReturn
 from unittest.mock import patch
 
 import pywikibot.family
@@ -326,7 +327,8 @@ class TestOptionSet(TestCase):
         with self.assertRaises(KeyError):
             options._set_site(self.get_site(), 'recentchanges', 'show')
         self.assertLength(options, 2)
-        options._set_site(self.get_site(), 'recentchanges', 'show', True)
+        options._set_site(self.get_site(), 'recentchanges', 'show',
+                          clear_invalid=True)
         self.assertLength(options, 1)
         with self.assertRaises(TypeError):
             options._set_site(self.get_site(), 'recentchanges', 'show')
@@ -363,7 +365,7 @@ class TestDryPageGenerator(TestCase):
     titles = ('Broadcaster (definition)', 'Wiktionary', 'Broadcaster.com',
               'Wikipedia:Disambiguation')
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test case."""
         super().setUp()
         mysite = self.get_site()
@@ -584,7 +586,7 @@ class TestDryQueryGeneratorNamespaceParam(TestCase):
 
     dry = True
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test case."""
         super().setUp()
         self.site = self.get_site()
@@ -661,7 +663,7 @@ class TestDryListGenerator(TestCase):
 
     dry = True
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test case."""
         super().setUp()
         mysite = self.get_site()
@@ -766,7 +768,7 @@ class TestLazyLoginBase(TestCase):
     hostname = 'steward.wikimedia.org'
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls) -> None:
         """Set up steward Family."""
         super().setUpClass()
         fam = pywikibot.family.AutoFamily(
@@ -782,20 +784,20 @@ class TestLazyLoginNotExistUsername(TestLazyLoginBase):
     # for a password even if the username does not exist, and even if
     # pywikibot is not connected to a tty. T100964
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Patch the LoginManager to avoid UI interaction."""
         super().setUp()
         self.orig_login_manager = pywikibot.login.ClientLoginManager
         pywikibot.login.ClientLoginManager = FakeLoginManager
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         """Restore the original LoginManager."""
         pywikibot.login.ClientLoginManager = self.orig_login_manager
         super().tearDown()
 
     @patch.object(pywikibot, 'info')
     @patch.object(pywikibot, 'warning')
-    def test_access_denied_notexist_username(self, warning, info):
+    def test_access_denied_notexist_username(self, warning, info) -> None:
         """Test the query with a username which does not exist."""
         self.site._username = 'Not registered username'
         req = api.Request(site=self.site, parameters={'action': 'query'})
@@ -817,7 +819,7 @@ class TestLazyLoginNoUsername(TestLazyLoginBase):
 
     @patch.object(pywikibot, 'warning')
     @patch.object(pywikibot.config, 'usernames', defaultdict(dict))
-    def test_access_denied_no_username(self, warning):
+    def test_access_denied_no_username(self, warning) -> None:
         """Test the query without a username."""
         self.site._username = None
         req = api.Request(site=self.site, parameters={'action': 'query'})
@@ -884,7 +886,7 @@ class DummyThrottle(Throttle):
 
     """Dummy Throttle class."""
 
-    def lag(self, lag):
+    def lag(self, lag) -> NoReturn:
         """Override lag method, save the lag value and exit the api loop."""
         self._lagvalue = lag  # save the lag value
         raise SystemExit  # exit the api loop

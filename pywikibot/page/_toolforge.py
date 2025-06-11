@@ -28,7 +28,7 @@ class WikiBlameMixin:
     #: Supported wikipedia site codes
     WIKIBLAME_CODES = 'als', 'bar', 'de', 'en', 'it', 'nds', 'sco'
 
-    def _check_wh_supported(self):
+    def _check_wh_supported(self) -> None:
         """Check if WikiHistory is supported."""
         if self.site.family.name != 'wikipedia':
             raise NotImplementedError(
@@ -172,7 +172,7 @@ class WikiBlameMixin:
         :raise TimeoutError: WikiHistory timeout
         """
         if n and n > 5:
-            warn('Only the first 5 authors can be given.')
+            warn('Only the first 5 authors can be given.', stacklevel=2)
 
         baseurl = 'https://wikihistory.toolforge.org'
         pattern = (r'><bdi>(?P<author>.+?)</bdi></a>\s'
