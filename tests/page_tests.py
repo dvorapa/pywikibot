@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tests for the page module."""
 #
-# (C) Pywikibot team, 2008-2024
+# (C) Pywikibot team, 2008-2025
 #
 # Distributed under the terms of the MIT license.
 #
@@ -136,7 +136,7 @@ class TestLinkObject(SiteAttributeTestCase):
         l2 = pywikibot.page.Link('en:Test', source=self.frwiki)
         l3 = pywikibot.page.Link('wikipedia:en:Test', source=self.itwikt)
 
-        def assertHashCmp(link1, link2):
+        def assertHashCmp(link1, link2) -> None:
             self.assertEqual(link1, link2)
             self.assertEqual(hash(link1), hash(link2))
 
@@ -691,7 +691,7 @@ class TestPageRepr(DefaultDrySiteTestCase):
     """Test for Page's repr implementation."""
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls) -> None:
         """Initialize page instance."""
         super().setUpClass()
         cls._old_encoding = config.console_encoding
@@ -699,7 +699,7 @@ class TestPageRepr(DefaultDrySiteTestCase):
         cls.page = pywikibot.Page(cls.site, 'Ō')
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDownClass(cls) -> None:
         """Restore the original console encoding."""
         config.console_encoding = cls._old_encoding
         super().tearDownClass()
@@ -725,7 +725,7 @@ class TestPageBotMayEdit(TestCase):
     cached = True
     login = True
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Setup test."""
         super().setUp()
         self.page = pywikibot.Page(self.site,
@@ -734,13 +734,13 @@ class TestPageBotMayEdit(TestCase):
             self.skipTest(f'Page {self.page.title()} exists! Change page name'
                           ' in tests/page_tests.py')
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         """Cleanup cache."""
         if hasattr(self.page, '_bot_may_edit'):
             del self.page._bot_may_edit
         super().tearDown()
 
-    def _run_test(self, template, user, expected_result):
+    def _run_test(self, template, user, expected_result) -> None:
         """Run a single template test."""
         del self.page.text
         self.page._text = template % {'user': user}
@@ -875,7 +875,6 @@ class TestPageBotMayEdit(TestCase):
                 page = pywikibot.Page(self.site, 'Pywikibot nobots test')
                 page.text = content
                 self.assertFalse(page.botMayEdit())
-                del page
 
     def test_real_page(self) -> None:
         """Test botMayEdit for real example due to T377651."""

@@ -1,6 +1,6 @@
 """Object representing boolean API option."""
 #
-# (C) Pywikibot team, 2015-2024
+# (C) Pywikibot team, 2015-2025
 #
 # Distributed under the terms of the MIT license.
 #
@@ -54,8 +54,8 @@ class OptionSet(MutableMapping):
         if data:
             self.from_dict(data)
 
-    def _set_site(self, site, module: str, param: str,
-                  clear_invalid: bool = False):
+    def _set_site(self, site, module: str, param: str, *,
+                  clear_invalid: bool = False) -> None:
         """Set the site and valid names.
 
         As soon as the site has been not None, any subsequent calls will fail,
@@ -93,7 +93,7 @@ class OptionSet(MutableMapping):
                                '"{}"'.format('", "'.join(invalid_names)))
         self._site_set = True
 
-    def from_dict(self, dictionary):
+    def from_dict(self, dictionary) -> None:
         """Load options from the dict.
 
         The options are not cleared before. If changes have been made
@@ -129,7 +129,7 @@ class OptionSet(MutableMapping):
         self._enabled = enabled | (self._enabled - disabled - removed)
         self._disabled = disabled | (self._disabled - enabled - removed)
 
-    def __setitem__(self, name, value):
+    def __setitem__(self, name, value) -> None:
         """Set option to enabled, disabled or neither."""
         if value is True:
             if self._site_set and name not in self._valid_enable:
