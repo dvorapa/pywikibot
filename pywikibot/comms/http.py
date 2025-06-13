@@ -164,9 +164,10 @@ def user_agent_username(username=None):
     """Reduce username to a representation permitted in HTTP headers.
 
     To achieve that, this function:
-    1) replaces spaces (' ') with '_'
-    2) encodes the username as 'utf-8' and if the username is not ASCII
-    3) URL encodes the username if it is not ASCII, or contains '%'
+
+    - replaces spaces (' ') with '_'
+    - encodes the username as 'utf-8' and if the username is not ASCII
+    - URL encodes the username if it is not ASCII, or contains '%'
     """
     if not username:
         return ''
@@ -262,10 +263,10 @@ def request(site: pywikibot.site.BaseSite,
 
     :param site: The Site to connect to
     :param uri: the URI to retrieve
-    :keyword Optional[CodecInfo, str] charset: Either a valid charset
-        (usable for str.decode()) or None to automatically chose the
-        charset from the returned header (defaults to latin-1)
-    :keyword Optional[str] protocol: a url scheme
+    :keyword CodecInfo or str or None charset: Either a valid charset
+        (usable for `str.decode()`) or None to automatically chose the
+        charset from the returned header (defaults to latin-1).
+    :keyword str | None protocol: a url scheme
     :return: The received data Response
     """
     kwargs.setdefault('verify', site.verify_SSL_certificate())
