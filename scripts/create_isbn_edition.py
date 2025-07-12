@@ -967,11 +967,6 @@ def add_claims(isbn_data: dict[str, Any]) -> int:  # noqa: C901
         # Redundant "subtitles" are ignored
         subtitle = first_upper(titles[1].strip())
 
-    # Get formatted ISBN number
-    isbn_number = isbn_data['ISBN-13']  # Numeric format
-    isbn_fmtd = isbnlib.mask(isbn_number)  # Canonical format (with "-")
-    pywikibot.log(isbn_fmtd)
-
     # Search the ISBN number both in canonical and numeric format
     qnumber_list = get_item_with_prop_value(ISBNPROP, isbn_fmtd)
     qnumber_list.update(get_item_with_prop_value(ISBNPROP, isbn_number))
@@ -1596,10 +1591,9 @@ def main(*args: str) -> None:
         mainlang = bib_source[booklib][2]
     else:
         # Unknown bib reference - show implemented codes
-        for seq in bib_source:
+        for seq, ref in bib_source.items():
             pywikibot.info(
-                f'{seq.ljust(10)}{bib_source[seq][2].ljust(4)}'
-                f'{bib_source[seq][3].ljust(20)}{bib_source[seq][1]}'
+                f'{seq.ljust(10)}{ref[2].ljust(4)}{ref[3].ljust(20)}{ref[1]}'
             )
         fatal_error(3, f'Unknown Digital library ({REFPROP}) {booklib}')
 
