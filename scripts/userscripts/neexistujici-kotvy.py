@@ -109,7 +109,7 @@ class BasicBot(
             except (SiteDefinitionError, InvalidTitleError):
                 continue
             if test_stranka.isRedirectPage():
-                test_stranka = test_stranka.getRedirectTarget()
+                test_stranka = pywikibot.Page(self.site, test_stranka.getRedirectTarget().title(with_section=False))
             if test_str_existuje or test_stranka.is_filepage():
                 text_stranky = test_stranka.text
                 text_stranky = replaceExcept(text_stranky, r'\[\[[^\|\]\n]+\|([^\]\n]+)\]\]', r'\1', vyjimky)
