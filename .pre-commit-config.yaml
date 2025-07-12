@@ -1,6 +1,8 @@
+---
 default_install_hook_types:
   - commit-msg
   - pre-commit
+
 repos:
   - repo: meta
     hooks:
@@ -33,12 +35,12 @@ repos:
       - id: double-quote-string-fixer
       - id: end-of-file-fixer
       - id: fix-byte-order-marker
-        exclude: '^tests/data/'
+        exclude: ^tests/data/
       - id: forbid-new-submodules
       - id: mixed-line-ending
       - id: pretty-format-json
         # list required for tab
-        args: ["--autofix", "--indent", "\t", "--no-ensure-ascii"]
+        args: [--autofix, --indent, "\t", --no-ensure-ascii]
       - id: trailing-whitespace
         args:
           - --markdown-linebreak-ext=rst
@@ -61,13 +63,14 @@ repos:
         entry: tests/hooks/copyright_fixer.py
         files: .+\.py$
         language: python
+        require_serial: true
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.0
+    rev: v0.12.2
     hooks:
       - id: ruff-check
         alias: ruff
         args:
-        - --fix
+          - --fix
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.20.0
     hooks:
@@ -91,7 +94,7 @@ repos:
       - id: isort
         exclude: ^pwb\.py$
   - repo: https://github.com/jshwi/docsig
-    rev: v0.69.4
+    rev: v0.70.0
     hooks:
       - id: docsig
         exclude: ^(tests|scripts)
@@ -101,6 +104,7 @@ repos:
       - id: flake8
         args:
           - --doctests
+          - --config=tox.ini
         additional_dependencies:
           # Due to incompatibilities between packages the order matters.
           - flake8-bugbear>=24.12.12
@@ -108,3 +112,21 @@ repos:
           - flake8-print>=5.0.0
           - flake8-tuple>=0.4.1
           - pep8-naming>=0.15.1
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.16.1
+    hooks:
+      - id: mypy
+        args:
+          - --config-file=pyproject.toml
+          - --follow-imports=silent
+        # Test for files which already passed in past.
+        # They should be also used in conftest.py to exclude them from non-voting mypy test.
+        files: >
+          ^pywikibot/(__metadata__|exceptions|fixes|time)\.py$|
+          ^pywikibot/(comms|data|families|specialbots)/__init__\.py$|
+          ^pywikibot/families/[a-z][a-z\d]+_family\.py$|
+          ^pywikibot/page/(__init__|_decorators|_revision)\.py$|
+          ^pywikibot/scripts/(?:i18n/)?__init__\.py$|
+          ^pywikibot/site/(__init__|_basesite|_decorators|_interwikimap|_upload)\.py$|
+          ^pywikibot/tools/(_logging|_unidata|formatter)\.py$|
+          ^pywikibot/userinterfaces/(__init__|_interface_base|terminal_interface)\.py$
