@@ -1,24 +1,25 @@
-import pywikibot
+from pywikibot import Site, Category, Page
+from sys import getrecursionlimit
 
 # s site
-s = pywikibot.Site()
+s = Site()
 
-# a set pismen
-a = set()
+# a pocet proslych kategorii
+a = 0
+# r maximalni rekurze
+r = getrecursionlimit()-1
 # v set kategorii v cyklu
 v = set()
 # w list potencialnich kategorii jednotlivych cyklu
 w = []
 # i kategorie
 for i in s.allpages(namespace=14):
+    if a%20000:
+        print(i.title(with_ns=False)[:2], flush=True)
+    a += 1
     # m generator podkategorii
-    m = i.subcategories(recurse=True)
+    m = i.subcategories(recurse=r)
     if next(m, False) and next(i.categories().__iter__(), False):
-        # b pismeno
-        b = i.title(with_ns=False)[0]
-        if not b in a:
-            a.add(b)
-            print(b, flush=True)
         # g list potencialnich kategorii cyklu
         g = []
         # f set videnych podkategorii
@@ -40,10 +41,11 @@ for i in s.allpages(namespace=14):
                     break
             f.add(j)
 
+print(str(a) + " read categories")
 
 # f set videnych cyklu
 f = set()
-f.add(frozenset(pywikibot.Category(s, 'Kategorie:Wikipedie:Neindexované stránky')))
+f.add(frozenset(Category(s, 'Kategorie:Wikipedie:Neindexované stránky')))
 # t list stringu jednotlivych cyklu
 t = []
 # g list potencialnich kategorii cyklu
@@ -61,6 +63,6 @@ for g in w:
         t.append(' > '.join(i.title(as_link=True, textlink=True) for i in l))
 
 # p page
-p = pywikibot.Page(s, 'Wikipedie:Údržbové seznamy/Cykly v kategoriích/seznam')
+p = Page(s, 'Wikipedie:Údržbové seznamy/Cykly v kategoriích/seznam')
 p.text += '\n# ' + '\n# '.join(t)
 p.save(summary='Robot: aktualizace')
