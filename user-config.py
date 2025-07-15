@@ -15,8 +15,8 @@ mylang = 'cs'
 # have a bot account. If you have a unique username for all sites of a
 # family , you can use '*'
 usernames['wikipedia']['cs'] = 'DvorapaBot'
-from user_oauth import credentials
-authenticate['cs.wikipedia.org'] = credentials
+from user_oauth import _credentials
+authenticate['cs.wikipedia.org'] = _credentials
 
 # The list of BotPasswords is saved in another file. Import it if needed.
 # See https://www.mediawiki.org/wiki/Manual:Pywikibot/BotPasswords to know how
@@ -162,11 +162,11 @@ retry_max = 120
 # db_hostname_format = '{0}.analytics.db.svc.wikimedia.cloud'
 # db_name_format = '{0}_p'
 # db_connect_file = user_home_path('replica.my.cnf')
-db_hostname_format = 'localhost'
+db_hostname_format = '{0}.analytics.db.svc.wikimedia.cloud'
 db_username = ''
 db_password = ''
-db_name_format = '{0}'
-db_connect_file = user_home_path('.my.cnf')
+db_name_format = '{0}_p'
+db_connect_file = user_home_path('replica.my.cnf')
 # local port for mysql server
 # ssh -L 4711:enwiki.analytics.db.svc.eqiad.wmflabs:3306 \
 #     user@login.toolforge.org
