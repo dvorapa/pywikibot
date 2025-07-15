@@ -15,8 +15,8 @@ mylang = 'cs'
 # have a bot account. If you have a unique username for all sites of a
 # family , you can use '*'
 usernames['wikipedia']['cs'] = 'DvorapaBot'
-with open('user-oauth.py', 'rb') as user_oauth:
-    exec(user_oauth.read())
+from user_oauth import credentials
+authenticate['cs.wikipedia.org'] = credentials
 
 # The list of BotPasswords is saved in another file. Import it if needed.
 # See https://www.mediawiki.org/wiki/Manual:Pywikibot/BotPasswords to know how
