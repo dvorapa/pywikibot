@@ -14,7 +14,7 @@ v = set()
 w = []
 # i kategorie
 for i in s.allpages(namespace=14):
-    if not a%20000:
+    if not a%7000:
         print(i.title(with_ns=False)[:2], flush=True)
     a += 1
     # m generator podkategorii
