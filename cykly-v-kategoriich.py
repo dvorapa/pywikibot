@@ -7,7 +7,7 @@ s = Site()
 # a pocet proslych kategorii
 a = 0
 # r maximalni rekurze
-r = getrecursionlimit()-1
+r = getrecursionlimit()-10
 # v set kategorii v cyklu
 v = set()
 # w list potencialnich kategorii jednotlivych cyklu
