@@ -18,7 +18,7 @@ for c in s.allpages(namespace=14):
     if c in m[c]:
         print(c, flush=True)
         v.append([c] * 2)
-print(str(a) + " read categories")
+print(str(a) + ' read categories')
 
 # t list potencialniho cyklu
 for t in tarjan(m):
@@ -26,17 +26,18 @@ for t in tarjan(m):
         print(t, flush=True)
         v.append(t + [t[0]])
 
-if [Category(s, "Kategorie:Wikipedie:Neindexované stránky")] * 2 in v:
-    v.remove([Category(s, "Kategorie:Wikipedie:Neindexované stránky")] * 2)
+# j vyjimka
+j = [Category(s, 'Kategorie:Wikipedie:Neindexované stránky')] * 2
+if j in v:
+    v.remove(j)
 
 if len(v) > 1:
     # l list stringu jednotlivych cyklu
     l = []
     for o in v:
-        l.append(" > ".join(g.title(as_link=True, textlink=True) for g in o))
+        l.append(' > '.join(g.title(as_link=True, textlink=True) for g in o))
 
     # p page
-    p = Page(s, "Wikipedie:Údržbové seznamy/Cykly v kategoriích/seznam")
-    p.text += "\n# " + "\n# ".join(l)
-    print(p.text)
-    # p.save(summary='Robot: aktualizace')
+    p = Page(s, 'Wikipedie:Údržbové seznamy/Cykly v kategoriích/seznam')
+    p.text += '\n# ' + '\n# '.join(l)
+    p.save(summary='Robot: aktualizace')
