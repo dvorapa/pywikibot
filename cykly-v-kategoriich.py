@@ -1,68 +1,42 @@
 from pywikibot import Site, Category, Page
-from sys import getrecursionlimit
+from tarjan import tarjan
 
 # s site
 s = Site()
-
 # a pocet proslych kategorii
 a = 0
-# r maximalni rekurze
-r = getrecursionlimit()-10
-# v set kategorii v cyklu
-v = set()
-# w list potencialnich kategorii jednotlivych cyklu
-w = []
-# i kategorie
-for i in s.allpages(namespace=14):
-    if not a%7000:
-        print(i.title(with_ns=False)[:2], flush=True)
+# m dict primych podkategorii
+m = {}
+# v list objevenych cyklu
+v = []
+# c prochazena kategorie
+for c in s.allpages(namespace=14):
+    if not a % 7000:
+        print(c.title(with_ns=False)[:2], flush=True)
     a += 1
-    # m generator podkategorii
-    m = i.subcategories(recurse=r)
-    if next(m, False) and next(i.categories().__iter__(), False):
-        # g list potencialnich kategorii cyklu
-        g = []
-        # f set videnych podkategorii
-        f = set()
-        # j podkategorie
-        for j in m:
-            if g:
-                g.append(j)
-            elif j in f:
-                break
-            if j == i:
-                v.add(i)
-                if not g:
-                    g.append(i)
-                else:
-                    w.append(g)
-                    g.clear()
-                    print(i, flush=True)
-                    break
-            f.add(j)
-
+    m[c] = list(c.subcategories(recurse=1))
+    if c in m[c]:
+        print(c, flush=True)
+        v.append([c] * 2)
 print(str(a) + " read categories")
 
-# f set videnych cyklu
-f = set()
-f.add(frozenset(Category(s, 'Kategorie:Wikipedie:Neindexované stránky')))
-# t list stringu jednotlivych cyklu
-t = []
-# g list potencialnich kategorii cyklu
-for g in w:
-    # l list kategorii cyklu
-    l = []
-    # i potencialni kategorie cyklu
-    for i in g:
-        if i in v:
-            l.append(i)
-    # u set kategorii cyklu
-    u = frozenset(l)
-    if not u in f:
-        f.add(u)
-        t.append(' > '.join(i.title(as_link=True, textlink=True) for i in l))
+# t list potencialniho cyklu
+for t in tarjan(m):
+    if len(t) > 1:
+        print(t, flush=True)
+        v.append(t + [t[0]])
 
-# p page
-p = Page(s, 'Wikipedie:Údržbové seznamy/Cykly v kategoriích/seznam')
-p.text += '\n# ' + '\n# '.join(t)
-p.save(summary='Robot: aktualizace')
+if [Category(s, "Kategorie:Wikipedie:Neindexované stránky")] * 2 in v:
+    v.remove([Category(s, "Kategorie:Wikipedie:Neindexované stránky")] * 2)
+
+if len(v) > 1:
+    # l list stringu jednotlivych cyklu
+    l = []
+    for o in v:
+        l.append(" > ".join(g.title(as_link=True, textlink=True) for g in o))
+
+    # p page
+    p = Page(s, "Wikipedie:Údržbové seznamy/Cykly v kategoriích/seznam")
+    p.text += "\n# " + "\n# ".join(l)
+    print(p.text)
+    # p.save(summary='Robot: aktualizace')
