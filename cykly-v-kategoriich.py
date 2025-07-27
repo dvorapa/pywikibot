@@ -35,7 +35,7 @@ if len(v) > 1:
     # l list stringu jednotlivych cyklu
     l = []
     for o in v:
-        l.append(' > '.join(g.title(as_link=True, textlink=True) for g in o))
+        l.append(' > '.join(g.title(as_link=True, textlink=True) for g in reversed(o)))
 
     # p page
     p = Page(s, 'Wikipedie:Údržbové seznamy/Cykly v kategoriích/seznam')
