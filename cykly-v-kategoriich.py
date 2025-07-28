@@ -31,12 +31,23 @@ j = [Category(s, 'Kategorie:Wikipedie:Neindexované stránky')] * 2
 if j in v:
     v.remove(j)
 
-if len(v) > 1:
+if v:
     # l list stringu jednotlivych cyklu
     l = []
+    # o silne souvisla komponenta
     for o in v:
-        if len(o) > 3 and not o[1] in o[0].subcategories(recurse=1):
-            o.reverse()
+        if len(o) > 3:
+            # z cyklus
+            z = []
+            # q kategorie v ssk
+            q = o[0]
+            z.append(q)
+            o.remove(q)
+            while o:
+                q = [n for n in q.subcategories(recurse=1) if n in o][0]
+                z.append(q)
+                o.remove(q)
+            o = z
         l.append(' > '.join(g.title(as_link=True, textlink=True) for g in o))
 
     # p page
