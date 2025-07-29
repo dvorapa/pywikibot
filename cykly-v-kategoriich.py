@@ -16,7 +16,7 @@ for c in s.allpages(namespace=14):
 print(str(a) + ' read categories')
 
 # v list objevenych cyklu
-v = simple_cycles(DiGraph(m))
+v = sorted(simple_cycles(DiGraph(m)), key=len)
 
 # j vyjimka
 j = [Category(s, 'Kategorie:Wikipedie:Neindexované stránky')]
@@ -24,7 +24,6 @@ if j in v:
     v.remove(j)
 
 if v:
-    v.sort(key=len)
     # l list stringu jednotlivych cyklu
     l = []
     # o cyklus
