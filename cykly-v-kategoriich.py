@@ -51,7 +51,7 @@ if v:
             # b kategorie nejdelsiho cyklu
             for x, b in enumerate(w):
                 l[-1] += w[x - 1].title(as_link=True, textlink=True)
-                if [y for y in set(o) - set([b]) if y in w[x - 1].subcategories(recurse=1)]:
+                if [y for y in set(o) - set([b]) if y in z[w[x - 1]]]:
                     l[-1] += '^'
                 l[-1] += ' > '
             l[-1] += b.title(as_link=True, textlink=True)
