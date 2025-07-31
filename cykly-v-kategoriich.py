@@ -39,14 +39,22 @@ if v:
     # o silne souvisla komponenta
     for o in v:
         if len(o) > 2:
+            l.append('')
             # z dict primych podkategorii
             z = {}
             # u kategorie v silne souvisle komponente
             for u in o:
                 z[u] = list(u.subcategories(recurse=1))
-            # w jednotlivy cyklus
-            for w in simple_cycles(DiGraph(z)):
-                l.append(' > '.join(g.title(as_link=True, textlink=True) for g in w + [w[0]]))
+            # w nejdelsi cyklus
+            w = sorted(simple_cycles(DiGraph(z)), key=len)[-1]
+            # x poradi kategorie nejdelsiho cyklu
+            # b kategorie nejdelsiho cyklu
+            for x, b in enumerate(w):
+                l[-1] += w[x - 1].title(as_link=True, textlink=True)
+                if [y for y in set(o) - set([b]) if y in w[x - 1].subcategories(recurse=1)]:
+                    l[-1] += '^'
+                l[-1] += ' > '
+            l[-1] += b.title(as_link=True, textlink=True)
         else:
             l.append(' > '.join(g.title(as_link=True, textlink=True) for g in o + [o[0]]))
 
