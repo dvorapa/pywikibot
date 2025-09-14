@@ -736,7 +736,7 @@ class CosmeticChangesToolkit:
             return text
 
         # iterate stripped sections and create a new page body
-        new_body: textlib.SectionList[textlib.Section] = []
+        new_body: textlib.SectionList = textlib.SectionList()
         for i, strip_section in enumerate(strip_sections):
             current_dep = sections[i].level
             try:
