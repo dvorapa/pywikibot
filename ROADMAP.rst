@@ -1,11 +1,8 @@
 Current Release Changes
 =======================
 
-* i18n Updates
-* Use 'login' token from API response in :meth:`login.ClientLoginManager.login_to_site`
-  (:phab:`T328814`)
-* Always use *fallback_prompt* in :func:`i18n.twtranslate` whenever no
-  translation is found, including unknown keys in existing packages (:phab:`T326470`)
+* Return :meth:`bot.BaseBot.userPut` result with :meth:`AutomaticTWSummaryBot.put_current()
+  <bot.AutomaticTWSummaryBot.put_current>` method
 
 
 Deprecations
@@ -14,6 +11,13 @@ Deprecations
 Pending removal in Pywikibot 13
 -------------------------------
 
+* 10.5.0: Accessing the fallback '*' keys in 'languages', 'namespaces', 'namespacealiases', and
+  'skins' properties of :attr:`APISite.siteinfo<pywikibot.site._apisite.APISite.siteinfo>` are
+  deprecated and will be removed.
+* 10.5.0: The methods :meth:`APISite.protection_types()
+  <pywikibot.site._apisite.APISite.protection_types>` and :meth:`APISite.protection_levels()
+  <pywikibot.site._apisite.APISite.protection_levels>` are deprecated.
+  :attr:`APISite.restrictions<pywikibot.site._apisite.APISite.restrictions>` should be used instead.
 * 10.4.0: Require all parameters of :meth:`Site.allpages()
   <pywikibot.site._generators.GeneratorsMixin.allpages>` except *start* to be keyword arguments.
 * 10.4.0: Positional arguments of :class:`pywikibot.Coordinate` are deprecated and must be given as
