@@ -16,13 +16,13 @@ VERSIONS_REQUIRED_MESSAGE = """
 Pywikibot is not available on:
 {version}
 
-This version of Pywikibot only supports Python 3.8+.
+This version of Pywikibot only supports Python 3.9+.
 """
 
 
 def python_is_supported():
     """Check that Python is supported."""
-    return sys.version_info[:3] >= (3, 8)
+    return sys.version_info[:3] >= (3, 9)
 
 
 if not python_is_supported():  # pragma: no cover
