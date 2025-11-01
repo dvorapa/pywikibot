@@ -9,6 +9,7 @@ from __future__ import annotations
 import itertools
 import re
 import sys
+from collections.abc import Callable, Iterable, Sequence
 from datetime import timedelta
 from functools import partial
 from itertools import zip_longest
@@ -16,7 +17,6 @@ from typing import TYPE_CHECKING
 
 import pywikibot
 from pywikibot import i18n
-from pywikibot.backports import Callable, Iterable, Sequence, removeprefix
 from pywikibot.bot import ShowingListOption
 from pywikibot.data import api
 from pywikibot.exceptions import (
@@ -636,7 +636,7 @@ class GeneratorFactory:
             value = pywikibot.input('What namespace are you filtering on?')
         not_key = 'not:'
         if value.startswith(not_key):
-            value = removeprefix(value, not_key)
+            value = value.removeprefix(not_key)
             resolve = self.site.namespaces.resolve
             not_ns = set(resolve(value.split(',')))
             if not self._namespaces:

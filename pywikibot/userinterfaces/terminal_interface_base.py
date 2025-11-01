@@ -11,17 +11,12 @@ import logging
 import re
 import sys
 import threading
+from collections.abc import Iterable, Sequence
 from typing import Any, Literal, NoReturn, TextIO
 
 import pywikibot
 from pywikibot import config
-from pywikibot.backports import (
-    Iterable,
-    RLock,
-    Sequence,
-    batched,
-    removeprefix,
-)
+from pywikibot.backports import RLock, batched
 from pywikibot.bot_choice import (
     ChoiceException,
     Option,
@@ -505,7 +500,7 @@ class UI(ABUIC):
                         if force:
                             raise ValueError(
                                 f'{default!r} is not a valid Option for '
-                                f'{removeprefix(output, question).lstrip()}')
+                                f'{output.removeprefix(question).lstrip()}')
 
         if isinstance(answer, ChoiceException):
             raise answer
