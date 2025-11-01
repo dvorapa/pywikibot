@@ -14,6 +14,7 @@ import sys
 import types
 import urllib.parse as urlparse
 import warnings
+from collections.abc import Mapping, Sequence
 from importlib import import_module
 from itertools import chain
 from os.path import basename, dirname, splitext
@@ -22,7 +23,6 @@ from typing import TYPE_CHECKING, NoReturn
 
 import pywikibot
 from pywikibot import config
-from pywikibot.backports import DefaultDict, Mapping, Sequence, removesuffix
 from pywikibot.data import wikistats
 from pywikibot.exceptions import FamilyMaintenanceWarning, UnknownFamilyError
 from pywikibot.tools import classproperty, deprecated
@@ -31,7 +31,7 @@ from pywikibot.tools import classproperty, deprecated
 logger = logging.getLogger('pywiki.wiki.family')
 
 if TYPE_CHECKING:
-    CrossnamespaceType = DefaultDict[str, dict[str, list[int]]]
+    CrossnamespaceType = collections.defaultdict[str, dict[str, list[int]]]
 
 # Legal characters for Family.name and Family.langs keys
 NAME_CHARACTERS = string.ascii_letters + string.digits
@@ -1195,7 +1195,7 @@ def AutoFamily(name: str, url: str) -> SingleSiteFamily:
     def scriptpath(self, code):
         """Extract the script path from the URL."""
         if self.url.path.endswith('/api.php'):
-            return removesuffix(self.url.path, '/api.php')
+            return self.url.path.removesuffix('/api.php')
 
         # AutoFamily refers to the variable set below, not the function
         # but the reference must be given here
