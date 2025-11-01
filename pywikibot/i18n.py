@@ -26,23 +26,15 @@ import os
 import pkgutil
 import re
 from collections import abc, defaultdict
+from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
 from contextlib import suppress
+from functools import cache
 from pathlib import Path
 from textwrap import fill
 from typing import Any
 
 import pywikibot
 from pywikibot import __url__, config
-from pywikibot.backports import (
-    Generator,
-    Iterable,
-    Iterator,
-    Mapping,
-    Match,
-    Sequence,
-    cache,
-    removesuffix,
-)
 from pywikibot.plural import plural_rule
 
 
@@ -460,7 +452,7 @@ def _extract_plural(lang: str, message: str, parameters: Mapping[str, int]
         assert not callable(plural_rule)
         return plural_rule
 
-    def replace_plural(match: Match[str]) -> str:
+    def replace_plural(match: re.Match[str]) -> str:
         selector = match[1]
         variants = match[2]
         num = parameters[selector]
@@ -878,7 +870,7 @@ def twget_keys(twtitle: str) -> list[str]:
     pathname = os.path.join(next(iter(mod.__path__)), package)
 
     # build a list of languages in that directory
-    langs = [removesuffix(filename, '.json')
+    langs = [filename.removesuffix('.json')
              for filename in sorted(os.listdir(pathname))
              if filename.endswith('.json')]
 
@@ -888,7 +880,7 @@ def twget_keys(twtitle: str) -> list[str]:
             if lang != 'qqq' and _get_translation(lang, twtitle)]
 
 
-def bundles(stem: bool = False) -> Generator[Path | str, None, None]:
+def bundles(stem: bool = False) -> Generator[Path | str]:
     """A generator which yields message bundle names or its path objects.
 
     The bundle name usually corresponds with the script name which is

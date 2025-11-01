@@ -11,6 +11,7 @@ import re
 import time
 import webbrowser
 from collections import OrderedDict, defaultdict
+from collections.abc import Iterable
 from contextlib import suppress
 from textwrap import fill
 from typing import TYPE_CHECKING, Any, Literal, NamedTuple, TypeVar
@@ -18,9 +19,6 @@ from warnings import warn
 
 import pywikibot
 from pywikibot import login
-from pywikibot.backports import DefaultDict, Iterable, Match
-from pywikibot.backports import OrderedDict as OrderedDictType
-from pywikibot.backports import removesuffix
 from pywikibot.comms import http
 from pywikibot.data import api
 from pywikibot.exceptions import (
@@ -91,7 +89,7 @@ if TYPE_CHECKING:
 
 __all__ = ('APISite', )
 
-_mw_msg_cache: DefaultDict[str, dict[str, str]] = defaultdict(dict)
+_mw_msg_cache: defaultdict[str, dict[str, str]] = defaultdict(dict)
 
 
 class _OnErrorExc(NamedTuple):
@@ -228,7 +226,7 @@ class APISite(
                     if m_site['dbname'] == dbname:
                         # extract site from dbname
                         family = m_site['code']
-                        code = removesuffix(dbname, family).replace('_', '-')
+                        code = dbname.removesuffix(family).replace('_', '-')
                         if family == 'wiki':
                             family = 'wikipedia'
                         return pywikibot.Site(code, family)
@@ -964,7 +962,7 @@ class APISite(
         self,
         keys: Iterable[str],
         lang: str | None = None
-    ) -> OrderedDictType[str, str]:
+    ) -> OrderedDict[str, str]:
         """Fetch the text of a set of MediaWiki messages.
 
         The returned dict uses each key to store the associated message.
@@ -1299,7 +1297,7 @@ class APISite(
         def handle_warning(
             mod: str,
             warning: str
-        ) -> Match[str] | bool | None:
+        ) -> re.Match[str] | bool | None:
             return (mod == 'query' and re.match(
                 r'Unrecognized value for parameter [\'"]meta[\'"]: wikibase',
                 warning))
@@ -1772,7 +1770,7 @@ class APISite(
 
         user_tokens = {}
         if data.get('tokens'):
-            user_tokens = {removesuffix(key, 'token'): val
+            user_tokens = {key.removesuffix('token'): val
                            for key, val in data['tokens'].items()
                            if val != '+\\'}
 
