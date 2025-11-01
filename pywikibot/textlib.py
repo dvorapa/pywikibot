@@ -10,17 +10,13 @@ import itertools
 import re
 import sys
 from collections import OrderedDict
-from collections.abc import Sequence
+from collections.abc import Callable, Container, Iterable, Sequence
 from contextlib import closing, suppress
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from typing import NamedTuple
 
 import pywikibot
-from pywikibot.backports import Callable, Container, Iterable, Match
-from pywikibot.backports import OrderedDict as OrderedDictType
-from pywikibot.backports import Pattern
-from pywikibot.backports import Sequence as SequenceType
 from pywikibot.backports import pairwise
 from pywikibot.exceptions import InvalidTitleError, SiteDefinitionError
 from pywikibot.family import Family
@@ -42,7 +38,7 @@ except ImportError:
 
 
 # cache for replaceExcept to avoid recompile or regexes each call
-_regex_cache: dict[str, Pattern[str]] = {}
+_regex_cache: dict[str, re.Pattern[str]] = {}
 
 # The regex below collects nested templates, providing simpler
 # identification of templates used at the top-level of wikitext.
@@ -143,7 +139,7 @@ def to_local_digits(phrase: str | int, lang: str) -> str:
 
 
 def to_ascii_digits(phrase: str,
-                    langs: SequenceType[str] | str | None = None) -> str:
+                    langs: Sequence[str] | str | None = None) -> str:
     """Change non-ascii digits to ascii digits.
 
     .. versionadded:: 7.0
@@ -320,7 +316,7 @@ def _create_default_regexes() -> None:
 def get_regexes(
     keys: str | Iterable[str],
     site: pywikibot.site.BaseSite | None = None
-) -> list[Pattern[str]]:
+) -> list[re.Pattern[str]]:
     """Fetch compiled regexes.
 
     .. versionchanged:: 8.2
@@ -382,9 +378,9 @@ def get_regexes(
 
 
 def replaceExcept(text: str,
-                  old: str | Pattern[str],
-                  new: str | Callable[[Match[str]], str],
-                  exceptions: SequenceType[str | Pattern[str]],
+                  old: str | re.Pattern[str],
+                  new: str | Callable[[re.Match[str]], str],
+                  exceptions: Sequence[str | re.Pattern[str]],
                   caseInsensitive: bool = False,
                   allowoverlap: bool = False,
                   marker: str = '',
@@ -2019,7 +2015,7 @@ def extract_templates_and_params(
     text: str,
     remove_disabled_parts: bool = False,
     strip: bool = False,
-) -> list[tuple[str, OrderedDictType[str, str]]]:
+) -> list[tuple[str, OrderedDict[str, str]]]:
     """Return a list of templates found in text.
 
     Return value is a list of tuples. There is one tuple for each use of a
@@ -2203,11 +2199,11 @@ class TimeStripperPatterns(NamedTuple):
     .. versionadded:: 8.0
     """
 
-    time: Pattern[str]
-    tzinfo: Pattern[str]
-    year: Pattern[str]
-    month: Pattern[str]
-    day: Pattern[str]
+    time: re.Pattern[str]
+    tzinfo: re.Pattern[str]
+    year: re.Pattern[str]
+    month: re.Pattern[str]
+    day: re.Pattern[str]
 
 
 class TimeStripper:
@@ -2352,7 +2348,7 @@ class TimeStripper:
 
     def _last_match_and_replace(self,
                                 txt: str,
-                                pat) -> tuple[str, Match[str] | None]:
+                                pat) -> tuple[str, re.Match[str] | None]:
         """Take the rightmost match and replace with marker.
 
         It does so to prevent spurious earlier matches.
@@ -2365,7 +2361,7 @@ class TimeStripper:
 
         m = all_matches[-1]
 
-        def marker(m: Match[str]):
+        def marker(m: re.Match[str]):
             """Replace exactly the same number of matched characters.
 
             Same number of chars shall be replaced, in order to be able
