@@ -467,3 +467,35 @@ class TextExtractsMixin:
             raise Error(msg)
 
         return data[str(page.pageid)]['extract']
+
+
+class FlaggedRevsMixin:
+
+    """APISite mixin for the FlaggesRevs extension.
+
+    .. version-added:: 11.7
+    .. seealso:: https://www.mediawiki.org/wiki/Extension:FlaggedRevs
+    """
+
+    @need_extension('FlaggedRevs')
+    def stable_revid(self: BaseSiteProtocol,
+                     page: pywikibot.Page) -> int | None:
+        """Return the stable (reviewed) revision id for a page, if any.
+
+        :param page: The page to inspect.
+        :return: The stable revision id or None if not available.
+        :raises UnknownExtensionError: FlaggedRevs not available
+        """
+        req = self.simple_request(
+            action='query',
+            prop='flagged',
+            titles=page.title(with_section=False),
+            formatversion=2
+        )
+        data = req.submit()
+
+        pages = data.get('query', {}).get('pages', [])
+        if not pages:
+            return None
+
+        return pages[0].get('flagged', {}).get('stable_revid')
