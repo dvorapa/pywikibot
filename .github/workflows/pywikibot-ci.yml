@@ -51,6 +51,18 @@ jobs:
           - python-version: '3'
             site: wikipedia:de
             os: macOS-latest
+          - python-version: 3.13t
+            site: wikipedia:test
+            experimental: true
+          - python-version: 3.14t
+            site: wikipedia:test
+            experimental: true
+          - python-version: graalpy-24.1
+            site: wikipedia:test
+            experimental: true
+          - python-version: graalpy-25.0
+            site: wikipedia:test
+            experimental: true
           # ubuntu-22.04 required 3.15-dev due to T382214
           - python-version: 3.15-dev
             site: wikipedia:en
@@ -108,9 +120,11 @@ jobs:
       - name: Test with unittest or pytest
         id: ci_test
         continue-on-error: true
-        timeout-minutes: 45
+        timeout-minutes: 60
         env:
           PYWIKIBOT_TEST_NO_RC: ${{ (matrix.site == 'wikisource:zh' || matrix.test_no_rc) && 1 || 0 }}
+          # Force GIL "off" due to mwparserfromhell issue as suggested by warning in T412624
+          PYTHON_GIL: ${{ endsWith(matrix.python-version, 't') && '0' || '1' }}
         run: |
           python pwb.py version
           if [ ${{matrix.site || 0}} != 'wikisource:zh' ]; then

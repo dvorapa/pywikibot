@@ -23,7 +23,7 @@ keywords = [
     "pywiki", "pywikibase", "pywikibot", "pywikipedia", "pywikipediabot",
     "wiki", "wikibase", "wikidata", "wikimedia", "wikipedia",
 ]
-license =  "MIT"
+license = "MIT"
 license-files = ["LICENSE"]
 classifiers=[
     "Development Status :: 5 - Production/Stable",
@@ -173,7 +173,7 @@ disable = [
 
 
 [tool.isort]
-py_version = 38
+py_version = 39
 add_imports = ["from __future__ import annotations"]
 atomic = true
 ensure_newline_before_comments = true
@@ -205,7 +205,6 @@ ignore = ["D105", "D211", "D213", "D214", "D401", "D404", "D406", "D407", "D412"
 
 [tool.ruff.lint.per-file-ignores]
 "pywikibot/families/*" = ["D102"]
-"scripts/dataextend.py" = ["D101", "D102"]
 "tests/ui_tests.py" = ["D102", "D103"]
 
 [tool.ruff.lint.flake8-quotes]
