@@ -1,6 +1,6 @@
 """The initialization file for the Pywikibot framework."""
 #
-# (C) Pywikibot team, 2008-2025
+# (C) Pywikibot team, 2008-2026
 #
 # Distributed under the terms of the MIT license.
 #
@@ -32,6 +32,7 @@ from pywikibot._wbtypes import (
     WbTime,
     WbUnknown,
 )
+from pywikibot.backports import RLock
 from pywikibot.bot import (
     Bot,
     CurrentPageBot,
@@ -60,11 +61,22 @@ from pywikibot.logging import (
 )
 from pywikibot.site import BaseSite as _BaseSite
 from pywikibot.time import Timestamp
-from pywikibot.tools import normalize_username
+from pywikibot.tools import (
+    PYTHON_VERSION,
+    deprecated_signature,
+    normalize_username,
+)
 
 
 if TYPE_CHECKING:
     from pywikibot.site import APISite
+
+if PYTHON_VERSION >= (3, 13):
+    from queue import ShutDown
+else:
+    class ShutDown(Exception):
+
+        """Dummy exception for Python 3.9-3.12."""
 
 
 __all__ = (
@@ -333,18 +345,22 @@ def _flush(stop: bool = True) -> None:
     debug('_flush() called')
 
     def remaining() -> tuple[int, datetime.timedelta]:
+        """Calculate remaining pages and seconds."""
         remaining_pages = page_put_queue.qsize()
-        if stop:
+        if stop and PYTHON_VERSION < (3, 13):
             # -1 because we added a None element to stop the queue
             remaining_pages -= 1
 
         remaining_seconds = datetime.timedelta(
-            seconds=round(remaining_pages * _config.put_throttle))
+            seconds=round(remaining_pages * max(_config.put_throttle, 1)))
         return (remaining_pages, remaining_seconds)
 
     if stop:
-        # None task element leaves async_manager
-        page_put_queue.put((None, [], {}))
+        if PYTHON_VERSION >= (3, 13):
+            page_put_queue.shutdown()
+        else:
+            # None task element leaves async_manager
+            page_put_queue.put((None, [], {}))
 
     num, sec = remaining()
     if num > 0 and sec.total_seconds() > _config.noisysleep:
@@ -353,8 +369,8 @@ def _flush(stop: bool = True) -> None:
 
     exit_queue = None
     if _putthread is not threading.current_thread():
-        while _putthread.is_alive() and not (page_put_queue.empty()
-                                             and page_put_queue_busy.empty()):
+        while _putthread.is_alive() and (not page_put_queue.empty()
+                                         or _page_put_queue_busy.locked()):
             try:
                 _putthread.join(1)
             except KeyboardInterrupt:
@@ -383,8 +399,12 @@ def _flush(stop: bool = True) -> None:
 
 
 # Create a separate thread for asynchronous page saves (and other requests)
-def async_manager(block=True) -> None:
+@deprecated_signature(since='11.0.0')
+def async_manager(*, block=True) -> None:
     """Daemon to take requests from the queue and execute them in background.
+
+    .. versionchanged:: 11.0
+       *block* must be given as keyword argument.
 
     :param block: If true, block :attr:`page_put_queue` if necessary
         until a request is available to process. Otherwise process a
@@ -393,13 +413,17 @@ def async_manager(block=True) -> None:
     while True:
         if not block and page_put_queue.empty():
             break
-        (request, args, kwargs) = page_put_queue.get(block)
-        page_put_queue_busy.put(None)
-        if request is None:
+
+        try:
+            request, args, kwargs = page_put_queue.get(block)
+        except ShutDown:
             break
-        request(*args, **kwargs)
-        page_put_queue.task_done()
-        page_put_queue_busy.get()
+
+        with _page_put_queue_busy:
+            if request is None:  # Python < 3.13 not handled by ShutDown
+                break
+            request(*args, **kwargs)
+            page_put_queue.task_done()
 
 
 def async_request(request: Callable, *args: Any, **kwargs: Any) -> None:
@@ -408,14 +432,16 @@ def async_request(request: Callable, *args: Any, **kwargs: Any) -> None:
         # ignore RuntimeError if start() is called more than once
         with page_put_queue.mutex, suppress(RuntimeError):
             _putthread.start()
+
     page_put_queue.put((request, args, kwargs))
 
 
 #: Queue to hold pending requests
 page_put_queue: Queue = Queue(_config.max_queue_size)
 
-# queue to signal that async_manager is working on a request. See T147178.
-page_put_queue_busy: Queue = Queue(_config.max_queue_size)
+# RLock to signal that async_manager is working on a request. See T147178.
+_page_put_queue_busy: RLock = RLock()
+
 # set up the background thread
 _putthread = threading.Thread(target=async_manager,
                               name='Put-Thread',  # for debugging purposes
