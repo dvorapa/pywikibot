@@ -25,7 +25,7 @@ To enable access via cookies, assign cookie handling class::
    Cookies are lazy loaded when logging to site.
 """
 #
-# (C) Pywikibot team, 2007-2025
+# (C) Pywikibot team, 2007-2026
 #
 # Distributed under the terms of the MIT license.
 #
@@ -168,7 +168,7 @@ class _UserAgentFormatter(Formatter):
 _USER_AGENT_FORMATTER = _UserAgentFormatter()
 
 
-def user_agent_username(username=None):
+def user_agent_username(username=None) -> str:
     """Reduce username to a representation permitted in HTTP headers.
 
     To achieve that, this function:
@@ -269,11 +269,11 @@ def request(site: pywikibot.site.BaseSite,
        :meth:`family.Family.base_url` method.
 
     :param site: The Site to connect to
-    :param uri: the URI to retrieve
+    :param uri: The URI to retrieve
     :keyword CodecInfo or str or None charset: Either a valid charset
         (usable for `str.decode()`) or None to automatically chose the
         charset from the returned header (defaults to latin-1).
-    :keyword str | None protocol: a url scheme
+    :keyword str | None protocol: A url scheme
     :return: The received data Response
     """
     kwargs.setdefault('verify', site.verify_SSL_certificate())
@@ -293,8 +293,8 @@ def request(site: pywikibot.site.BaseSite,
 def get_authentication(uri: str) -> tuple[str, str] | None:
     """Retrieve authentication token.
 
-    :param uri: the URI to access
-    :return: authentication token
+    :param uri: The URI to access
+    :return: Authentication token
     """
     parsed_uri = urlparse(uri)
     netloc_parts = parsed_uri.netloc.split('.')
@@ -313,11 +313,11 @@ def get_authentication(uri: str) -> tuple[str, str] | None:
     return None
 
 
-def error_handling_callback(response) -> None:
+def error_handling_callback(response: requests.Response | Exception) -> None:
     """Raise exceptions and log alerts.
 
-    :param response: Response returned by Session.request().
-    :type response: :py:obj:`requests.Response`
+    :param response: Response returned by Session.request() or Exception
+        raised during request.
     """
     # TODO: do some error correcting stuff
     if isinstance(response, requests.exceptions.SSLError) \
@@ -366,30 +366,32 @@ def error_handling_callback(response) -> None:
         warning(f'Http response status {response.status_code}')
 
 
-def fetch(uri: str, method: str = 'GET', headers: dict | None = None,
+def fetch(uri: str,
+          method: str = 'GET',
+          headers: dict[str, str] | None = None,
           default_error_handling: bool = True,
-          use_fake_user_agent: bool | str = False, **kwargs):
+          use_fake_user_agent: bool | str = False,
+          **kwargs) -> requests.Response:
     """HTTP request.
 
     See :py:obj:`requests.Session.request` for parameters.
 
     :param uri: URL to send
     :param method: HTTP method of the request (default: GET)
-    :param headers: dictionary of headers of the request
+    :param headers: Dictionary of headers of the request
     :param default_error_handling: Use default error handling
     :param use_fake_user_agent: Set to True to use fake UA, False to use
         pywikibot's UA, str to specify own UA. This behaviour might be
         overridden by domain in config.
 
-    :keyword charset: Either a valid charset (usable for str.decode()) or None
-        to automatically chose the charset from the returned header (defaults
-        to latin-1)
+    :keyword charset: Either a valid charset (usable for str.decode())
+        or None to automatically chose the charset from the returned
+        header (defaults to latin-1)
     :type charset: CodecInfo, str, None
-    :keyword verify: verify the SSL certificate (default is True)
+    :keyword verify: Verify the SSL certificate (default is True)
     :type verify: bool or path to certificates
     :keyword callbacks: Methods to call once data is fetched
     :type callbacks: list of callable
-    :rtype: :py:obj:`requests.Response`
     """
     # Change user agent depending on fake UA settings.
     # Set header to new UA if needed.
@@ -457,6 +459,7 @@ def fetch(uri: str, method: str = 'GET', headers: dict | None = None,
         response.encoding = _decide_encoding(response, charset)
 
     for callback in callbacks:
+        # Note: error_handling_callback raises the Exception
         callback(response)
 
     return response
