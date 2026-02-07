@@ -43,6 +43,7 @@ import collections
 import copy
 import os
 import platform
+import re
 import stat
 import sys
 import types
@@ -134,8 +135,8 @@ disambiguation_comment: _DabComDict = collections.defaultdict(dict)
 # User agent format.
 # For the meaning and more help in customization see:
 # https://www.mediawiki.org/wiki/Manual:Pywikibot/User-agent
-user_agent_format = ('{script_product} ({script_comments}) {pwb} ({revision}) '
-                     '{http_backend} {python}')
+user_agent_format = ('{username}/{script} ({script_comments}) {pwb} '
+                     '({revision}) {python} {http_backend}')
 
 # User agent description
 # This is a free-form string that can be user to describe specific bot/tool,
@@ -857,13 +858,13 @@ max_queue_size = 64
 
 # Pickle protocol version to use for storing dumps.
 # This config variable is not used for loading dumps.
-# Version 0 is a more or less human-readable protocol
-# Version 2 is common to both Python 2 and 3, and should
-# be used when dumps are accessed by both versions.
+# Version 0 is a more or less human-readable protocol.
+# Version 1 is an old binary format.
+# Version 2 is common to both Python 2 and 3. Default for Pywikibot 1–10.
 # Version 3 is only available for Python 3
 # Version 4 is only available for Python 3.4+
-# Version 5 was added with Python 3.8
-pickle_protocol = 2
+# Version 5 was added with Python 3.8. It is the default since Pywikibot 11.
+pickle_protocol = 5
 
 # ============================
 # End of configuration section
@@ -987,9 +988,10 @@ def _assert_types(
 
 
 DEPRECATED_VARIABLE = (
-    f'"{{}}" present in your {user_config_file} is no longer a supported'
-    ' configuration variable and should be removed. Please inform the'
-    ' maintainers if you depend on it.'
+    '"{name}" present in your '
+    f'{user_config_file} is deprecated since'
+    ' {since} and no longer a supported configuration variable and should be'
+    ' removed. Please inform the maintainers if you depend on it.'
 )
 
 
@@ -1013,7 +1015,11 @@ def _check_user_config_types(
                 user_config[name] = value
         elif not name.startswith('_') and name not in skipped:
             if name in _deprecated_variables:
-                warn('\n' + fill(DEPRECATED_VARIABLE.format(name)),
+                msg = DEPRECATED_VARIABLE.format(
+                    name=name,
+                    since=_deprecated_variables[name]
+                )
+                warn('\n' + fill(msg),
                      _ConfigurationDeprecationWarning, stacklevel=2)
             else:
                 warn('\n' + fill(f'Configuration variable "{name}" is defined '
@@ -1028,6 +1034,30 @@ _check_user_config_types(_exec_globals, _public_globals, _imports)
 # Copy the user config settings into globals
 _modified = {_key for _key in _public_globals
              if _exec_globals[_key] != globals()[_key]}
+
+# UA variables deprecated since Pywikibot 11
+if 'user_agent_format' in _modified:
+    _right_user_agent_format = _exec_globals['user_agent_format']
+    _right_user_agent_format, _number_of_subs_made = re.subn(
+        r'\{(lang|code|family)\}', '{site}', _right_user_agent_format, count=1)
+    if _number_of_subs_made:
+        _right_user_agent_format = re.sub(
+            r'\{(lang|code|family)\}', '', _right_user_agent_format)
+    _right_user_agent_format = re.sub(
+        r'\{script_product\}', '{script}', _right_user_agent_format)
+    _right_user_agent_format = re.sub(
+        r'\{version\}', '{revision}', _right_user_agent_format)
+    msg = """
+Deprecated placeholders in "user_agent_format" detected since Pywikibot 11.0:
+- The first occurrence of "{lang}", "{code}" or "{family}" is replaced with
+  "{site}", others are removed.
+- All occurrences of "{script_product}" replaced with "{script}".
+- All occurrences of "{version}" replaced with "{revision}".
+"""
+    if _right_user_agent_format != _exec_globals['user_agent_format']:
+        warn(msg, _ConfigurationDeprecationWarning, stacklevel=2)
+        _exec_globals['user_agent_format'] = _right_user_agent_format
+    del _right_user_agent_format, _number_of_subs_made
 
 for _key in _modified:
     globals()[_key] = _exec_globals[_key]
