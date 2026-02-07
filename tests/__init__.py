@@ -1,9 +1,10 @@
-"""Package tests."""
 #
 # (C) Pywikibot team, 2007-2026
 #
 # Distributed under the terms of the MIT license.
 #
+"""Package tests."""
+
 from __future__ import annotations
 
 
@@ -82,7 +83,6 @@ library_test_modules = {
     'edit',
     'edit_failure',
     'eventstreams',
-    'exceptions',
     'family',
     'file',
     'fixes',
