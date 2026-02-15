@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# (C) Pywikibot team, 2017-2024
+# (C) Pywikibot team, 2017-2026
 #
 # Distributed under the terms of the MIT license.
 #
@@ -20,7 +20,6 @@ This script supports the following command line parameters:
    within a settings file which is scripts.ini by default.
 .. versionadded:: 3.0.20180108
 """
-
 from __future__ import annotations
 
 import binascii
