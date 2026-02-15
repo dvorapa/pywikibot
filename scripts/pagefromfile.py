@@ -4,7 +4,7 @@
 #
 # Distributed under the terms of the MIT license.
 #
-r"""Bot to upload pages from a text file.
+"""Bot to upload pages from a text file.
 
 This bot takes its input from the UTF-8 text file that contains a number
 of pages to be put on the wiki. The pages should all have the same
@@ -75,7 +75,6 @@ added between the existing and the new text. For example a parameter
 ``-appendtop:foo`` would add 'foo' between them. A new line can be added
 between them by specifying '\n' as a value.
 """
-
 from __future__ import annotations
 
 import os
