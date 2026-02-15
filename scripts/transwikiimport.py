@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# (C) Pywikibot team, 2023-2024
+# (C) Pywikibot team, 2023-2026
 #
 # Distributed under the terms of the MIT license.
 #
@@ -142,7 +142,6 @@ administrator, transwiki importer or importer.
 
 .. versionadded:: 8.2
 """
-
 from __future__ import annotations
 
 import pywikibot
