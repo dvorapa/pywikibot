@@ -770,7 +770,7 @@ class CosmeticChangesToolkit:
         exceptions = ['nowiki']
 
         def prepare(text):
-            return r'[' + text[0].upper() + text[0].lower() + r']' + re.escape(text[1:]).replace('\ ', '[ _]')
+            return r'[' + text[0].upper() + text[0].lower() + r']' + re.escape(text[1:]).replace('\\ ', '[ _]')
         def match(templates, part):
             if not templates:
                 return False
