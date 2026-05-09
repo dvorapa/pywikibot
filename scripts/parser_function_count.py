@@ -59,7 +59,7 @@ from pywikibot.bot import ExistingPageBot, SingleSiteBot
 
 class ParserFunctionCountBot(SingleSiteBot, ExistingPageBot):
 
-    """Bot class used for obtaining Parser function Count."""
+    """Bot class used for obtaining parser function count."""
 
     use_redirects = False
 
