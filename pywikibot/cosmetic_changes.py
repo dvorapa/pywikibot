@@ -1175,7 +1175,7 @@ class CosmeticChangesToolkit:
         [1]:
         https://commons.wikimedia.org/wiki/Commons:Tools/pywiki_file_description_cleanup
         """
-        if (self.site.sitename != 'commons:commons'
+        if (self.site.family.name != 'commons'
                 or self.namespace != Namespace.FILE):
             return text
 
