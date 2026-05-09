@@ -25,7 +25,7 @@ A
     André Costa
     Andre Engels
     André Malafaya Baptista
-    Anreas J. Schwab
+    Andreas J. Schwab
     Andrei Cipu
     Andrew Harris
     Anirudh GP
@@ -70,7 +70,7 @@ D
 
     dalba
     Damian Johnson
-    Dan Miachel O. Heggø
+    Dan Michael O. Heggø
     Daniel Friesen
     Daniel Herding
     darkoneko
@@ -271,7 +271,6 @@ Q
 
 ::
 
-
     Qualc1
 
 R
@@ -297,7 +296,8 @@ S
 
     Sanjai Siddharthan
     Sarthak Singh
-    Serio Santoro
+    Sébastien Santoro
+    Sergio Santoro
     Scot Wilcoxon
     Shardul C
     Shinjiman
