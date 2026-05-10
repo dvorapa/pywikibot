@@ -247,10 +247,12 @@ links:
                 .. tip:: It is recommended to use this option with the
                    ``-movelog`` pagegenerator.
 
--neverlink:     Used as ``-neverlink:xx`` where xx is a language code,
-                disregard any links found to language xx. You can also
-                specify a list of languages to disregard, separated by
-                commas.
+-neverlink:     Used as ``-neverlink:xx`` where xx is a site code,
+                preserve existing interwiki links to site code xx without
+                checking or following them. This prevents the bot from
+                removing or modifying links to the specified site code(s),
+                treating them as correct. You can also specify a list of
+                site codes, separated by commas.
 
 -ignore:        Used as -ignore:xx:aaa where xx is a language code, and
                 aaa is a page title to be ignored.
@@ -1227,6 +1229,13 @@ class Subject(interwiki_graph.Subject):
 
         for link in iw:
             linkedPage = pywikibot.Page(link)
+
+            if linkedPage.site.code in self.conf.neverlink:
+                pywikibot.info(f'NOTE: {self.origin}: {page} has interwiki '
+                               f'link to {linkedPage} in neverlink site code,'
+                               ' preserving without following')
+                continue
+
             if self.conf.hintsareright and linkedPage.site in self.hintedsites:
                 pywikibot.info(f'NOTE: {self.origin}: {page} extra interwiki '
                                f'on hinted site ignored {linkedPage}')
@@ -1636,6 +1645,13 @@ class Subject(interwiki_graph.Subject):
 
         # Put interwiki links into a map
         old = {p.site: p for p in interwikis}
+
+        # Preserve existing interwiki links to neverlink site codes
+        for site, oldpage in old.items():
+            if site.code in self.conf.neverlink and site not in new:
+                new[site] = oldpage
+                pywikibot.info(f'Preserving link to {oldpage} '
+                               f'(site code {site.code} is in neverlink list)')
 
         # Check what needs to get done
         mods, mcomment, adding, removing, modifying = compareLanguages(
