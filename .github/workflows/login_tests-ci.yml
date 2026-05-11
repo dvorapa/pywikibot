@@ -58,7 +58,7 @@ jobs:
             os: ubuntu-22.04
             experimental: true
           - python-version: '3.10'
-            site: wsbeta:en
+            site: wikisource:beta
             experimental: true
           - python-version: '3.9'
             site: wikidata:test
@@ -96,9 +96,6 @@ jobs:
         run: |
           if  [ ${{matrix.family || 0}} == wpbeta ]; then
             python pwb.py generate_family_file http://${{matrix.code}}.wikipedia.beta.wmcloud.org/ wpbeta y
-          fi
-          if [ ${{matrix.site || 0}} == 'wsbeta:en' ]; then
-            python pwb.py generate_family_file http://en.wikisource.beta.wmcloud.org/ wsbeta n
           fi
       - name: Generate user files
         run: |

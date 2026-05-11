@@ -132,7 +132,7 @@ class AddTextBot(AutomaticTWSummaryBot, ExistingPageBot):
             self.generator = pagegenerators.PageWithTalkPageGenerator(
                 self.generator, return_talk_only=True)
 
-    def skip_page(self, page):
+    def skip_page(self, page: pywikibot.Page) -> bool:
         """Skip if -exceptUrl matches or page does not exists."""
         if page.exists():
             if self.opt.createonly:
