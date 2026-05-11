@@ -16,7 +16,7 @@ the modified page uploaded.
 
 .. hint:: This script should not be used for wiki farms having a data
    repository like Wikidata for Wikimedia cluster. Possibly use the
-   :mod:``scripts.interwikidata`` script for similar purpose in such
+   :mod:`scripts.interwikidata` script for similar purpose in such
    environments.
 
 These command-line arguments can be used to specify which pages to work
@@ -495,10 +495,14 @@ class InterwikiBotConfig:
     graph = config.interwiki_graph
 
     def note(self, text: str) -> None:
-        """Output a notification message with.
+        """Output a notification message.
 
-        The text will be printed only if conf.quiet isn't set.
-        :param text: text to be shown
+        The text will be printed only if :attr:`conf.quiet<quiet>` isn't
+        set.
+
+        .. version-added:: 3.0.20200111
+
+        :param text: Text to be shown.
         """
         if not self.quiet:
             pywikibot.info('NOTE: ' + text)
@@ -1075,7 +1079,7 @@ class Subject(interwiki_graph.Subject):
     def redir_checked(self, page, counter) -> bool:
         """Check and handle redirect.
 
-        Return True if check is done.
+        :return: True if check is done, else False.
         """
         if page.isRedirectPage():
             redirect_target = page.getRedirectTarget()
@@ -1088,7 +1092,7 @@ class Subject(interwiki_graph.Subject):
 
         self.conf.note(f'{page} is {redir}redirect to {redirect_target}')
         if self.origin is None or page == self.origin:
-            # the 1st existig page becomes the origin page, if none was
+            # the 1st existing page becomes the origin page, if none was
             # supplied
             if self.conf.initialredirect:
                 # don't follow another redirect; it might be a self
@@ -1162,7 +1166,7 @@ class Subject(interwiki_graph.Subject):
 
         # Page exists, isn't a redirect, and is a plain link (no section)
         if self.origin is None:
-            # the 1st existig page becomes the origin page, if none was
+            # the 1st existing page becomes the origin page, if none was
             # supplied
             self.origin = page
 
@@ -1687,8 +1691,7 @@ class Subject(interwiki_graph.Subject):
         newtext = textlib.replaceLanguageLinks(oldtext, new,
                                                site=page.site,
                                                template=template)
-        # This is for now. Later there should be different funktions for each
-        # kind
+
         if not botMayEdit(page):
             pywikibot.info(f'SKIPPING: {page} ', newline=False)
             if template:
