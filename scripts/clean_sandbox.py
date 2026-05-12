@@ -76,9 +76,6 @@ content = {
               '<!-- Не удаляйте, пожалуйста, эту строку, '
               'тестируйте ниже -->',
     },
-    'wikinews': {
-        'es': '{{ZDP}}\n== Haz tus pruebas bajo esta sección  ==',
-    },
     'wikiquote': {
         'es': '{{ZDP}}\n== Haz tus pruebas bajo esta sección  ==',
     },
