@@ -27,6 +27,9 @@ Example:
 .. version-changed:: 11.0
    Multiple families can be given with one run. The difference is shown
    instead of the new list.
+.. version-changed:: 11.3
+   wikinews is no longer supported by this script because all wikinews
+   sites are closed.
 """
 from __future__ import annotations
 
@@ -44,7 +47,6 @@ from pywikibot.tools import issue_deprecation_warning
 # supported families by this script
 families_list = [
     'wikibooks',
-    'wikinews',
     'wikipedia',
     'wikiquote',
     'wikisource',
