@@ -2251,7 +2251,7 @@ class InterwikiDumps(OptionHandler):
     def files(self):
         """Return file generator depending on restore_all option.
 
-        rtype: generator
+        :rtype: generator
         """
         if self.opt.restore_all:
             return self.get_files()

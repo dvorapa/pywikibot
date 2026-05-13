@@ -97,7 +97,7 @@ class GeneratorFactory:
         :param positional_arg_name: Generator to use for positional
             args, which do not begin with a hyphen
         :param enabled_options: Only enable options given by this
-            Iterable. This is priorized over disabled_options
+            Iterable. This is prioritized over disabled_options
         :param disabled_options: Disable these given options and let
             them be handled by scripts options handler
         """

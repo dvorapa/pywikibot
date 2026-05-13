@@ -259,7 +259,7 @@ PLACE_AFTER_SECTIONS: dict[str, list[str]]
 """References sections can also be placed after a given section. This
 dictionary defines these sections, sorted by priority. For example, on Simple
 wiki, the script would place the "References" section after the "Notes"
-section, if that existed. The PLACE_AFTER_SECTIONS is priorized over the
+section, if that existed. The PLACE_AFTER_SECTIONS is prioritized over the
 placing of the "placeBeforeSections" sections.
 
 .. attention:: not implemented yet.

@@ -32,7 +32,7 @@ Furthermore, the following command line parameters are supported:
 
 This script is a :py:obj:`ConfigParserBot <bot.ConfigParserBot>`.
 All local parameters can be given inside a scripts.ini file. Options
-passed to the script are priorized over options read from ini file.
+passed to the script are prioritized over options read from ini file.
 
 For example:
 
