@@ -656,7 +656,7 @@ class GeneratorsMixin:
             member_type = {member_type}
 
         if member_type and sortby == 'timestamp':
-            # Covert namespaces to a known type
+            # Convert namespaces to a known type
             namespaces = set(self.namespaces.resolve(namespaces or []))
 
             if 'page' in member_type:
