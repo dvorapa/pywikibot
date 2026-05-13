@@ -1052,7 +1052,7 @@ def add_text(text: str, add: str, *, site=None) -> str:
     :param text: The page content to add text to.
     :param add: Text to add.
     :param site: The site that the text is coming from. Required for
-        reorder of categories and interlanguage links. Te default site
+        reorder of categories and interlanguage links. The default site
         is used otherwise.
     :type site: pywikibot.Site
     """
