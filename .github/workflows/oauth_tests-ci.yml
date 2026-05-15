@@ -77,15 +77,31 @@ jobs:
         if: ${{ matrix.family == 'wpbeta' }}
         run: |
           python pwb.py generate_family_file http://${{matrix.code}}.wikipedia.beta.wmcloud.org/ wpbeta y
+
       - name: Generate user files
         run: |
-          python -Werror::UserWarning -m pwb generate_user_files -family:${{matrix.family}} -code:${{matrix.code}} -user:${{ env.PYWIKIBOT_USERNAME }} -v -debug;
+          python -Werror::UserWarning -m pwb generate_user_files  \
+            -family:${{matrix.family}} \
+            -code:${{matrix.code}} \
+            -user:${{ env.PYWIKIBOT_USERNAME }} \
+            -v \
+            -debug;
+          echo "::add-mask::$CK"
+          echo "::add-mask::$CS"
+          echo "::add-mask::$AK"
+          echo "::add-mask::$AS"
           echo "usernames['commons']['beta'] = '${{ env.PYWIKIBOT_USERNAME }}'" >> user-config.py
           echo "usernames['meta']['meta'] = '${{ env.PYWIKIBOT_USERNAME }}'" >> user-config.py
-          echo "authenticate['${{ matrix.domain }}'] = ('${{ steps.split.outputs._0 }}', '${{ steps.split.outputs._1 }}', '${{ steps.split.outputs._2 }}', '${{ steps.split.outputs._3 }}')" >> user-config.py
+          echo "authenticate['${{ matrix.domain }}'] = ('$CK', '$CS', '$AK', '$AS')" >> user-config.py
           echo "noisysleep = float('inf')" >> user-config.py
           echo "maximum_GET_length = 5000" >> user-config.py
           echo "console_encoding = 'utf8'" >> user-config.py
+        env:
+          CK: ${{ steps.split.outputs._0 }}
+          CS: ${{ steps.split.outputs._1 }}
+          AK: ${{ steps.split.outputs._2 }}
+          AS: ${{ steps.split.outputs._3 }}
+
       - name: Oauth tests with unittest
         timeout-minutes: 8
         env:
