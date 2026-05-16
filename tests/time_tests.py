@@ -231,7 +231,8 @@ class TestTimestamp(TestCase):
 
         for mw_ts, ts in tests[1:-1]:
             with self.subTest(timestamp=mw_ts), self.assertRaisesRegex(
-                    ValueError, f'time data {mw_ts!r} does not match MW'):
+                ValueError,
+                    f'time data {mw_ts!r} does not match MW format'):
                 Timestamp.fromtimestampformat(mw_ts, strict=True)
 
     def test_add_timedelta(self) -> None:

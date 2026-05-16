@@ -38,15 +38,6 @@ on:
 
                 This option implies ``-noredirect``.
 
--new:           Work on the 100 newest pages. If given as -new:x, will
-                work on the x newest pages. When multiple -namespace
-                parameters are given, x pages are inspected, and only
-                the ones in the selected name spaces are processed. Use
-                ``-namespace:all`` for all namespaces. Without
-                ``-namespace``, only article pages are processed.
-
-                This option implies ``-noredirect``.
-
 -restore:       Restore a set of "dumped" pages the bot was working on
                 when it terminated. The dump file will be subsequently
                 removed.
@@ -67,12 +58,6 @@ on:
 
 Additionally, these arguments can be used to restrict the bot to certain
 pages:
-
--namespace:n    [int] Number or name of namespace to process. The
-                parameter can be used multiple times. It works in
-                combination with all other parameters, except for the
-                ``-start`` parameter. If you e.g. want to iterate over
-                all categories starting at M, use  ``-start:Category:M``.
 
 -number:        [int] Used as -number:#, specifies that the bot should
                 process that amount of pages and then stop. This is only
@@ -355,6 +340,9 @@ To run the script on all pages on a language, run it with option
 .. version-changed:: 10.4
    The ``-localonly`` option now restricts page processing to the
    default site only, instead of the origin page.
+.. version-changed:: 11.3
+   The ``-new`` option was removed in favour of pagegenerators
+   ``-newpages``.
 """
 from __future__ import annotations
 
@@ -384,6 +372,7 @@ from pywikibot.bot import (
 )
 from pywikibot.cosmetic_changes import moved_links
 from pywikibot.exceptions import (
+    ArgumentDeprecationWarning,
     EditConflictError,
     Error,
     InvalidPageError,
@@ -399,7 +388,7 @@ from pywikibot.exceptions import (
     SpamblacklistError,
     UnknownSiteError,
 )
-from pywikibot.tools import first_upper
+from pywikibot.tools import first_upper, issue_deprecation_warning
 from pywikibot.tools.collections import SizedKeyCollection
 
 
@@ -2320,11 +2309,9 @@ def main(*args: str) -> None:
 
     :param args: command line arguments
     """
-    singlePageTitle = ''
     opthintsonly = False
     # Which namespaces should be processed?
     # default to [] which means all namespaces will be processed
-    namespaces = []
     number = None
     until = None
     # a normal PageGenerator (which doesn't give hints, only Pages)
@@ -2332,64 +2319,60 @@ def main(*args: str) -> None:
     optContinue = False
     optRestore = False
     append = True
-    newPages = None
     unknown = []
 
-    # Process global args and prepare generator args parser
+    # Prepare pagegenerators args parser and process global and pg args
     local_args = pywikibot.handle_args(args)
-    genFactory = pagegenerators.GeneratorFactory()
+    site = pywikibot.Site()
+    genFactory = pagegenerators.GeneratorFactory(
+        site, positional_arg_name='page')
+    local_args = genFactory.handle_args(local_args)
 
     iwconf = InterwikiBotConfig()
-    for arg in local_args:
-        if iwconf.readOptions(arg):
+    for option in local_args:
+        if iwconf.readOptions(option):
             continue
 
-        if arg.startswith('-years'):
+        arg, _, value = option.partition(':')
+        if arg == '-years':
             # Look if user gave a specific year at which to start
             # Must be a natural number or negative integer.
-            if len(arg) > 7 and (arg[7:].isdigit()
-                                 or (arg[7] == '-' and arg[8:].isdigit())):
-                startyear = int(arg[7:])
-            else:
+            try:
+                startyear = int(value)
+            except ValueError:
                 startyear = 1
             # avoid problems where year pages link to centuries etc.
             iwconf.followredirect = False
             hintlessPageGen = pagegenerators.YearPageGenerator(startyear)
-        elif arg.startswith('-days'):
-            if len(arg) > 6 and arg[5] == ':' and arg[6:].isdigit():
-                # Looks as if the user gave a specific month at which to start
-                # Must be a natural number.
-                startMonth = int(arg[6:])
-            else:
+        elif arg == '-days':
+            try:
+                startMonth = int(value)
+            except ValueError:
                 startMonth = 1
             hintlessPageGen = pagegenerators.DayPageGenerator(startMonth)
-        elif arg.startswith('-new'):
-            if len(arg) > 5 and arg[4] == ':' and arg[5:].isdigit():
-                # Looks as if the user gave a specific number of pages
-                newPages = int(arg[5:])
-            else:
-                newPages = 100
-        elif arg.startswith('-restore'):
-            iwconf.restore_all = arg[9:].lower() == 'all'
+        elif arg == '-new':
+            pages = value or '100'
+            instead = f'-newpages:{pages}'
+            issue_deprecation_warning(
+                option,
+                instead,
+                warning_class=ArgumentDeprecationWarning,
+                since='11.3.0'
+            )
+            genFactory.handle_arg(instead)
+        elif arg == '-restore':
+            iwconf.restore_all = value == 'all'
             optRestore = not iwconf.restore_all
         elif arg == '-continue':
             optContinue = True
         elif arg == '-hintsonly':
             opthintsonly = True
-        elif arg.startswith('-namespace:'):
-            try:
-                namespaces.append(int(arg[11:]))
-            except ValueError:
-                namespaces.append(arg[11:])
-        elif arg.startswith('-number:'):
-            number = int(arg[8:])
-        elif arg.startswith('-until:'):
-            until = arg[7:]
-        elif not genFactory.handle_arg(arg):
-            if not (arg.startswith('-') or singlePageTitle):
-                singlePageTitle = arg
-            else:
-                unknown.append(arg)
+        elif arg == '-number':
+            number = int(value)
+        elif arg == '-until:':
+            until = value
+        else:
+            unknown.append(option)
 
     if suggest_help(unknown_parameters=unknown):
         return
@@ -2400,53 +2383,37 @@ def main(*args: str) -> None:
     elif iwconf.summary:
         iwconf.summary += '; '
 
-    site = pywikibot.Site()
     # ensure that we don't try to change main page
     mainpagename = site.siteinfo['mainpage']
     iwconf.skip.add(pywikibot.Page(site, mainpagename))
 
     dump = InterwikiDumps(site=site, do_continue=optContinue,
                           restore_all=iwconf.restore_all)
-
-    if newPages is not None:
-        if not namespaces:
-            ns = 0
-        elif len(namespaces) == 1:
-            ns = namespaces[0]
-            if isinstance(ns, str) and ns != 'all':
-                index = site.namespaces.lookup_name(ns)
-                if index is None:
-                    raise ValueError('Unknown namespace: ' + ns)
-                ns = index.id
-            namespaces = []
-        else:
-            ns = 'all'
-        hintlessPageGen = pagegenerators.NewpagesPageGenerator(total=newPages,
-                                                               namespaces=ns)
-
-    elif optRestore or optContinue or iwconf.restore_all:
+    if optRestore or optContinue or iwconf.restore_all:
         hintlessPageGen = dump.read_dump()
 
     bot = InterwikiBot(iwconf)
 
-    if not hintlessPageGen:
-        hintlessPageGen = genFactory.getCombinedGenerator()
     if hintlessPageGen:
-        if len(namespaces) > 0:
-            hintlessPageGen = pagegenerators.NamespaceFilterPageGenerator(
-                hintlessPageGen, namespaces, site)
+        # Don't use pagegenerators generators in this case
+        genFactory.gens.clear()
+
+    # take -namespace settings into account
+    hintlessPageGen = genFactory.getCombinedGenerator(hintlessPageGen)
+
+    if hintlessPageGen:
         # we'll use iter() to create make a next() function available.
         bot.setPageGenerator(iter(hintlessPageGen), number=number, until=until)
     else:
-        if not singlePageTitle and not opthintsonly:
-            singlePageTitle = pywikibot.input('Which page to check:')
-        if singlePageTitle:
-            singlePage = pywikibot.Page(pywikibot.Site(), singlePageTitle)
-        else:
-            singlePage = None
-        bot.add(singlePage, hints=iwconf.hints)
+        single_page = None
+        if not opthintsonly:
+            title = pywikibot.input('Which page to check:')
+            if title:
+                single_page = pywikibot.Page(site, title)
+        bot.add(single_page, hints=iwconf.hints)
 
     append = not (optRestore or optContinue or iwconf.restore_all)
+
     try:
         bot.run()
     except KeyboardInterrupt:

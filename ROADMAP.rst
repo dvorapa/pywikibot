@@ -1,6 +1,12 @@
 Release 11.3
 ============
 
+* Update :attr:`family.WikimediaFamily.known_codes` (:phab:`T426319`)
+* Move all :mod:`families.wikinews_family` site codes to :attr:`Family.closed_wikis
+  <families.wikinews_family.Family.closed_wikis>` (:phab:`T425953`, :phab:`T426022`)
+* Enable :meth:`CosmeticChangesToolkit.commonsfiledesc()
+  <cosmetic_changes.CosmeticChangesToolkit.commonsfiledesc>` for FILE namespace on
+  on all commons wikis (:phab:`T425306`, :phab:`T425349`)
 * Add Devanagari numerals for ne-wiki to :attr:`NON_ASCII_DIGITS
   <userinterfaces.transliteration.NON_ASCII_DIGITS>` and fix :class:`textlib.TimeStripper`
   regex for :attr:`textlib.TimeStripperPatterns.timezone` (:phab:`T424467`)

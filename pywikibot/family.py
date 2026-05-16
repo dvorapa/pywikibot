@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 # Legal characters for Family.name and Family.langs keys
 NAME_CHARACTERS = string.ascii_letters + string.digits
-# nds_nl code alias requires "_"n
+# nds_nl code alias requires "_"
 # dash must be the last char to be reused as regex
 CODE_CHARACTERS = string.ascii_lowercase + string.digits + '_-'
 
@@ -87,7 +87,7 @@ class Family:
         else:
             raise RuntimeError(fill(
                 f'__post_init__() method of {cls.__module__}.{cls.__name__}'
-                ' class or its superclass must be a classmethod. Please  check'
+                ' class or its superclass must be a classmethod. Please check'
                 ' your family file.', width=66))
 
         return cls.instance
@@ -193,11 +193,9 @@ class Family:
     """
 
     interwiki_forward: str | None = None
-    """Some families, e.
-
-    g. commons and meta, are not multilingual and forward interlanguage
-    links to another family (wikipedia). These families can set this
-    variable to the name of the target family.
+    """Some families, e.g. commons and meta, are not multilingual and
+    forward interlanguage links to another family (wikipedia). These
+    families can set this variable to the name of the target family.
     """
 
     #: Some languages belong to a group where the possibility is high
