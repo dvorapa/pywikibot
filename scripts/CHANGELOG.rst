@@ -4,6 +4,16 @@ Scripts Changelog
 11.3.0
 ------
 
+addwikis
+^^^^^^^^
+
+* Update :attr:`family.WikimediaFamily.known_codes` together with wiki updates (:phab:`T426319`)
+
+interwiki
+^^^^^^^^^
+
+* Ignore site codes of ``-neverlink`` option instead of deleting them (:phab:`T410104`)
+
 noreferences
 ^^^^^^^^^^^^
 
@@ -12,7 +22,7 @@ noreferences
 parser_function_count
 ^^^^^^^^^^^^^^^^^^^^^
 
-* Load all pages with content flag  (:phab:`T423836`)
+* Load all pages with content flag (:phab:`T423836`)
 
 
 11.2.0
