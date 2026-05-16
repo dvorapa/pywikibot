@@ -24,8 +24,8 @@ jobs:
       matrix:
         python-version: [graalpy-24.1, graalpy-25.0]
         site: ['wikipedia:test']
-        os: ['macOS-latest', 'ubuntu-latest']
-        experimental: [True]
+        os: [macOS-latest, ubuntu-latest]
+        experimental: [true]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6
@@ -76,7 +76,5 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       - name: Check on failure
         if: steps.ci_test.outcome == 'failure'
-        run: |
-          # Print public IP of runner
-          curl -s https://api.ipify.org
+        run: |-
           exit 1
