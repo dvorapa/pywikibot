@@ -208,3 +208,8 @@ ignore = ["D105", "D211", "D213", "D214", "D301", "D401", "D404", "D406", "D407"
 
 [tool.ruff.lint.flake8-quotes]
 inline-quotes = "single"
+
+[tool.yamlfix]
+section_whitelines = 1
+line_length = 100
+preserve_quotes = true
