@@ -82,6 +82,7 @@ jobs:
       - name: Generate user files
         run: |
           python -Werror::UserWarning -m pwb generate_user_files -site:wikipedia:test -user:${{ env.PYWIKIBOT_USERNAME }} -v -debug;
+          echo "maxlag = 20" >> user-config.py
       - name: doctest with pytest
         id: ci_test
         continue-on-error: true

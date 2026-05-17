@@ -2369,7 +2369,7 @@ def main(*args: str) -> None:
             opthintsonly = True
         elif arg == '-number':
             number = int(value)
-        elif arg == '-until:':
+        elif arg == '-until':
             until = value
         else:
             unknown.append(option)
