@@ -962,6 +962,18 @@ class TestFactoryGenerator(DefaultSiteTestCase):
             self.assertIsInstance(page, pywikibot.Page)
             self.assertEqual(page.namespace(), 0)
 
+    def test_allpages_until(self) -> None:
+        """Test allpages generator."""
+        gf = pagegenerators.GeneratorFactory()
+        self.assertTrue(gf.handle_arg('-start:Python'))
+        self.assertTrue(gf.handle_arg('-until:Pywikibot'))
+        gen = gf.getCombinedGenerator()
+        self.assertIsNotNone(gen)
+        for page in gen:
+            self.assertIsInstance(page, pywikibot.Page)
+            self.assertEqual(page.namespace(), 0)
+            self.assertLessEqual(page.title(), 'Pywikibot')
+
     def test_allpages_ns(self) -> None:
         """Test allpages generator with namespace argument."""
         gf = pagegenerators.GeneratorFactory()
@@ -1646,11 +1658,18 @@ class EnWikipediaPageGeneratorIntersectTestCase(GeneratorIntersectTestCase,
         )
 
 
+@require_modules('requests_sse')
 class EventStreamsPageGeneratorTestCase(RecentChangesTestCase):
 
     """Test case for Live Recent Changes pagegenerator."""
 
-    @require_modules('requests_sse')
+    @classmethod
+    def setUpClass(cls) -> None:
+        """Skip wikisource:beta site due to T426540."""
+        super().setUpClass()
+        if cls.site.sitename == 'wikisource:beta':
+            cls.skipTest(cls, f'Skip {cls.site} site due to T426540')
+
     def test_RC_pagegenerator_result(self) -> None:
         """Test RC pagegenerator."""
         lgr = logging.getLogger('requests_sse.client')

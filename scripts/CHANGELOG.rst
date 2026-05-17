@@ -512,7 +512,7 @@ clean_sandbox
 ^^^^^^^^^^^^^
 
 * L10N updates
-* A `-textfile` option was addet to fetch the text from a file
+* A `-textfile` option was added to fetch the text from a file
 
 create_isbn_edition
 ^^^^^^^^^^^^^^^^^^^
@@ -892,7 +892,7 @@ solve_disambiguation
 touch
 ^^^^^
 
-\*Do not pass OtherPageSaveRelatedError silently
+* Do not pass OtherPageSaveRelatedError silently
 
 unusedfiles
 ^^^^^^^^^^^
@@ -939,8 +939,7 @@ reflinks
 general
 ^^^^^^^
 
-*  show a warning if pywikibot.__version_\_ is behind
-   scripts.__version_\_
+*  show a warning if ``pywikibot.__version__`` is behind ``scripts.__version__``
 
 addtext
 ^^^^^^^
