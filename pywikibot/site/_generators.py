@@ -33,9 +33,7 @@ from pywikibot.tools.itertools import filter_unique
 
 
 if typing.TYPE_CHECKING:
-    from data.api import ParamInfo, Request
-
-    from pywikibot.site._apisite import _RequestWrapperT
+    from pywikibot.data.api import ParamInfo, Request
     from pywikibot.site._namespace import NamespacesDict, SingleNamespaceType
     from pywikibot.site._tokenwallet import TokenWallet
     from pywikibot.tools import MediaWikiVersion
@@ -46,7 +44,7 @@ class GeneratorsMixin:
     """API generators mixin to MediaWiki site."""
 
     if typing.TYPE_CHECKING:
-        _generator: Callable[..., _RequestWrapperT]
+        _generator: Callable[..., pywikibot.site._apisite._RequestWrapperT]
         _paraminfo: ParamInfo
         _request: Callable[..., Request]
         assert_valid_iter_params: Callable[..., None]
@@ -67,7 +65,7 @@ class GeneratorsMixin:
     ) -> Generator[pywikibot.Page]:
         """Return a page generator from pageids.
 
-        Pages are iterated in the same order than in the underlying
+        Pages are iterated in the same order as in the underlying
         pageids.
 
         Pageids are filtered and only one page is returned in case of
@@ -131,7 +129,7 @@ class GeneratorsMixin:
     ) -> Generator[pywikibot.Page]:
         """Return a generator to a list of preloaded pages.
 
-        Pages are iterated in the same order than in the underlying
+        Pages are iterated in the same order as in the underlying
         pagelist. In case of duplicates in a groupsize batch, return the
         first entry.
 
@@ -359,7 +357,7 @@ class GeneratorsMixin:
         total: int | None = None,
         content: bool = False
     ) -> Iterable[pywikibot.Page]:
-        """Iterale all redirects to the given page.
+        """Iterate all redirects to the given page.
 
         .. seealso:: :api:`Redirects`
 
@@ -481,7 +479,7 @@ class GeneratorsMixin:
         :param with_sort_key: If True, include the sort key in each
             Category
         :param content: If True, load the current content of each
-            iterated page default False); note that this means the
+            iterated page (default False); note that this means the
             contents of the category description page, not the pages
             contained in the category
         """
@@ -2369,7 +2367,6 @@ class GeneratorsMixin:
         :param propname: Must be a valid property.
         :param total: Number of pages to return
         :return: Return a generator of Page objects
-        :rtype: iterator
         """
         if propname not in self.get_property_names():
             raise NotImplementedError(
