@@ -754,8 +754,10 @@ def main(*args: str) -> None:
         ' or '.join(source)) if len(source) > 1 else ''
 
     if action == 'both' and '-fullscan' in source:
-        problem += (' You can only use either -fullscan together with '
-                    "broken/double action or 'both' action")
+        problem += (
+            ' The -fullscan option cannot be used with the "both" action. '
+            'Use -fullscan with "broken" or "double" actions only.'
+        )
 
     if suggest_help(additional_text=fill(problem),
                     unknown_parameters=unknown,
@@ -768,8 +770,8 @@ def main(*args: str) -> None:
             gen_options['namespaces'] = gen_factory.namespaces
         gen = RedirectGenerator(action, **gen_options)
 
-    if gen_factory.gens \
-       or action != 'both' and next(iter(source)) not in ('-fullscan', '-xml'):
+    if gen_factory.gens or action != 'both' \
+       and next(iter(source), None) not in ('-fullscan', '-xml'):
         gen = gen_factory.getCombinedGenerator(gen=gen)
 
     bot = RedirectRobot(action, generator=gen, **options)
