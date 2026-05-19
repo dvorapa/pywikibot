@@ -302,7 +302,7 @@ class WikibaseClientMixin:
         .. warning:: The retrieved pages may be connected in meantime.
            To avoid this, use *strict* parameter to check.
 
-        .. version-changed::
+        .. version-changed:: 10.4.0
            The *strict* parameter was added.
 
         :param total: Maximum number of pages to return, or ``None`` for
@@ -419,7 +419,7 @@ class UrlShortenerMixin:
         Note that on Wikimedia wikis only metawiki supports this action,
         and this wiki can process links to all WM domains.
 
-        :param url: The link to reduce, with propotol prefix.
+        :param url: The link to reduce, with protocol prefix.
         :return: The reduced link, without protocol prefix.
         """
         req = self.simple_request(action='shortenurl', url=url)
