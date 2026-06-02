@@ -1008,7 +1008,7 @@ class _OptionDict(dict[str, Any]):
         super().__init__(options)
 
     def __missing__(self, key: str) -> None:
-        raise Error(f"'{key}' is not a valid option for {self._classname}.")
+        raise Error(f'{key!r} is not a valid option for {self._classname}.')
 
     def __getattr__(self, name: str) -> Any:
         """Get item from dict."""
@@ -1092,7 +1092,7 @@ class OptionHandler:
         self.opt.update((opt, options[opt])
                         for opt in received_options & valid_options)
         for opt in received_options - valid_options:
-            _warning(f'{opt} is not a valid option. It was ignored.')
+            _warning(f'{opt!r} is not a valid option. It was ignored.')
 
 
 class BaseBot(OptionHandler):
@@ -1204,7 +1204,7 @@ class BaseBot(OptionHandler):
         To check for an empty generator you may use::
 
             if self.generator_completed and not self.counter['read']:
-                print('generator was emtpty')
+                print('generator was empty')
 
         .. note:: An empty generator returns True.
         .. version-added:: 3.0
@@ -1518,7 +1518,7 @@ class BaseBot(OptionHandler):
                if not hasattr(self, 'generator'):
                    raise NotImplementedError('"generator" not set.')
 
-               if self.generator is None;
+               if self.generator is None:
                    print('No generator was defined')
 
                try:
@@ -1813,7 +1813,7 @@ class ConfigParserBot(BaseBot):
                     method = getattr(conf, 'get' + value_type, default)
                 options[option] = method(section, option)
             for opt in set(conf.options(section)) - set(options):
-                _warning(f'"{opt}" is not a valid option. It was ignored.')
+                _warning(f'{opt!r} is not a valid option. It was ignored.')
             options.update(kwargs)
         else:
             options = kwargs
