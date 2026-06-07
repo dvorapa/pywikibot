@@ -425,7 +425,7 @@ def init_handlers() -> None:
             # keep config.logfilename unchanged
             logfile = config.datafilepath('logs', config.logfilename)
         else:
-            # add PID to logfle name
+            # add PID to logfile name
             logfile = config.datafilepath('logs',
                                           f'{module_name}-{pid}bot.log')
 
@@ -781,7 +781,9 @@ def handle_args(args: Iterable[str] | None = None,
                 config.family = config.mylang = value
         elif option == '-family':
             config.family = value
-        elif option in ('-code', '-lang'):  # -lang might be deprecated later
+        elif option in ('-code', '-lang'):
+            # -lang is kept for backward compatibility and might be deprecated
+            # later; prefer -code
             config.mylang = value
         elif option == '-user':
             username = value
@@ -1171,11 +1173,12 @@ class BaseBot(OptionHandler):
             method
         """
         if 'generator' in kwargs:
+            gen = kwargs.pop('generator')
             if hasattr(self, 'generator'):
                 warnings.warn(f'{type(self).__name__} has a generator'
                               ' already. Ignoring argument.', stacklevel=2)
             else:
-                self.generator: Iterable = kwargs.pop('generator')
+                self.generator: Iterable = gen
 
         self.available_options.update(self.update_options)
         super().__init__(**kwargs)
@@ -1196,7 +1199,7 @@ class BaseBot(OptionHandler):
         """Instance attribute which is True if the :attr:`generator` is
         completed.
 
-        It gives False if the the generator processing in :meth:`run` is
+        It gives False if the generator processing in :meth:`run` is
         either interrupted by ``KeyboardInterrupt`` or exited by
         :exc:`QuitKeyboardInterrupt` while closing the generator i.e.
         :code:`self.generator.close()` keeps the value True.
@@ -1429,8 +1432,8 @@ class BaseBot(OptionHandler):
         :attr:`treat_page_type` even when the generator returns
         something else.
 
-        Also used to set the arrange the current site. This is called
-        before :meth:`skip_page` and :meth:`treat`.
+        Also used to set the current site. This is called before
+        :meth:`skip_page` and :meth:`treat`.
 
         :param item: Any item from :attr:`generator`
         :return: Return the page object to be processed further
@@ -1479,7 +1482,7 @@ class BaseBot(OptionHandler):
     def setup(self) -> None:
         """Some initial setup before :meth:`run` operation starts.
 
-        This can be used for reading huge parts from life wiki or file
+        This can be used for reading huge parts from live wiki or file
         operation which is more than just initialize the instance.
         Invoked by :meth:`run` before running through :attr:`generator`
         loop.
