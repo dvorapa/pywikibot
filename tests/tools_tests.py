@@ -3,7 +3,7 @@
 # (C) Pywikibot team, 2015-2026
 #
 # Distributed under the terms of the MIT license.
-"""Test tools package alone which don't fit into other tests."""
+"""Test tools package alone which doesn't fit into other tests."""
 from __future__ import annotations
 
 import decimal
@@ -20,6 +20,7 @@ from unittest import mock
 
 from pywikibot import config, tools
 from pywikibot.tools import (
+    PYTHON_VERSION,
     SevenZipFile,
     cached,
     classproperty,
@@ -855,7 +856,6 @@ class TestIsIpAddress(TestCase):
             None,
             '',
             '0.0.0',
-            '01.02.03.04',
             '1.2.3.256',
             '1.2.3.-1',
             '1.2.3.4.5',
@@ -868,6 +868,11 @@ class TestIsIpAddress(TestCase):
         for address in invalid_addresses:
             with self.subTest(ip_address=address):
                 self.assertFalse(is_ip_address(address))
+
+        address = '01.02.03.04'
+        with self.subTest(ip_address=address):
+            self.assertEqual(is_ip_address(address),
+                             PYTHON_VERSION < (3, 9, 5))
 
     def test_valid_ipv6_addresses(self) -> None:
         """Check with valid IPv6 addresses."""
@@ -1089,7 +1094,7 @@ class TestTinyCache(TestCase):
         self.assertEqual(self.foo.read, 1)
         self.assertHasAttr(self.foo, '_foo')
         self.assertEqual(self.foo.foo(), 'foo')  # check cached value
-        self.assertEqual(self.foo.read, 1)  # bar() was called only once
+        self.assertEqual(self.foo.read, 1)  # foo() was called only once
         del self.foo._foo
         self.assertNotHasAttr(self.foo, '_foo')
         self.assertEqual(self.foo.foo(), 'foo')  # check computed value
