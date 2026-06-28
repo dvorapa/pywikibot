@@ -789,9 +789,6 @@ socket_timeout = (6.05, 45)
 # ############# COSMETIC CHANGES SETTINGS ##############
 # The bot can make some additional changes to each page it edits, e.g. fix
 # whitespace or positioning of category links.
-
-# This is an experimental feature; handle with care and consider re-checking
-# each bot edit if enabling this!
 cosmetic_changes = False
 
 # If cosmetic changes are switched on, and you also have several accounts at
@@ -870,7 +867,7 @@ max_queue_size = 64
 pickle_protocol = 5
 
 # 7-zip executable setting
-# The default for 7-zip executable is '7za' but my also be '7Z'. If The
+# The default for 7-zip executable is '7za' but may also be '7Z'. If the
 # executable is not included in the local PATH environment variable the
 # relative or absolute path can also be given with this cmd line setting
 # like:
