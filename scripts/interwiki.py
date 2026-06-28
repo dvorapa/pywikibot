@@ -100,7 +100,7 @@ These arguments control miscellaneous bot behaviour:
                    saving the pages was successful.
 
 -summary:       [str] Set an additional action summary message for the
-                edit. This could be used for further explainings of the
+                edit. This could be used for further explanations of the
                 bot action. This will only be used in non-autonomous
                 mode.
 
@@ -257,7 +257,7 @@ links:
                 interactively, via the -askhint command line option, are
                 only effective once they have been entered, thus
                 interwiki links on the starting page are followed
-                regardess of hints given when prompted.
+                regardless of hints given when prompted.
 
                 .. caution:: Should be used with care!
 
@@ -343,6 +343,8 @@ To run the script on all pages on a language, run it with option
 .. version-changed:: 11.3
    The ``-new`` option was removed in favour of pagegenerators
    ``-newpages``.
+.. version-changed:: 11.5
+   Wildcards (``'*'``) in :mod:`config.usernames<config>` are now respected.
 """
 from __future__ import annotations
 
@@ -678,10 +680,14 @@ class Subject(interwiki_graph.Subject):
         self.site = pywikibot.Site()
 
     @staticmethod
-    def is_not_redirect(page):
-        """Check whether *page* is not a redirect page.
+    def is_not_redirect(page: pywikibot.Page) -> bool:
+        """Check whether *page* is neither a redirect nor a category redirect.
 
         .. version-added:: 11.0
+
+        :param page: The page to check.
+        :return: ``True`` if the page exists and is not a redirect,
+            otherwise ``False``.
         """
         return page.exists() and not (page.isRedirectPage()
                                       or page.isCategoryRedirect())
@@ -1489,8 +1495,9 @@ class Subject(interwiki_graph.Subject):
                or (not frgnSiteDone and site != lclSite and site in new):
                 if site == lclSite:
                     lclSiteDone = True   # even if we fail the update
-                if (site.family.name in config.usernames
-                        and site.code in config.usernames[site.family.name]):
+
+                codes = config.usernames.get(site.family.name, {})
+                if codes and site.code in codes or '*' in codes:
                     try:
                         if self.replaceLinks(new[site], new):
                             updated.append(site)
@@ -1536,9 +1543,9 @@ class Subject(interwiki_graph.Subject):
                 )
                 continue
 
-            # Check if a username is configured for this site
+            # Check if a username or wildcard is configured for this site
             codes = config.usernames.get(site.family.name, [])
-            if site.code not in codes:
+            if site.code not in codes and '*' not in codes:
                 pywikibot.warning(
                     f'username for {site} is not given in your user-config.py'
                 )
