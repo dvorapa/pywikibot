@@ -550,7 +550,9 @@ class BasePage(ComparableMixin):
         >>> type(edit_time)
         <class 'pywikibot.time.Timestamp'>
 
-        .. seealso:: :attr:`oldest_revision`
+        .. seealso::
+           - :attr:`stable_revision`
+           - :attr:`oldest_revision`
         """
         rev = self._latest_cached_revision()
         if rev is not None:
@@ -559,6 +561,65 @@ class BasePage(ComparableMixin):
         with suppress(StopIteration):
             return next(self.revisions(content=True, total=1))
         raise InvalidPageError(self)
+
+    @property
+    @cached
+    def stable_revision_id(self) -> int | None:
+        """Return the current stable (reviewed) revision id for this page.
+
+        .. version-added:: 11.7
+        .. seealso:
+           - :attr:`stable_revision`
+           - :attr:`latest_revision_id`
+
+        :raises UnknownExtensionError: FlaggedRevs not available
+        """
+        return self.site.stable_revid(self)
+
+    @stable_revision_id.deleter
+    def stable_revision_id(self) -> None:
+        """Remove the cached latest stable revision id set for this Page."""
+        with suppress(AttributeError):
+            del self._stable_revision_id
+
+    @property
+    def stable_revision(self) -> pywikibot.page.Revision | None:
+        """Return the latest stable (reviewed) revision for this page, if any.
+
+        Uses the site’s
+        :class:`FlaggedRevsMixin<pywikibot.site._extensions.FlaggedRevsMixin>`
+        mixin to obtain a stable revid.
+
+        **Example:**
+
+        >>> site = pywikibot.Site('wikipedia:fi')
+        >>> page = pywikibot.Page(site, 'Main Page')
+        ... # get the stable revision timestamp of that page
+        >>> edit_time = page.stable_revision.timestamp
+        >>> type(edit_time)
+        <class 'pywikibot.time.Timestamp'>
+        >>> page.stable_revision.revid == site.stable_revid(page)
+        True
+        >>> # delete cache to force reloading the latest stable id
+        >>> del page.stable_revision_id
+        >>> page.stable_revision.revid == page.stable_revision_id
+        True
+
+        .. version-added:: 11.7
+        .. seealso::
+           - :attr:`stable_revision_id`
+           - :attr:`latest_revision`
+           - :attr:`oldest_revision`
+           - :attr:`APISite.stable_revid
+             <pywikibot.site._extensions.FlaggedRevsMixin.stable_revid>`
+
+        :raises UnknownExtensionError: FlaggedRevs not available
+        """
+        revid = self.stable_revision_id
+        if revid is not None:
+            return self.get_revision(revid, content=True)
+
+        return None
 
     @property
     def text(self) -> str:
