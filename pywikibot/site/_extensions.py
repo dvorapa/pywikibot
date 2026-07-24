@@ -343,7 +343,7 @@ class LinterMixin:
     ) -> Iterable[pywikibot.Page]:
         """Return a generator to pages containing linter errors.
 
-        .. seealso:: https://www.mediawiki.org/wiki/Extension:Linter
+        .. seealso:: :ext:`Linter`
 
         :param lint_categories: Categories of lint errors. Must be an
             iterable of lint categories, or a pipe-separated string of
@@ -446,10 +446,8 @@ class TextExtractsMixin:
         :return: The extract of the page.
 
         .. seealso::
-
-           - https://www.mediawiki.org/wiki/Extension:TextExtracts
-
-           - :meth:`page.BasePage.extract`.
+           - :ext:`TextExtracts`
+           - :meth:`page.BasePage.extract`
         """
         if not page.exists():
             raise NoPageError(page)
