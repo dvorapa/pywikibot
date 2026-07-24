@@ -371,8 +371,8 @@ class ClientLoginManager(LoginManager):
     .. version-changed:: 10.2
        Secondary authentication via email was enabled.
     .. seealso::
-       - https://www.mediawiki.org/wiki/Extension:OATHAuth
-       - https://www.mediawiki.org/wiki/Extension:EmailAuth
+       - :ext:`OATHAuth`
+       - :ext:`EmailAuth`
     """
 
     _waituntil: datetime.datetime

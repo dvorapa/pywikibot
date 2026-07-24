@@ -161,7 +161,7 @@ class TestHttpStatus(HttpbinTestCase):
         self.assertIn('//en.wikipedia.org/wiki/Main_Page', r.url)
 
         r = http.fetch(self.httpbin
-                       + 'redirect-to?url=https://www.wikidata.org')
+                       + '/redirect-to?url=https://www.wikidata.org')
         self.assertIsNotEmpty(r.history)
         self.assertEqual(r.history[0].status_code, HTTPStatus.FOUND.value)
         self.assertEqual(r.history[-1].status_code,
