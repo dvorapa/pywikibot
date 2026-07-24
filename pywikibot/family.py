@@ -252,7 +252,7 @@ class Family:
     ldapDomain = ()
     """LDAP domain if your wiki uses LDAP authentication.
 
-    .. seealso:: https://www.mediawiki.org/wiki/Extension:LDAPAuthentication2
+    .. seealso:: :ext:`LDAPAuthentication2`
     """
 
     crossnamespace: CrossnamespaceType = collections.defaultdict(dict)

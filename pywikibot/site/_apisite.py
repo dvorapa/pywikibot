@@ -51,6 +51,7 @@ from pywikibot.site._basesite import BaseSite
 from pywikibot.site._decorators import need_right
 from pywikibot.site._extensions import (
     EchoMixin,
+    FlaggedRevsMixin,
     GeoDataMixin,
     GlobalUsageMixin,
     LinterMixin,
@@ -100,6 +101,7 @@ class _OnErrorExc(NamedTuple):
 class APISite(
     BaseSite,
     EchoMixin,
+    FlaggedRevsMixin,
     GeneratorsMixin,
     GeoDataMixin,
     GlobalUsageMixin,
