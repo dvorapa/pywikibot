@@ -9,70 +9,71 @@ This module contains all exception and warning classes used throughout
 the framework::
 
     Exception
-     +-- Error
-          +-- APIError
-          |    +-- APIMWError
-          |    +-- UploadError
-          +-- AutoblockUserError
-          +-- CaptchaError
-          +-- ClientError
-          |    +-- Client414Error
-          +-- InvalidTitleError
-          +-- NoUsernameError
-          +-- PageInUseError
-          +-- PageRelatedError
-          |    +-- CircularRedirectError
-          |    +-- InterwikiRedirectPageError
-          |    +-- IsNotRedirectPageError
-          |    +-- IsRedirectPageError
-          |    +-- NoMoveTargetError
-          |    +-- NoPageError
-          |    +-- NoRenameTargetError
-          |    +-- NotEmailableError
-          |    +-- PageLoadRelatedError
-          |    |    +-- InconsistentTitleError
-          |    |    +-- InvalidPageError
-          |    |    +-- NoSiteLinkError
-          |    +-- PageSaveRelatedError
-          |    |    +-- EditConflictError
-          |    |    |    +-- ArticleExistsConflictError
-          |    |    |    +-- PageCreatedConflictError
-          |    |    |    +-- PageDeletedConflictError
-          |    |    +-- LockedPageError
-          |    |    |    +-- LockedNoPageError
-          |    |    |    +-- CascadeLockedPageError
-          |    |    +-- NoCreateError
-          |    |    +-- OtherPageSaveError
-          |    |    +-- SpamblacklistError
-          |    |    +-- TitleblacklistError
-          |    |    +-- AbuseFilterDisallowedError
-          |    +-- UnsupportedPageError
-          +-- SectionError
-          +-- ServerError
-          |    +-- FatalServerError
-          |    +-- Server504Error
-          +-- SiteDefinitionError
-          |    +-- UnknownFamilyError
-          |    +-- UnknownSiteError
-          +-- ApiTimeoutError
-          |    +-- MaxlagTimeoutError
-          +-- TranslationError
-          +-- UnexpectedAPIDataError (ValueError)
-          +-- UnknownExtensionError (NotImplementedError)
-          +-- UserRightsError
-          |    +-- HiddenKeyError (KeyError)
-          +-- VersionParseError
-          +-- WikiBaseError
-               +-- CoordinateGlobeUnknownError (NotImplementedError)
-               +-- EntityTypeUnknownError
-               +-- NoWikibaseEntityError
+     └── Error
+          ├── APIError
+          |    ├── APIMWError
+          |    └── UploadError
+          ├── AutoblockUserError
+          ├── CaptchaError
+          ├── CitoidError
+          ├── ClientError
+          |    └── Client414Error
+          ├── InvalidTitleError
+          ├── NoUsernameError
+          ├── PageInUseError
+          ├── PageRelatedError
+          |    ├── CircularRedirectError
+          |    ├── InterwikiRedirectPageError
+          |    ├── IsNotRedirectPageError
+          |    ├── IsRedirectPageError
+          |    ├── NoMoveTargetError
+          |    ├── NoPageError
+          |    ├── NoRenameTargetError
+          |    ├── NotEmailableError
+          |    ├── PageLoadRelatedError
+          |    |    ├── InconsistentTitleError
+          |    |    ├── InvalidPageError
+          |    |    └── NoSiteLinkError
+          |    ├── PageSaveRelatedError
+          |    |    ├── EditConflictError
+          |    |    |    ├── ArticleExistsConflictError
+          |    |    |    ├── PageCreatedConflictError
+          |    |    |    └── PageDeletedConflictError
+          |    |    ├── LockedPageError
+          |    |    |    ├── LockedNoPageError
+          |    |    |    └── CascadeLockedPageError
+          |    |    ├── NoCreateError
+          |    |    ├── OtherPageSaveError
+          |    |    ├── SpamblacklistError
+          |    |    ├── TitleblacklistError
+          |    |    └── AbuseFilterDisallowedError
+          |    └── UnsupportedPageError
+          ├── SectionError
+          ├── ServerError
+          |    ├── FatalServerError
+          |    └── Server504Error
+          ├── SiteDefinitionError
+          |    ├── UnknownFamilyError
+          |    └── UnknownSiteError
+          ├── ApiTimeoutError
+          |    └── MaxlagTimeoutError
+          ├── TranslationError
+          ├── UnexpectedAPIDataError (ValueError)
+          ├── UnknownExtensionError (NotImplementedError)
+          ├── UserRightsError
+          |    └── HiddenKeyError (KeyError)
+          ├── VersionParseError
+          └── WikiBaseError
+               ├── CoordinateGlobeUnknownError (NotImplementedError)
+               ├── EntityTypeUnknownError
+               └── NoWikibaseEntityError
 
     UserWarning
-     +-- ArgumentDeprecationWarning (FutureWarning)
-     +-- FamilyMaintenanceWarning
+     ├── ArgumentDeprecationWarning (FutureWarning)
+     └── FamilyMaintenanceWarning
 
     RuntimeWarning
-     +-- NotImplementedWarning
+     └── NotImplementedWarning
 
 
 Error: Base class, all exceptions should the subclass of this class.
@@ -287,6 +288,14 @@ class UploadError(APIError):
     def message(self) -> str:
         """Return warning message."""
         return self.info
+
+
+class CitoidError(Error):
+
+    """The Citoid service returned an error.
+
+    .. version-added:: 11.7
+    """
 
 
 class PageRelatedError(Error):
