@@ -34,7 +34,7 @@ from pywikibot.tools import (
     deprecated_signature,
     is_ip_address,
 )
-from pywikibot.tools.itertools import filter_unique
+from pywikibot.tools.itertools import filter_unique, union_generators
 
 
 if typing.TYPE_CHECKING:
@@ -400,8 +400,13 @@ class GeneratorsMixin:
     ) -> Iterable[pywikibot.Page]:
         """Convenience method combining pagebacklinks and page_embeddedin.
 
+        .. version-changed:: 11.7
+           Duplicate pages are no longer yielded when backlinks and template
+           inclusions overlap.
+
         :param namespaces: If present, only return links from the
             namespaces in this list.
+        :param total: Maximum number of unique pages to retrieve in total.
         :raises KeyError: A namespace identifier was not resolved
         :raises TypeError: A namespace identifier has an inappropriate
             type such as NoneType or bool
@@ -416,16 +421,24 @@ class GeneratorsMixin:
                                       filter_redirects=filter_redirects,
                                       namespaces=namespaces, total=total,
                                       content=content)
-        return itertools.islice(
-            itertools.chain(
-                self.pagebacklinks(
-                    page, follow_redirects=follow_redirects,
-                    filter_redirects=filter_redirects,
-                    namespaces=namespaces, content=content),
-                self.page_embeddedin(
-                    page, filter_redirects=filter_redirects,
-                    namespaces=namespaces, content=content)
-            ), total)
+        generators = (
+            self.pagebacklinks(
+                page, follow_redirects=follow_redirects,
+                filter_redirects=filter_redirects,
+                namespaces=namespaces, content=content),
+            self.page_embeddedin(
+                page, filter_redirects=filter_redirects,
+                namespaces=namespaces, content=content),
+        )
+        if follow_redirects:
+            # Following redirects chains multiple sorted backlink generators,
+            # so the resulting iterable itself is not necessarily sorted.
+            references = filter_unique(
+                itertools.chain(*generators), key=lambda item: item.pageid)
+        else:
+            references = union_generators(
+                *generators, key=lambda item: item.pageid)
+        return itertools.islice(references, total)
 
     def pagelinks(
         self,
@@ -1251,6 +1264,11 @@ class GeneratorsMixin:
         users: str | Iterable[str] | None = None,
         iprange: str | None = None,
         total: int | None = None,
+        *,
+        account: bool | None = None,
+        ip: bool | None = None,
+        ip_range: bool | None = None,
+        temp: bool | None = None,
     ) -> Iterable[dict[str, Any]]:
         """Iterate all current blocks, in order of creation.
 
@@ -1265,6 +1283,9 @@ class GeneratorsMixin:
         .. warning::
            ``iprange`` parameter cannot be used together with ``users``.
 
+        .. version-changed:: 11.7
+           The *account*, *ip*, *ip_range* and *temp* parameters were added.
+
         :param starttime: Start iterating at this Timestamp
         :param endtime: Stop iterating at this Timestamp
         :param reverse: If True, iterate oldest blocks first (default: newest)
@@ -1274,6 +1295,14 @@ class GeneratorsMixin:
         :param iprange: A single IP or an IP range. Ranges broader than
             IPv4/16 or IPv6/19 are not accepted.
         :param total: Total amount of block entries
+        :param account: If ``True``, only iterate account blocks; if ``False``,
+            only iterate non-account blocks; if ``None``, iterate both.
+        :param ip: If ``True``, only iterate IP blocks; if ``False``, only
+            iterate non-IP blocks; if ``None``, iterate both.
+        :param ip_range: If ``True``, only iterate range blocks; if ``False``,
+            only iterate non-range blocks; if ``None``, iterate both.
+        :param temp: If ``True``, only iterate temporary blocks; if ``False``,
+            only iterate permanent blocks; if ``None``, iterate both.
         """
         if starttime and endtime:
             self.assert_valid_iter_params('blocks', starttime, endtime,
@@ -1301,6 +1330,14 @@ class GeneratorsMixin:
             bkgen.request['bkusers'] = users
         elif iprange:
             bkgen.request['bkip'] = iprange
+        filters = {
+            'account': account,
+            'ip': ip,
+            'range': ip_range,
+            'temp': temp,
+        }
+        bkgen.request['bkshow'] = api.OptionSet(self, 'blocks', 'show',
+                                                filters)
         return bkgen
 
     def exturlusage(

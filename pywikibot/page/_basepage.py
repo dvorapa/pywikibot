@@ -458,8 +458,6 @@ class BasePage(ComparableMixin):
         """Return an old revision of this page.
 
         .. version-added:: 9.6
-        .. seealso:: :meth:`getOldVersion`
-
 
         :param oldid: The revid of the revision desired.
         :param content: If True, retrieve the content of the revision
@@ -470,11 +468,14 @@ class BasePage(ComparableMixin):
             self.site.loadrevisions(self, content=content, revids=oldid)
         return self._revisions[oldid]
 
-    def getOldVersion(self, oldid, force: bool = False) -> str:
+    @deprecated('get_revision(oldid, content=True).text', since='11.7.0')
+    def getOldVersion(self, oldid: int, force: bool = False) -> str:
         """Return text of an old revision of this page.
 
         .. version-changed:: 10.0
            The unused parameter *get_redirect* was removed.
+        .. version-deprecated:: 11.7
+           Use ``get_revision(oldid, content=True).text`` instead.
         .. seealso:: :meth:`get_revision`
 
         :param oldid: The revid of the revision desired.
@@ -1054,6 +1055,10 @@ class BasePage(ComparableMixin):
         If you need a full list of referring pages, use
         ``pages = list(s.getReferences())``
 
+        .. version-changed:: 11.7
+           Duplicate pages are no longer yielded when backlinks and template
+           inclusions overlap.
+
         :param follow_redirects: If True, also iterate pages that link to a
             redirect pointing to the page.
         :param with_template_inclusion: If True, also iterate pages where self
@@ -1062,7 +1067,7 @@ class BasePage(ComparableMixin):
             is used as a template.
         :param filter_redirects: If True, only iterate redirects to self.
         :param namespaces: Only iterate pages in these namespaces
-        :param total: Iterate no more than this number of pages in total
+        :param total: Iterate no more than this number of unique pages in total
         :param content: If True, retrieve the content of the current version
             of each referring page (default False)
         """
