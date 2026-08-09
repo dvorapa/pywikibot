@@ -27,11 +27,10 @@ from pywikibot.exceptions import (
     UnknownSiteError,
 )
 from tests.aspects import (
-    AlteredDefaultSiteTestCase,
-    DefaultDrySiteTestCase,
     DefaultSiteTestCase,
     DeprecationTestCase,
     PatchingTestCase,
+    SiteConfigTestCase,
     TestCase,
     WikimediaDefaultSiteTestCase,
 )
@@ -1116,10 +1115,11 @@ class TestLinktrails(TestCase):
                 self.assertEqual(site.linktrail(), linktrail)
 
 
-class TestSingleCodeFamilySite(DefaultDrySiteTestCase):
+class TestSingleCodeFamilySite(TestCase):
 
     """Test single code family sites."""
 
+    dry = True
     family = 'i18n'
     code = 'i18n'
 
@@ -1163,7 +1163,7 @@ class TestSubdomainFamilySite(TestCase):
 
 
 @unittest.skip('Skipping TimeoutError due to T431173')
-class TestProductionAndTestSite(AlteredDefaultSiteTestCase):
+class TestProductionAndTestSite(SiteConfigTestCase):
 
     """Test site without other production sites in its family."""
 
