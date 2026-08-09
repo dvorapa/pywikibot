@@ -11,9 +11,13 @@ from contextlib import suppress
 from unittest.mock import MagicMock, patch
 
 import pywikibot
-from pywikibot.exceptions import UnknownExtensionError
+from pywikibot.exceptions import (
+    APIError,
+    UnknownExtensionError,
+    UserRightsError,
+)
 from pywikibot.page import Revision
-from tests.aspects import TestCase
+from tests.aspects import PatchingTestCase, TestCase
 
 
 class TestPageStableRevision(TestCase):
@@ -139,6 +143,255 @@ class TestPageStableRevision(TestCase):
 
             result = self.page.stable_revision
             self.assertEqual(result.revid, 999)
+
+
+class TestFlaggedRevsReview(PatchingTestCase):
+
+    """Test site.review() with flagged revisions."""
+
+    family = 'wikipedia'
+    code = 'fi'
+    dry = True
+
+    def setUp(self):
+        """Set up Test and patches."""
+        super().setUp()
+        self.token = '123ABC+\\'
+
+        self.mock_req = MagicMock()
+        self.patch(
+            pywikibot.site._apisite.APISite,
+            'simple_request',
+            self.mock_req,
+        )
+        self.submit = self.mock_req.return_value.submit
+
+        self.patch(
+            pywikibot.site._tokenwallet.TokenWallet,
+            '__getitem__',
+            lambda *_: self.token,
+        )
+
+        self.patch(
+            pywikibot.site._apisite.APISite,
+            'has_extension',
+            lambda *_: True,
+        )
+
+        self.patch(
+            pywikibot.site._apisite.APISite,
+            'has_right',
+            lambda *_: True,
+        )
+
+        self.patch(
+            self.site,
+            '_paraminfo',
+            {
+                'review': {
+                    'parameters': [
+                        {'name': 'comment'},
+                        {'name': 'flag_accuracy'},
+                    ]
+                }
+            },
+        )
+
+    def _mock_success(self, revid: int, **extra):
+        return {
+            'review': {
+                'revid': revid,
+                'result': 'Success',
+                **extra
+            }
+        }
+
+    def test_review_basic(self) -> None:
+        """Review a revision without any flags (simple approval)."""
+        revid = 12345
+        self.submit.return_value = self._mock_success(revid)
+        self.site.review_revision(revid=revid, comment='unit test')
+
+        self.mock_req.assert_called_once_with(
+            action='review',
+            token=self.token,
+            revid=revid,
+            comment='unit test',
+            formatversion=2,
+        )
+
+    def test_review_unapprove(self) -> None:
+        """Un-approve a previously approved revision."""
+        revid = 12347
+        self.submit.return_value = self._mock_success(revid)
+
+        self.site.review_revision(
+            revid=revid,
+            comment='unit test unapprove',
+            unapprove=True
+        )
+
+        self.mock_req.assert_called_once_with(
+            action='review',
+            token=self.token,
+            revid=revid,
+            comment='unit test unapprove',
+            unapprove='1',
+            formatversion=2,
+        )
+
+    def test_review_missing_token(self) -> None:
+        """Calling review() without a token raises ``notoken``."""
+        self.site.tokens.clear()
+        self.submit.side_effect = APIError(
+            code='notoken',
+            info='No CSRF token',
+            other={},
+        )
+
+        with self.assertRaises(APIError) as cm:
+            self.site.review_revision(revid=999)
+
+        self.assertEqual(cm.exception.code, 'notoken')
+
+    def test_review_insufficient_rights(self) -> None:
+        """User without ``review`` right gets ``permissiondenied``."""
+        self.submit.side_effect = APIError(
+            code='permissiondenied',
+            info="You don't have permission to review revisions.",
+            other={},
+        )
+
+        with self.assertRaises(APIError) as cm:
+            self.site.review_revision(revid=888)
+
+        self.assertEqual(cm.exception.code, 'permissiondenied')
+
+    def test_review_defaults(self) -> None:
+        """Calling review() with only revid and token is allowed."""
+        revid = 12348
+        self.submit.return_value = self._mock_success(revid)
+        self.site.review_revision(revid=revid)
+
+        self.mock_req.assert_called_once_with(
+            action='review',
+            token=self.token,
+            revid=revid,
+            comment=None,
+            formatversion=2,
+        )
+
+
+class TestBasePageReview(TestCase):
+
+    """Test review and unreview methods."""
+
+    family = 'wikipedia'
+    code = 'test2'
+    cache = True
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        """Set up test class."""
+        super().setUpClass()
+        cls.flagged = pywikibot.Page(cls.site, 'BTP')
+        cls.unflagged = pywikibot.Page(cls.site, 'UBTP')
+
+    def test_revision_ids(self):
+        """Test revision ids."""
+        self.assertEqual(self.flagged.stable_revision_id,
+                         self.flagged.latest_revision_id)
+        self.assertIsNotNone(self.unflagged.latest_revision_id)
+        self.assertIsNone(self.unflagged.stable_revision_id)
+
+    def test_review_check_revisions(self):
+        """Test exceptions."""
+        with self.assertRaisesRegex(
+            ValueError,
+            r'Revision 4711 does not belong to \[\[test2:BTP\]\]'
+        ):
+            self.flagged.review(revid=4711)
+        with self.assertRaisesRegex(ValueError, "Invalid revision id '0815'"):
+            self.flagged.review(revid='0815')
+        with self.assertRaisesRegex(ValueError, 'Invalid revision id True'):
+            self.flagged.review(revid=True)
+        with self.assertRaisesRegex(ValueError, 'Invalid revision id 3.14159'):
+            self.flagged.review(revid=3.14159)
+        with self.assertRaisesRegex(ValueError, 'Invalid revision id -273'):
+            self.flagged.review(revid=-273)
+
+    def test_review(self):
+        """Test review calls without site.review_revision."""
+        with self.assertRaisesRegex(
+            UserRightsError,
+            r'User ".+" does not have required user right "review" on site'
+        ):
+            self.flagged.review()
+        self.assertNotHasAttr(self.flagged, '_stable_revision_id')
+
+        with self.assertRaisesRegex(
+            UserRightsError,
+            r'User ".+" does not have required user right "review" on site'
+        ):
+            self.unflagged.review()
+        self.assertNotHasAttr(self.flagged, '_stable_revision_id')
+
+    def test_unreview(self):
+        """Test unreview calls without site.review_revision."""
+        self.assertIsNone(self.unflagged.unreview())
+        self.assertHasAttr(self.unflagged, '_stable_revision_id')
+        self.assertIsNone(self.unflagged.unreview(refresh=True))
+        self.assertHasAttr(self.unflagged, '_stable_revision_id')
+
+        with self.assertRaisesRegex(
+            UserRightsError,
+            r'User ".+" does not have required user right "review" on site'
+        ):
+            self.flagged.unreview()
+        self.assertHasAttr(self.flagged, '_stable_revision_id')
+
+        with self.assertRaisesRegex(
+            UserRightsError,
+            r'User ".+" does not have required user right "review" on site'
+        ):
+            self.flagged.unreview(refresh=True)
+        self.assertHasAttr(self.flagged, '_stable_revision_id')
+
+    def test_review_calls_site(self):
+        """Test review calls site.review_revision."""
+        revid = self.unflagged.latest_revision_id
+
+        with patch.object(
+            self.site,
+            'review_revision',
+            return_value=None,
+        ) as review_revision:
+            self.unflagged.review()
+
+        review_revision.assert_called_once_with(
+            revid,
+            summary=None,
+            flag=None,
+        )
+        self.assertNotHasAttr(self.unflagged, '_stable_revision_id')
+
+    def test_unreview_calls_site(self):
+        """Test unreview calls site.review_revision."""
+        revid = self.flagged.stable_revision_id
+
+        with patch.object(
+            self.site,
+            'review_revision',
+            return_value=None,
+        ) as review_revision:
+            self.flagged.unreview()
+
+        review_revision.assert_called_once_with(
+            revid,
+            summary=None,
+            unapprove=True,
+        )
+        self.assertNotHasAttr(self.flagged, '_stable_revision_id')
 
 
 if __name__ == '__main__':

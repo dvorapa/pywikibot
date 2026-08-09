@@ -1320,7 +1320,11 @@ class SiteAttributeTestCase(TestCase):
 
 class DefaultSiteTestCase(TestCase):
 
-    """Run tests against the config specified site."""
+    """Run tests using the config specified site.
+
+    Set :attr:`dry` to ``True`` to run tests using the site in offline
+    (dry) mode.
+    """
 
     family = config.family
     code = config.mylang
@@ -1349,7 +1353,7 @@ class DefaultSiteTestCase(TestCase):
         }
 
 
-class AlteredDefaultSiteTestCase(TestCase):
+class SiteConfigTestCase(TestCase):
 
     """Save and restore the config.mylang and config.family."""
 
@@ -1366,7 +1370,7 @@ class AlteredDefaultSiteTestCase(TestCase):
         super().tearDown()
 
 
-class ScriptMainTestCase(AlteredDefaultSiteTestCase):
+class ScriptMainTestCase(SiteConfigTestCase):
 
     """Tests that depend on the default site being set to the test site."""
 
@@ -1376,13 +1380,6 @@ class ScriptMainTestCase(AlteredDefaultSiteTestCase):
         site = self.get_site()
         pywikibot.config.family = site.family
         pywikibot.config.mylang = site.code
-
-
-class DefaultDrySiteTestCase(DefaultSiteTestCase):
-
-    """Run tests using the config specified site in offline mode."""
-
-    dry = True
 
 
 class WikimediaDefaultSiteTestCase(DefaultSiteTestCase):
