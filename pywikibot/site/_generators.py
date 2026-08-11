@@ -1508,12 +1508,11 @@ class GeneratorsMixin:
         if start and end:
             self.assert_valid_iter_params('abuselog', start, end, reverse)
 
-        gen = self._generator(api.ListGenerator, type_arg='abuselog',
-                              afluser=user, total=total,
-                              aflstart=start, aflend=end,
-                              afldir=('newer' if reverse else 'older'),
-                              **kwargs)
-        return gen
+        return self._generator(api.ListGenerator, type_arg='abuselog',
+                               afluser=user, total=total,
+                               aflstart=start, aflend=end,
+                               afldir=('newer' if reverse else 'older'),
+                               **kwargs)
 
     def recentchanges(
         self,
@@ -1749,7 +1748,7 @@ class GeneratorsMixin:
         :param prop: Include additional pieces of information. Refer
             :api:`Usercontribs` for the elements and the default setting.
         :param formatversion: The API format version to use for the
-            response. (``1`` by deault)
+            response. (``1`` by default)
         :raises pywikibot.exceptions.Error: either user or userprefix
             must be non-empty
         :raises KeyError: A namespace identifier was not resolved
@@ -2100,7 +2099,7 @@ class GeneratorsMixin:
             to be patrolled.
         :param revid: An int/string/iterable/iterator providing revid of pages
             to be patrolled.
-        :param revision: An Revision/iterable/iterator providing Revision
+        :param revision: A Revision/iterable/iterator providing Revision
             object of pages to be patrolled.
         """
         # If patrol is not enabled, attr will be set the first time a
@@ -2550,7 +2549,7 @@ class GeneratorsMixin:
         def ignore_talkpages(page: pywikibot.page.BasePage) -> bool:
             """Ignore talk pages and special pages."""
             ns = page.namespace()
-            return ns >= 0 and not page.namespace() % 2
+            return ns >= 0 and not ns % 2
 
         expiry = None if force else pywikibot.config.API_config_expiry
         gen = api.PageGenerator(site=self, generator='watchlistraw',
