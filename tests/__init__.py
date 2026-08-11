@@ -179,6 +179,7 @@ script_test_modules = {
     'cache',
     'category_bot',
     'checkimages',
+    'commonscat',
     'data_ingestion',
     'deletionbot',
     'fixing_redirects',
@@ -196,9 +197,11 @@ script_test_modules = {
     'reflinks',
     'replacebot',
     'script',
+    'speedy_delete',
     'template_bot',
     'uploadscript',
     'weblinkchecker',
+    'welcome',
 }
 
 disabled_test_modules = {
