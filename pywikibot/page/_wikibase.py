@@ -1165,8 +1165,8 @@ class ItemPage(WikibasePage):
 
         .. seealso:: :meth:`page.BasePage.getRedirectTarget`
 
-        :param ignore_section: Do not include section to the target even
-            the link has one
+        :param ignore_section: Skip checking the target section against raw
+            wikitext headings.
 
         :raises CircularRedirectError: Page is a circular redirect
         :raises InterwikiRedirectPageError: The redirect target is on
@@ -1174,8 +1174,8 @@ class ItemPage(WikibasePage):
         :raises Error: Target page has wrong content model
         :raises IsNotRedirectPageError: Page is not a redirect
         :raises RuntimeError: No redirects found
-        :raises SectionError: The section is not found on target page
-            and *ignore_section* is not set
+        :raises SectionError: The section does not match a raw wikitext
+            heading on the target page and *ignore_section* is not set
         """
         target = super().getRedirectTarget(ignore_section=ignore_section)
         cmodel = target.content_model
@@ -2198,27 +2198,29 @@ class Claim(Property):
 
         :return: JSON value
         """
+        target = self.getTarget()
+
         # TODO: eventually unify the following two groups
         if self.type in ('wikibase-item', 'wikibase-property'):
-            value = {'entity-type': self.getTarget().entity_type,
-                     'numeric-id': self.getTarget().getID(numeric=True)}
+            value = {'entity-type': target.entity_type,
+                     'numeric-id': target.getID(numeric=True)}
         elif self.type in (
                 'wikibase-lexeme', 'wikibase-form', 'wikibase-sense'):
-            value = {'entity-type': self.getTarget().entity_type,
-                     'id': self.getTarget().getID()}
+            value = {'entity-type': target.entity_type,
+                     'id': target.getID()}
         elif self.type in ('string', 'url', 'math', 'external-id',
                            'musical-notation'):
-            value = self.getTarget()
+            value = target
         elif self.type == 'commonsMedia':
-            value = self.getTarget().title(with_ns=False)
+            value = target.title(with_ns=False)
         elif self.type in ('globe-coordinate', 'time',
                            'quantity', 'monolingualtext',
                            'geo-shape', 'tabular-data'):
-            value = self.getTarget().toWikibase()
+            value = target.toWikibase()
         else:  # WbUnknown
             pywikibot.warning(
                 f'{self.type} datatype is not supported yet.')
-            value = self.getTarget().toWikibase()
+            value = target.toWikibase()
         return value
 
     def _formatDataValue(self) -> dict:
