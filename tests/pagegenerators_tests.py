@@ -679,6 +679,20 @@ class TestDryPreloadingGenerator(TestCase):
         high_site.preloadpages.assert_called_once_with(
             high_pages, groupsize=5, quiet=False)
 
+    def test_preload_options(self) -> None:
+        """Test that preload options are passed to the site."""
+        site = mock.Mock(maxlimit=5)
+        site.preloadpages.side_effect = lambda pages, **kwargs: iter(pages)
+        page = mock.Mock(site=site)
+
+        pages = list(PreloadingGenerator(
+            [page], content=False, coordinates=True, pageprops=True))
+
+        self.assertEqual(pages, [page])
+        site.preloadpages.assert_called_once_with(
+            [page], groupsize=5, quiet=False, pageprops=True,
+            content=False, coordinates=True)
+
 
 class TestPreloadingGenerator(DefaultSiteTestCase):
 
@@ -807,6 +821,29 @@ class DryFactoryGeneratorTest(TestCase):
     code = 'en'
 
     dry = True
+
+    def test_title_filters_run_before_redirect_filter(self) -> None:
+        """Test title filters discard pages before redirect checks."""
+        site = self.get_site()
+        keep = pywikibot.Page(site, 'Keep this')
+        pages = [
+            pywikibot.Page(site, 'Drop this'),
+            pywikibot.Page(site, 'Keep excluded'),
+            keep,
+        ]
+        gf = pagegenerators.GeneratorFactory(site=site)
+        gf.gens = [pages]
+        gf.titlefilter_list = ['^Keep']
+        gf.titlenotfilter_list = ['excluded']
+        gf.redirectfilter = False
+
+        with mock.patch.object(
+                pywikibot.Page, 'isRedirectPage', return_value=False
+        ) as is_redirect:
+            result = list(gf.getCombinedGenerator())
+
+        self.assertEqual(result, [keep])
+        is_redirect.assert_called_once_with()
 
     def test_one_namespace(self) -> None:
         """Test one namespace."""
