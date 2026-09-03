@@ -1226,7 +1226,10 @@ The text message is:
             except TypeError:
                 raise RuntimeError(result)
 
-        msg = 'Maximum retries attempted due to maxlag without success.'
+        msg = (
+            f'Maximum retries attempted due to maxlag on {self.site} without'
+            ' success.'
+        )
         if TEST_RUNNING:
             raise unittest.SkipTest(msg)
 
@@ -1414,6 +1417,6 @@ def encode_url(query) -> str:
 
     # parameters ending on 'token' should go last
     # wpEditToken should go very last
-    query.sort(key=lambda x: x[0].lower().endswith('token')
-               + (x[0] == 'wpEditToken'))
+    query = sorted(query, key=lambda x: x[0].lower().endswith('token')
+                   + (x[0] == 'wpEditToken'))
     return urlencode(query)
