@@ -140,7 +140,10 @@ def intersect_generators(*iterables, allow_duplicates: bool = False):
         return
 
     if len(iterables) == 1:
-        yield from iterables[0]
+        if allow_duplicates:
+            yield from iterables[0]
+        else:
+            yield from filter_unique(iterables[0])
         return
 
     # If any iterable is empty, no pages are going to be returned

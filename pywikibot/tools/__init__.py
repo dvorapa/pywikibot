@@ -20,6 +20,7 @@ import sys
 from collections.abc import Callable
 from contextlib import suppress
 from functools import total_ordering, wraps
+from pathlib import Path
 from types import TracebackType
 from typing import IO, Any, Literal
 from warnings import catch_warnings, showwarning, warn
@@ -433,7 +434,7 @@ class MediaWikiVersion:
 
     """Version object to allow comparing 'wmf' versions with normal ones.
 
-    The version mainly consist of digits separated by periods. After
+    The version mainly consists of digits separated by periods. After
     that is a suffix which may only be 'wmf<number>', 'alpha',
     'beta<number>' or '-rc.<number>' (the - and . are optional). They
     are considered from old to new in that order with a version number
@@ -728,7 +729,7 @@ class SevenZipFile(io.RawIOBase):
 
 
 @deprecated_signature(since='11.4.0')
-def open_archive(filename: str, /,
+def open_archive(filename: str | os.PathLike[str], /,
                  mode: str = 'rb', *,
                  use_extension: bool = True) -> IO[bytes]:
     """Open a file and uncompress it if needed.
@@ -748,8 +749,10 @@ def open_archive(filename: str, /,
        keyword only. Uses :class:`SevenZipFile` to open 7zip-files.
     .. version-changed:: 11.7
        Honor *mode* for uncompressed archives.
+    .. version-changed:: 11.8
+       Accept path-like filenames and detect suffixes case-insensitively.
 
-    :param filename: The filename.
+    :param filename: The filename or path-like object.
     :param mode: The mode in which the file should be opened. It may
         either be 'r', 'rb', 'a', 'ab', 'w' or 'wb'. All modes open the
         file in binary mode. It defaults to 'rb'.
@@ -785,10 +788,9 @@ def open_archive(filename: str, /,
     elif mode not in ('rb', 'ab', 'wb'):
         raise ValueError(f'Invalid mode: "{mode}"')
 
+    filename = os.fspath(filename)
     if use_extension:
-        # if '.' not in filename, it'll be 1 character long but otherwise
-        # contain the period
-        extension = filename[filename.rfind('.'):][1:]
+        extension = Path(filename).suffix.removeprefix('.').lower()
     else:
         if mode != 'rb':
             raise ValueError('Magic number detection only when reading')

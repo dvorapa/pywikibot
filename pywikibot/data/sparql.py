@@ -144,6 +144,7 @@ class SparqlQuery(WaitingMixin):
 
         # force cleared
         self.last_response = None
+        self.current_retries = 0
 
         url = f'{self.endpoint}?query={quote(query)}'
         while True:

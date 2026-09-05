@@ -1964,7 +1964,7 @@ def getAutoFormat(lang: str, title: str, ignoreFirstLetterCase: bool = True
         with suppress(Exception):
             year = dictionary[lang](title)
             return dict_name, year
-    # sometimes the title may begin with an upper case while its listed as
+    # sometimes the title may begin with an upper case while it's listed as
     # lower case, or the other way around
     # change case of the first character to the opposite, and try again
     if ignoreFirstLetterCase:
