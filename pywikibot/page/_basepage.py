@@ -1152,7 +1152,7 @@ class BasePage(ComparableMixin):
                       namespaces=None,
                       total: int | None = None,
                       content: bool = False) -> Iterable[pywikibot.Page]:
-        """Return an iterator all pages that refer to or embed the page.
+        """Return an iterator over all pages that refer to or embed the page.
 
         If you need a full list of referring pages, use
         ``pages = list(s.getReferences())``
