@@ -124,7 +124,7 @@ template_total_move_protection = {
 }
 
 # If you use only one template for all the type of protection, put it here.
-# You may use only one template or an unique template and some other "old"
+# You may use only one template or a unique template and some other "old"
 # template that the script should still check (as on it.wikipedia)
 template_unique = {
     'ar': [r'\{\{(?:[Tt]emplate:|قالب:|)(محمية)\}\}'],
