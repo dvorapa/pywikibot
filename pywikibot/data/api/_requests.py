@@ -1408,7 +1408,7 @@ def encode_url(query) -> str:
     :py:obj:`urlencode`. Return an HTTP URL query fragment which
     complies with :api:`Edit#Parameters` (See the 'token' bullet.)
 
-    :param query: keys and values to be uncoded for passing with a url
+    :param query: keys and values to be encoded for passing with a url
     :type query: mapping object or a sequence of two-element tuples
     :return: encoded parameters with token parameters at the end
     """
