@@ -305,7 +305,7 @@ class LinkCheckThread(threading.Thread):
                 self.url, headers=header,
                 use_fake_user_agent=self._use_fake_user_agent)
             bad = (r.status_code != HTTPStatus.OK
-                   or r.status_code in self.http_ignores)
+                   and r.status_code not in self.http_ignores)
             message = HTTPStatus(r.status_code).phrase
         except (requests.exceptions.InvalidURL, FatalServerError):
             bad = True

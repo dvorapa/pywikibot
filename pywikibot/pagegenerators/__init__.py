@@ -685,7 +685,9 @@ def PreloadingGenerator(
     """Yield preloaded pages taken from another generator.
 
     .. version-changed:: 11.8
-       Optional page properties can be selected for preloading.
+       The effective preload group size is calculated independently for
+       each site and limited by its API limit. Optional page properties
+       can be selected for preloading.
 
     :param generator: Pages to iterate over
     :param groupsize: How many pages to preload at once

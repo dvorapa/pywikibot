@@ -175,11 +175,12 @@ class TextEditor:
             _cmd = winreg.QueryValueEx(_key2, '')[0]
             # See T102465 for issues relating to using this value.
             cmd = _cmd
-            if cmd.find('%1'):
+            if '%1' in cmd:
                 cmd = cmd[:cmd.find('%1')]
                 # Remove any trailing character, which should be a quote or
                 # space and then remove all whitespace.
-                return cmd[:-1].strip()
+                cmd = cmd[:-1]
+            return cmd.strip()
         except OSError as e:
             # Catch any key lookup errors
             pywikibot.info(f'Unable to detect program for file extension '
