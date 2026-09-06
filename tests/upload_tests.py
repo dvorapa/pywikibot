@@ -213,6 +213,33 @@ class TestUploaderStateTransitions(TestCase):
                 self.assertNotIn('filekey', submitted[0])
                 self.assertEqual(submitted[1]['filekey'], ['upload-key'])
 
+    def test_stash_sha1_mismatch(self) -> None:
+        """Test rejecting a stash whose SHA1 differs from the local file."""
+        source = join_images_path('1rightarrow.png')
+        stash_info = {
+            'size': 1024,
+            'sha1': '3503db342c8dfb0a38db0682b7370ddd271fa163',
+        }
+        site = _Site([], stash_info)
+        uploader = Uploader(
+            site, _FilePage(), source_filename=source,
+            comment='upload test', chunk_size=1024,
+            ignore_warnings=True)
+
+        with self.assertRaises(ValueError) as cm:
+            uploader._upload(
+                ignore_warnings=True, report_success=False,
+                file_key='upload-key', offset=1024)
+
+        self.assertEqual(
+            str(cm.exception),
+            'The SHA1 of 1024 bytes of the stashed "upload-key" is '
+            '3503db342c8dfb0a38db0682b7370ddd271fa163 while the local file is '
+            '3dd334f11aa1e780d636416dc0649b96b67588b6')
+        self.assertEqual(
+            site.stash_calls, [('upload-key', ['size', 'sha1'])])
+        self.assertIsEmpty(site.requests)
+
     def test_transfer_and_publication_polling(self) -> None:
         """Test transfer and publication polling remain distinct."""
         responses = [
@@ -389,19 +416,6 @@ class TestUpload(TestCase):
     def test_first_chunk_warning_stash(self) -> None:
         """Test a first chunk is stashed after an upload warning."""
         self._init_upload(1024)
-
-    @unittest.expectedFailure  # T367321
-    def test_sha1_mismatch(self) -> None:
-        """Test trying to continue with a different file."""
-        self._init_upload(1024)
-        with self.assertRaises(ValueError) as cm:
-            self._finish_upload(1024, self.arrow_png)
-        self.assertEqual(
-            str(cm.exception),
-            f'The SHA1 of 1024 bytes of the stashed "{self._file_key}" is '
-            '3503db342c8dfb0a38db0682b7370ddd271fa163 while the local file is '
-            '3dd334f11aa1e780d636416dc0649b96b67588b6')
-        self._verify_stash()
 
     @unittest.expectedFailure  # T367316
     def test_offset_mismatch(self) -> None:

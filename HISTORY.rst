@@ -5,6 +5,8 @@ Release History
 ------
 *22 August 2026*
 
+* Raise ConnectionError for lost SOCKS connection in :func:`comms.http.error_handling_callback`.
+* Various performance, stability, and code quality improvements.
 * Yield non-strict unconnected pages in :meth:`APISite.unconnected_pages()
   <pywikibot.site._extensions.WikibaseClientMixin.unconnected_pages>` and fix the
   regression introduced in :ref:`10.4.0`.

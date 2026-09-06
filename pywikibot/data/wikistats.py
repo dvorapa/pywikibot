@@ -92,13 +92,13 @@ class WikiStats:
 
         :param table: table of data to fetch
         """
+        table = self.FAMILY_MAPPING.get(table, table)
         if table in _data:
             return _data[table]
 
         if table not in self.ALL_KEYS:
             pywikibot.warning('WikiStats unknown table ' + table)
 
-        table = self.FAMILY_MAPPING.get(table, table)
         path = '/api.php?action=dump&table={table}&format=csv'
         url = self.url + path
         r = http.fetch(url.format(table=table))

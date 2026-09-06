@@ -69,9 +69,14 @@ class UploadRobot(BaseBot):
         """Initializer.
 
         .. version-changed:: 6.2
-           asynchronous upload is used if *asynchronous* parameter is set
+           asynchronous upload is used if *asynchronous* parameter is
+           set.
         .. version-changed:: 6.4
-           *force_if_shared* parameter was added
+           *force_if_shared* parameter was added.
+        .. version-changed:: 11.8
+           Temporary files created for URL downloads are now cleaned up
+           after use, including when the download or upload fails.
+           Caller-provided local files are preserved.
 
         :param url: path to url or local file, or list of urls or paths
             to local files.
