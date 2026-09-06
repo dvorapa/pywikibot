@@ -1,12 +1,35 @@
 Release 11.8
 ============
 
-* Update translations (i18n)
-* Add new :class:`family.WikimediaSubdomainFamily`
-* Update documentation for :meth:`page.BasePage.exists`. (:phab:`T334341`)
+* Reset the retry counter for each query in :class:`data.sparql.SparqlQuery`.
+* Deduplicate intersections with a single input in :func:`tools.itertools.intersect_generators`.
+* Accept path-like filenames and detect suffixes case-insensitively in :func:`tools.open_archive`.
+* Add support for all existing Beta Cluster wikis. (:phab:`T225892`)
+* Various performance, stability, and code quality improvements.
+* Support selective page preloading of :meth:`APISite.preloadpages
+  <pywikibot.site._generators.GeneratorsMixin.preloadpages>` with
+  :func:`pagegenerators.PreloadingGenerator` and :func:`pagegenerators.DequePreloadingGenerator`.
+* Apply title filters first in :meth:`pagegenerators.GeneratorFactory.getCombinedGenerator`
+  and avoid loading page data for titles rejected by title filters.
+* Support immutable sequences in :func:`data.api.encode_url`.
+* Clear bundle cache when switching packages with :func:`i18n.set_messages_package`.
+* Use pathlib for path containment in :func:`config.shortpath` and
+  :func:`version.get_module_filename`.
+* Add *depth* parameter to :func:`pagegenerators.PetScanPageGenerator`.
+* The :class:`specialbots.UploadRobot` class now cleans up temporary download files
+  after upload completion or failure, while preserving caller-provided local files.
+* Fix :meth:`APISite.loadrevisions<pywikibot.site._generators.GeneratorsMixin.loadrevisions>`
+  *step* handling.
+* Keep preload *groupsize* per site in :func:`pagegenerators.PreloadingGenerator`.
+* Preserve colliding intersection items without ``hash()`` in
+  :func:`tools.itertools.intersect_generators`.
 * :meth:`page.BasePage.get` no longer validates section fragments or raises
-  :exc:`exceptions.SectionError` for them (:phab:`T422856`,
-  :phab:`T422859`).
+  :exc:`exceptions.SectionError` for them, as the method always retrieves the complete
+  page text (:phab:`T422856`, :phab:`T422859`).
+* Update translations (i18n).
+* Add new :class:`family.WikimediaSubdomainFamily`.
+* Update documentation for :meth:`page.BasePage.exists`. (:phab:`T334341`)
+
 
 Deprecations
 ============

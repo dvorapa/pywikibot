@@ -52,6 +52,8 @@ class Page(BasePage, WikiBlameMixin, WikiWhoMixin):
         This best-effort check supports strict redirect-target handling; it
         does not reproduce MediaWiki's parser-generated anchors.
 
+        .. version-added:: 11.8
+
         :raises SectionError: The section does not match an extracted heading.
         """
         page_section = self.section()

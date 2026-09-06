@@ -225,6 +225,8 @@ class GeneratorFactory:
            with the *quiet* option.
            The generator specified by ``-start`` and ``-until`` is
            evaluated lazily by this method.
+        .. versionchanged:: 11.8
+           Avoid loading page data for titles rejected by title filters.
 
         :param gen: Another generator to be combined with
         :param preload: Preload pages using PreloadingGenerator

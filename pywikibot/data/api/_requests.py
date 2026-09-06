@@ -1404,6 +1404,9 @@ class CachedRequest(Request):
 def encode_url(query) -> str:
     """Encode parameters to pass with a url.
 
+    .. version-changed:: 11.8
+       Support immutable sequences with *query* parameter.
+
     Reorder parameters so that token parameters go last and call wraps
     :py:obj:`urlencode`. Return an HTTP URL query fragment which
     complies with :api:`Edit#Parameters` (See the 'token' bullet.)
