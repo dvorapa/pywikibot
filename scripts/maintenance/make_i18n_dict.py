@@ -45,7 +45,12 @@ from pywikibot import config
 
 class i18nBot:  # noqa: N801
 
-    """I18n bot."""
+    """I18n bot.
+
+    .. version-changed:: 11.8
+       Fix regressions for pathlib conversion and script attribute
+       lookup.
+    """
 
     def __init__(self, script, *args, **kwargs) -> None:
         """Initializer."""

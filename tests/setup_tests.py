@@ -7,7 +7,11 @@
 """Test setup.py."""
 from __future__ import annotations
 
+import sys
 import unittest
+from unittest.mock import patch
+
+from packaging.version import Version
 
 import pywikibot
 import setup
@@ -29,6 +33,26 @@ class TestSetup(TestCase):
         """Test :func:`setup.get_validated_version` function."""
         self.assertEqual(setup.get_validated_version('pywikibot'),
                          pywikibot.__version__)
+
+    @patch('subprocess.run')
+    def test_get_validated_version_uses_latest_tag(self, mock_run) -> None:
+        """Test that version validation uses the latest repository tag."""
+        version = Version(pywikibot.__version__)
+        newer_version = f'{version.major + 1}.0.0'
+        older_version = f'{max(version.major - 1, 0)}.0.0'
+        mock_run.return_value.stdout = (
+            f'not-a-version\n{newer_version}\n{older_version}\n'
+        )
+
+        with patch.object(sys, 'argv', ['setup.py', 'sdist']):
+            with patch('builtins.print') as mock_print:
+                with self.assertRaises(SystemExit):
+                    setup.get_validated_version('pywikibot')
+
+        mock_print.assert_any_call(
+            f'\n\nNew version {str(version)!r} is not higher than last '
+            f'version {newer_version!r}.'
+        )
 
     def test_read_desc(self) -> None:
         """Test :func:`setup.read_desc` function."""

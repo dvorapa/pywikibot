@@ -119,7 +119,7 @@ def intersect_generators(*iterables, allow_duplicates: bool = False):
     .. version-added:: 3.0
 
     .. version-changed:: 5.0
-       Avoid duplicates (:phab:`T263947`).
+       Avoid duplicates except *allow_duplicates* is set.
 
     .. version-changed:: 6.4
        ``genlist`` was renamed to ``iterables``; consecutive iterables
@@ -131,6 +131,10 @@ def intersect_generators(*iterables, allow_duplicates: bool = False):
     .. version-changed:: 9.0
        Iterable elements may consist of lists or tuples
        ``allow_duplicates`` is a keyword-only argument
+
+    .. version-changed:: 11.8
+       Preserve colliding intersection items without ``hash()``. Avoid
+       duplicates for a single iterable if *allow_duplicates* is not set.
 
     :param iterables: Page generators
     :param allow_duplicates: Optional keyword argument to allow duplicates

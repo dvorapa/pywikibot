@@ -9,6 +9,60 @@ archivebot
 
 * Fix ``-locale`` and ``-timezone`` options.
 
+category_redirect
+^^^^^^^^^^^^^^^^^
+
+*  Fix delay option parsing.
+
+coordinate_import
+^^^^^^^^^^^^^^^^^
+
+* Use selective page preloading of :func:`pagegenerators.PreloadingGenerator`.
+
+data_ingestion
+^^^^^^^^^^^^^^
+
+*  Fix ``-csvdir`` option parsing.
+
+download_dump
+^^^^^^^^^^^^^
+
+* Prompt for empty path with ``-storepath`` option
+
+
+illustrate_wikidata
+^^^^^^^^^^^^^^^^^^^
+
+* Use selective page preloading of :func:`pagegenerators.PreloadingGenerator`.
+
+make_i18n_dict
+^^^^^^^^^^^^^^
+
+* Fix script attribute lookup regression introduced with release 3.0.20200703
+* Fix pathlib conversion regressions introduced in release 10.2.0.`
+
+parser_function_count
+^^^^^^^^^^^^^^^^^^^^^
+
+* Fix explicit :func:`pywikibot.handle_args` arguments.
+
+solve_disambiguation
+^^^^^^^^^^^^^^^^^^^^
+
+* Return on OSError, preserving the initialized ignore list as the pre-pathlib implementation
+  did.
+
+
+tracking_param_remover
+^^^^^^^^^^^^^^^^^^^^^^
+
+* Avoid unsafe C tokenizer without GIL. (:phab:`T435717`)
+
+transwikiimport
+^^^^^^^^^^^^^^^
+
+* Make summaries order-independent.
+
 
 11.7.0
 ------
