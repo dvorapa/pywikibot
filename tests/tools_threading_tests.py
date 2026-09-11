@@ -78,7 +78,8 @@ class BasicThreadedGeneratorTestCase(TestCase):
 
         def consume() -> None:
             try:
-                received.extend(generator)
+                for item in generator:
+                    received.append(item)
             except type(failure) as e:
                 errors.append(e)
 
@@ -238,7 +239,7 @@ class BoundedThreadPoolTests(TestCase):
             BoundedPoolExecutor(Executor)
         with self.assertRaisesRegex(
             TypeError,
-            r'(duplicate base class |Cannot create a consistent method[\s\S]*)'
+            r'(duplicate base class |Cannot create a consistent method(?s:.*))'
             "'?BoundedPoolExecutor'?"
         ):
             BoundedPoolExecutor(BoundedPoolExecutor)
