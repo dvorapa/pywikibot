@@ -345,12 +345,11 @@ class WikibaseEntity:
 
                 updated_references = statement.get('references', [])
                 for ref_grp_idx, ref_grp in enumerate(updated_references):
-                    for ref_propid, reference in ref_grp['snaks'].items():
-                        for ref_index, ref_stat in enumerate(reference):
-                            target_ref_grp = claim.sources[ref_grp_idx]
-                            target_ref_prop = target_ref_grp[ref_propid]
-                            target_ref = target_ref_prop[ref_index]
-                            target_ref.hash = ref_stat['hash']
+                    target_ref_grp = claim.sources[ref_grp_idx]
+                    for ref_propid in ref_grp['snaks']:
+                        target_ref_prop = target_ref_grp[ref_propid]
+                        for target_ref in target_ref_prop:
+                            target_ref.hash = ref_grp['hash']
 
     def concept_uri(self) -> str:
         """Return the full concept URI.
@@ -2321,8 +2320,9 @@ class LexemePage(WikibasePage):
             value = getattr(self, prop, None)
             if not value:
                 continue
-            if not diffto or diffto.get(prop) != value.getID():
-                data[prop] = value.getID()
+            value_id = value.getID()
+            if not diffto or diffto.get(prop) != value_id:
+                data[prop] = value_id
 
         return data
 
