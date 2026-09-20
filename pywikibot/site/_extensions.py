@@ -238,6 +238,105 @@ class PageImagesMixin:
         self._update_page(page, query)
 
 
+class PageViewInfoMixin:
+
+    """APISite mixin for PageViewInfo extension.
+
+    .. version-added:: 11.8
+    """
+
+    @need_extension('PageViewInfo')
+    def pageviews(
+        self: BaseSiteProtocol,
+        page: pywikibot.Page,
+        days: int | None = None,
+        *,
+        metric: str = 'pageviews',
+    ) -> dict[str, int | None]:
+        """Return daily page views for *page*.
+
+        :param page: Page for which to retrieve view counts.
+        :param days: Number of days to return, up to the site-configured
+            maximum. If ``None``, use the site's default.
+        :param metric: Page view metric supported by the site.
+        :raises NoPageError: The page does not exist.
+        :return: Mapping of ISO date strings to view counts. A count may
+            be ``None`` when data is unavailable.
+        """
+        if page.namespace() >= 0 and not page.exists():
+            raise NoPageError(page)
+
+        parameters = {
+            'titles': page.title(with_section=False),
+            'pvipmetric': metric,
+        }
+        if days is not None:
+            parameters['pvipdays'] = days
+        query = self._generator(api.PropertyGenerator,
+                                type_arg='pageviews', **parameters)
+        try:
+            pagedata = next(iter(query))
+            return pagedata['pageviews']
+        except (KeyError, StopIteration) as e:
+            raise UnexpectedAPIDataError(
+                f'PageViewInfo response contains no data for {page}'
+            ) from e
+
+    @need_extension('PageViewInfo')
+    def siteviews(
+        self: BaseSiteProtocol,
+        days: int | None = None,
+        *,
+        metric: str = 'pageviews',
+    ) -> dict[str, int | None]:
+        """Return daily view totals for this site.
+
+        :param days: Number of days to return, up to the site-configured
+            maximum. If ``None``, use the site's default.
+        :param metric: Site view metric supported by the site.
+        :return: Mapping of ISO date strings to view counts. A count may
+            be ``None`` when data is unavailable.
+        """
+        parameters = {
+            'action': 'query',
+            'meta': 'siteviews',
+            'pvismetric': metric,
+            'formatversion': 2,
+        }
+        if days is not None:
+            parameters['pvisdays'] = days
+        request = self.simple_request(**parameters)
+        try:
+            return request.submit()['query']['siteviews']
+        except KeyError as e:
+            raise UnexpectedAPIDataError(
+                'PageViewInfo response contains no site view data'
+            ) from e
+
+    @need_extension('PageViewInfo')
+    def mostviewed(
+        self: BaseSiteProtocol,
+        total: int | None = 10,
+        *,
+        metric: str = 'pageviews',
+    ) -> Generator[tuple[pywikibot.Page, int]]:
+        """Yield the most viewed pages and their view counts.
+
+        :param total: Maximum number of pages to return, or ``None`` for
+            all available pages.
+        :param metric: Page view metric supported by the site.
+        :yield: A page and its view count for the previous day.
+        """
+        query = self._generator(
+            api.ListGenerator,
+            type_arg='mostviewed',
+            total=total,
+            pvimmetric=metric,
+        )
+        for pagedata in query:
+            yield pywikibot.Page(self, pagedata['title']), pagedata['count']
+
+
 class GlobalUsageMixin:
 
     """APISite mixin for Global Usage extension."""
@@ -478,12 +577,22 @@ class FlaggedRevsMixin:
     """
 
     @need_extension('FlaggedRevs')
-    def stable_revid(self: BaseSiteProtocol,
-                     page: pywikibot.Page) -> int | None:
-        """Return the stable (reviewed) revision id for a page, if any.
+    def flagged_state(self: BaseSiteProtocol,
+                      page: pywikibot.Page) -> dict | None:
+        """Return the FlaggedRevs info dict for a page, if any.
+
+        Uses ``prop=flagged`` and returns the ``flagged`` object from the
+        API (keys such as ``stable_revid``, ``level``, ``level_text``,
+        ``pending_since``), or ``None`` if the page has no flagged data.
+
+        .. version-added:: 11.8
+        .. seealso::
+           - :meth:`stable_revid`
+           - :attr:`BasePage.flagged_state
+             <page.BasePage.flagged_state>`
 
         :param page: The page to inspect.
-        :return: The stable revision id or None if not available.
+        :return: Flagged info dict or None if not available.
         :raises UnknownExtensionError: FlaggedRevs not available
         """
         req = self.simple_request(
@@ -498,7 +607,22 @@ class FlaggedRevsMixin:
         if not pages:
             return None
 
-        return pages[0].get('flagged', {}).get('stable_revid')
+        flagged = pages[0].get('flagged')
+        return flagged or None
+
+    @need_extension('FlaggedRevs')
+    def stable_revid(self: BaseSiteProtocol,
+                     page: pywikibot.Page) -> int | None:
+        """Return the stable (reviewed) revision id for a page, if any.
+
+        :param page: The page to inspect.
+        :return: The stable revision id or None if not available.
+        :raises UnknownExtensionError: FlaggedRevs not available
+        """
+        flagged = self.flagged_state(page)
+        if not flagged:
+            return None
+        return flagged.get('stable_revid')
 
     @need_extension('FlaggedRevs')
     @need_right('review')
