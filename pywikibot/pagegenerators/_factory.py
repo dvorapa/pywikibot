@@ -467,8 +467,8 @@ class GeneratorFactory:
 
         if start_ or end_:
             pywikibot.info(
-                'Fetching log events in range: {} - {}.'
-                .format(end or 'beginning of time', start or 'now'))
+                'Fetching log events in range: %s - %s.',
+                end or 'beginning of time', start or 'now')
 
         # 'user or None', because user might be an empty string when
         # 'foo,,bar' was used.
@@ -538,7 +538,7 @@ class GeneratorFactory:
             max_w = max(len(p) for p in pages[::2]) + 4
             txt = 'Available special pages:\n'
             for a, b in zip_longest(pages[::2], pages[1::2], fillvalue=''):
-                txt += '    {a:<{max_w}}{b}\n'.format(a=a, b=b, max_w=max_w)
+                txt += f'    {a:<{max_w}}{b}\n'
             txt += ('\nMaximum number of pages to return is {max} '
                     '({highmax} for bots).\n'.format_map(limit))
             pywikibot.info(txt)
