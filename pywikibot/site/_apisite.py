@@ -1239,8 +1239,8 @@ class APISite(
             try:
                 namespace = _namespaces[ns]
             except KeyError:
-                pywikibot.warning('Broken namespace alias "{}" (id: {}) on {}'
-                                  .format(item['alias'], ns, self))
+                pywikibot.warning('Broken namespace alias "%s" (id: %s) on %s',
+                                  item['alias'], ns, self)
             else:
                 if item['alias'] not in namespace:
                     namespace.aliases.append(item['alias'])
@@ -1743,10 +1743,10 @@ class APISite(
 
         >>> site = pywikibot.Site()
         >>> tokens = site.get_tokens([])  # get all tokens
-        >>> list(tokens.keys())  # result depends on user
+        >>> list(tokens)  # result depends on user
         ['createaccount', 'login']
         >>> tokens = site.get_tokens(['csrf', 'patrol'])
-        >>> list(tokens.keys())  # doctest: +SKIP
+        >>> list(tokens)  # doctest: +SKIP
         ['csrf', 'patrol']
         >>> token = site.get_tokens(['csrf']).get('csrf')  # get a single token
         >>> token  # doctest: +SKIP
@@ -2094,11 +2094,13 @@ class APISite(
 
         if text_overrides:
             if 'text' in kwargs:
-                raise ValueError('text cannot be used with any of {}'
-                                 .format(', '.join(text_overrides)))
+                raise ValueError(
+                    'text cannot be used with any of '
+                    f'{", ".join(text_overrides)}')
             if len(text_overrides) > 1:
-                raise ValueError('Multiple text overrides used: {}'
-                                 .format(', '.join(text_overrides)))
+                raise ValueError(
+                    'Multiple text overrides used: '
+                    f'{", ".join(text_overrides)}')
             text = None
             basetimestamp = False
         elif 'text' in kwargs:

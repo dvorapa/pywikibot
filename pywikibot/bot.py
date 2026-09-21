@@ -882,13 +882,13 @@ def handle_args(args: Iterable[str] | None = None,
         show_help(show_global=do_help_val == 'global')
         sys.exit(0)
 
-    if calledModuleName() != 'generate_user_files':  # T261771
+    if module_name != 'generate_user_files':  # T261771
         try:
             pywikibot.Site()
         except (UnknownFamilyError, UnknownSiteError):
             _exception(exc_info=False)
             sys.exit(1)
-        if calledModuleName() == 'wrapper':
+        if module_name == 'wrapper':
             pywikibot._sites.clear()
 
     _debug('handle_args() completed.')
@@ -2219,17 +2219,19 @@ class WikidataBot(Bot, ExistingPageBot):
 
             # FIXME: the user may provide a better source, but we only
             # assume it's the default one
-            if ('s' not in exists_arg and sourceclaim
-                and any(sourceclaim.getID() in ref
-                        and all(snak.target_equals(sourceclaim.getTarget())
-                                for snak in ref[sourceclaim.getID()])
-                        for ref in existing.sources)):
-                logger_callback(
-                    f'Skipping {claim_id} because claim with the same source'
-                    ' already exists')
-                _log("Append 's' to -exists argument to override this "
-                     'behavior')
-                break
+            if 's' not in exists_arg and sourceclaim:
+                source_id = sourceclaim.getID()
+                source_target = sourceclaim.getTarget()
+                if any(source_id in ref
+                       and all(snak.target_equals(source_target)
+                               for snak in ref[source_id])
+                       for ref in existing.sources):
+                    logger_callback(
+                        f'Skipping {claim_id} because claim with the same'
+                        ' source already exists')
+                    _log("Append 's' to -exists argument to override this "
+                         'behavior')
+                    break
         else:
             return self.user_add_claim(item, claim, source, **kwargs)
 
