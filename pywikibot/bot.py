@@ -233,9 +233,11 @@ GLOBAL OPTIONS
 -nolog            Disable the log file (if it is enabled by default).
                   Also disable command.log.
 
--maxlag           Sets a new maxlag parameter to a number of seconds.
-                  Defer bot edits during periods of database server lag.
-                  Default is set by config.py
+-maxlag           Sets write_maxlag to a number of seconds and increases
+                  read_maxlag to at least this value. If read_maxlag is
+                  set to None, it remains unchanged. Defer bot requests
+                  during periods of database server lag. Defaults are
+                  set by config.py.
 
 -putthrottle:n    Set the minimum time (in seconds) the bot will wait
 -pt:n             between saving pages.
@@ -372,6 +374,9 @@ def init_handlers() -> None:
     .. version-changed:: 6.2
        Different logfiles are used if multiple processes of the same
        script are running.
+    .. version-changed:: 11.8
+       Moved to :func:`_init_handlers` to prevent recursive handler
+       initialization.
     """
     global _handlers_initializing
 
@@ -387,7 +392,11 @@ def init_handlers() -> None:
 
 
 def _init_handlers() -> None:
-    """Initialize logging handlers without a re-entrancy check."""
+    """Initialize logging handlers without a re-entrancy check.
+
+    .. version-added:: 11.8
+       Moved from :func:`init_handlers`.
+    """
     module_name = calledModuleName()
     if not module_name:
         module_name = 'terminal-interface'
@@ -855,9 +864,14 @@ def handle_args(args: Iterable[str] | None = None,
         elif option == '-daemonize':
             redirect_std = value or None
             daemonize.daemonize(redirect_std=redirect_std)
+        elif option == '-maxlag':
+            maxlag = int(value)
+            if config.read_maxlag is not None:
+                config.read_maxlag = max(config.read_maxlag, maxlag)
+            config.write_maxlag = maxlag
         else:
             # the argument depends on numerical config settings
-            # e.g. -maxlag and -step:
+            # e.g. -read_maxlag, -write_maxlag or -step:
             try:
                 _arg = option[1:]
                 # explicitly check for int (so bool doesn't match)
