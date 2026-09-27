@@ -149,6 +149,9 @@ def to_ascii_digits(phrase: str,
         known languages to convert.
     :return: The string with ascii digits
     """
+    if langs is None and phrase.isascii():
+        return phrase
+
     if langs is None:
         langs = NON_ASCII_DIGITS.keys()
     elif isinstance(langs, str):
@@ -2168,9 +2171,7 @@ def glue_template_and_params(template_and_params) -> str:
     params changes).
     """
     template, params = template_and_params
-    text = ''
-    for items in params.items():
-        text += '|{}={}\n'.format(*items)
+    text = ''.join('|{}={}\n'.format(*items) for items in params.items())
 
     return f'{{{{{template}\n{text}}}}}'
 
