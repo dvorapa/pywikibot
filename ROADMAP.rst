@@ -1,24 +1,7 @@
-Release 11.9
-============
+Release 11.10
+=============
 
-* Prevent setting a class property on an instance with :class:`tools.classproperty`.
-* Make API cache writes of :class:`data.api.CachedRequest` atomic and failure-safe. (:phab:`T438266`)
-* Map claims for wbeditentity of :class:`page.MediaInfo`. (:phab:`T376955`)
-* Avoid reading streamed HTTP responses to detect encoding in :func:`comms.http.fetch`.
-* Various performance, stability, and code quality improvements.
-* Add *timespec* parameter to :meth:`Timestamp.isoformat()<pywikibot.time.Timestamp.isoformat>`
-  method. (:phab:`T439983`, :phab:`T440120`)
-* Allow :ref:`global -user option<Global options>` to override OAuth authentication.
-  (:phab:`T420084`)
-* The *force* parameter of :class:`pywikibot.User` methods was renamed to
-  *refresh* (:phab:`T433225`)
-* Support custom Timestamp ISO separators and restores round-trip compatibility
-  between :meth:`Timestamp.isoformat()<pywikibot.time.Timestamp.isoformat>` and
-  :meth:`Timestamp.fromISOformat()<pywikibot.time.Timestamp.fromISOformat>`. (:phab:`T396723`)
-* Suggest installing all requirements for missing dependencies with
-  :mod:`pwb<pywikibot.scripts.wrapper>` wrapper.
-* Support legacy encoded section titles. (:phab:`T133276`)
-
+* (no changes yet)
 
 Deprecations
 ============
