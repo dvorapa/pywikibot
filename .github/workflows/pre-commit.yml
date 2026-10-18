@@ -22,16 +22,15 @@ jobs:
   pre-commit:
     runs-on: ${{ matrix.os || 'ubuntu-latest' }}
     continue-on-error: ${{ matrix.experimental || false }}
-    timeout-minutes: 8
+    timeout-minutes: 9
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.13', '3.14']
+        python-version: ['3.10', '3.13', '3.14', '3.15']
         os: [windows-latest, macOS-latest]
         include:
           - python-version: '3.13'
-            os: ubuntu-latest
-          - python-version: 3.15-dev
+          - python-version: '3.15'
     steps:
       - name: set up python ${{ matrix.python-version }}
         uses: actions/setup-python@v7
@@ -41,8 +40,13 @@ jobs:
       - name: checkout
         uses: actions/checkout@v7
         with:
-          submodules: true
           persist-credentials: false
+      # Fetch separately because checkout overrides GIT_HTTP_USER_AGENT.
+      - name: Fetch submodules
+        shell: bash
+        run: |
+          git submodule sync
+          git -c protocol.version=2 submodule update --init --force --depth=1
       - name: run pre-commit
         uses: pre-commit/action@v3.0.1
         env:
