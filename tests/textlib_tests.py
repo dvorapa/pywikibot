@@ -287,6 +287,23 @@ class TestCategoryRearrangement(DefaultSiteTestCase):
         self.assertEqual(orig_sortkey, new_dummy.sortKey)
 
 
+class TestReplaceCategoryLinks(TestCase):
+
+    """Test replacing category links."""
+
+    family = 'wikipedia'
+    code = 'en'
+
+    dry = True
+
+    def test_remove_last_category(self) -> None:
+        """Test removing the last category leaves the stub template intact."""
+        self.assertEqual(
+            textlib.replaceCategoryLinks(
+                'foo\n[[Category:Foo]]\n{{foo-stub}}', [], site=self.site),
+            'foo\n{{foo-stub}}')
+
+
 class TestTemplatesInCategory(TestCase):
 
     """Tests to verify that templates in category links are handled."""
@@ -1245,6 +1262,11 @@ class TestReplaceExcept(DefaultSiteTestCase):
                                                ['header'], site=self.site),
                          '\n==x<!--\n'
                          'comment-->==\n')
+        self.assertEqual(textlib.replaceExcept('\n==x==<!--==\n'
+                                               'x-->\n', 'x', 'y',
+                                               ['header'], site=self.site),
+                         '\n==x==<!--==\n'
+                         'x-->\n')
         self.assertEqual(textlib.replaceExcept('\n{|\n x \n|}\n', 'x', 'y',
                                                ['table'], site=self.site),
                          '\n{|\n x \n|}\n')
@@ -1740,6 +1762,21 @@ class TestExtractSections(DefaultSiteTestCase):
             [('== title ==',
               '\ncontent\n\n<!-- comment --> == not title ==\nfoo\n\n'),
              ('== title 2 ==', ' <!-- trailing comment -->\ncontent 2')]
+        )
+
+    def test_with_multiline_trailing_comment(self) -> None:
+        """Test section headers followed by a multiline comment."""
+        text = ('text\n\n'
+                '== title ==<!-- == not title ==\n-->\n'
+                'content\n\n'
+                '== title 2 == <!-- === not title ===\n-->\n'
+                'content 2')
+        result = extract_sections(text, self.site)
+        self._extract_sections_tests(
+            result,
+            'text\n\n',
+            [('== title ==', '<!-- == not title ==\n-->\ncontent\n\n'),
+             ('== title 2 ==', ' <!-- === not title ===\n-->\ncontent 2')]
         )
 
     def test_long_comment(self) -> None:
