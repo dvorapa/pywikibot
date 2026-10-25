@@ -56,6 +56,7 @@ __all__ = (
     'LexemeForm',
     'LexemePage',
     'LexemeSense',
+    'LexemeSubEntity',
     'MediaInfo',
     'Property',
     'PropertyPage',
@@ -2332,7 +2333,7 @@ class LexemePage(WikibasePage):
     }
 
     def __init__(self, site, title: str | None = None) -> None:
-        """Initializer.
+        """Initialize a Lexeme, with empty collections for a new entity.
 
         :param site: Data repository
         :type site: Pywikibot.site.DataSite
@@ -2343,6 +2344,7 @@ class LexemePage(WikibasePage):
         if title is None or title == '-1':
             super().__init__(site, '-1', entity_type='lexeme')
             assert self.id == '-1'
+            self._initialize_empty()
             return
 
         # we don't want empty titles
@@ -2394,6 +2396,10 @@ class LexemePage(WikibasePage):
         When diffto is provided, JSON representing differences to the
         provided data is created.
 
+        Forms and senses use API edit operations, not replacement of the
+        server's collections. Removing children requires a complete
+        original collection in diffto.
+
         :param diffto: JSON containing entity data
         """
         data = super().toJSON(diffto=diffto)
@@ -2424,6 +2430,13 @@ class LexemePage(WikibasePage):
             redirect, do not raise an exception.
         :raise NotImplementedError: a value in args or kwargs
         """
+        pending = {}
+        if not force and self.__dict__.get('_needs_reload', False):
+            # Fields assigned since invalidation are new local changes.
+            pending = {key: self.__dict__[key]
+                       for key in (*self.DATA_ATTRIBUTES, 'language',
+                                   'lexicalCategory')
+                       if key in self.__dict__}
         data = super().get(force, *args, **kwargs)
 
         if self.isRedirectPage() and not get_redirect:
@@ -2443,6 +2456,9 @@ class LexemePage(WikibasePage):
         data['language'] = self.language
         data['lexicalCategory'] = self.lexicalCategory
         self._needs_reload = False
+        for key, value in pending.items():
+            setattr(self, key, value)
+            data[key] = value
 
         return data
 
