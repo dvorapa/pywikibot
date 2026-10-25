@@ -1158,6 +1158,30 @@ class TestWriteNormalizeData(TestCase):
             ItemPage._normalizeData(data)
 
 
+class TestLexemePage(WikidataTestCase):
+
+    """Test Lexeme initialization without accessing a wiki."""
+
+    dry = True
+
+    def test_unsaved_fields(self) -> None:
+        """Collection access must preserve directly assigned lemmas."""
+        repo = self.get_repo()
+        namespace = Namespace(146, canonical_name='Lexeme',
+                              case='first-letter',
+                              defaultcontentmodel='wikibase-lexeme')
+        namespaces = NamespacesDict({**repo.namespaces, 146: namespace})
+        with patch.object(repo, '_namespaces', namespaces), \
+                patch.object(repo, '_entity_namespaces',
+                             {'lexeme': namespace}, create=True):
+            lexeme = LexemePage(repo)
+        lexeme.lemmas = LanguageDict({'en': 'colour'})
+        self.assertIsEmpty(lexeme.forms)
+        self.assertIsEmpty(lexeme.senses)
+        self.assertIsEmpty(lexeme.claims)
+        self.assertEqual(lexeme.lemmas, {'en': 'colour'})
+
+
 class TestLexemeNormalizeData(WikidataTestCase):
 
     """Test normalization of Lexeme and form fields."""
@@ -1269,6 +1293,28 @@ class TestLexemeSave(WikidataTestCase):
             self.assertEqual(lexeme.language.id, 'Q1860')
             self.assertIsNot(lexeme.forms, old_forms)
             self.assertEqual(lexeme.forms[0].id, 'L1-F1')
+
+    def test_repeated_save(self) -> None:
+        """Reload assigned IDs so a second save does not repeat additions."""
+        form = LexemeForm(self.repo)
+        form.representations['en'] = 'colours'
+        self.lexeme.forms.append(form)
+        response = copy.deepcopy(self.content)
+        response['lastrevid'] = 2
+        response['forms'] = [dict(form.toJSON(), id='L1-F1')]
+        with patch.object(self.repo, 'editEntity', return_value={
+                'entity': response}) as save, patch.object(
+                self.repo, 'loadcontent', side_effect=lambda *args: {
+                    'L1': copy.deepcopy(response)}):
+            self.lexeme.editEntity()
+            self.assertIn('add', save.call_args.args[1]['forms'][0])
+            self.lexeme.editEntity()
+            self.assertEqual(save.call_args.args[1], {})
+            self.assertEqual(save.call_args.kwargs['baserevid'], 2)
+            self.lexeme.lemmas = LanguageDict({'en': 'new local edit'})
+            self.lexeme.editEntity()
+            self.assertEqual(save.call_args.args[1], {'lemmas': {
+                'en': {'language': 'en', 'value': 'new local edit'}}})
 
     def test_failed_save_and_reload(self) -> None:
         """Rejected edits preserve changes; failed reloads prevent writes."""
