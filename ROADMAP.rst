@@ -1,6 +1,17 @@
 Release 11.10
 =============
 
+* Enable lexeme creation through :class:`LexemePage.editEntity()<pywikibot.LexemePage.editEntity>`.
+  See :ref:`Creating Lexemes` for further information. (:phab:`T442295`)
+* Initialize :class:`LexemePage<pywikibot.LexemePage>` collections for unsaved entities.
+  (:phab:`T442290`)
+* Various performance, stability, and code quality improvements.
+* Serialize nested form and sense edits in :class:`page.SubEntityCollection
+  <pywikibot.page._collections.SubEntityCollection>` and :class:`LexemePage<pywikibot.LexemePage>`
+  (:phab:`T189321`)
+* Add :attr:`ignore_save_related_errors<bot.BaseBot.ignore_save_related_errors>`
+  and :attr:`ignore_server_errors<bot.BaseBot.ignore_server_errors>` attributes
+  to :class:`bot.BaseBot` and use them in :meth:`userPut()<bot.BaseBot.userPut>`. (:phab:`T156908`)
 * Add support for Scribunto redirects. (:phab:`T417129`)
 * Serialize term removals and empty feature sets in :class:`page.LexemeSubEntity`
   and :class:`LexemeForm<pywikibot.LexemeForm>`. (:phab:`T189321`)
@@ -28,7 +39,6 @@ Release 11.10
   with :attr:`BaseBot.update_options<bot.BaseBot.update_options>`. (:phab:`T439883`)
 * Update translations (i18n).
 * Reject nested wikilinks in file captions with :attr:`textlib.FILE_LINK_REGEX`. (:phab:`T396721`)
-* Various performance, stability, and code quality improvements.
 * Speed up parsing of API ISO timestamps in :meth:`Timestamp._from_iso8601()
   <pywikibot.time.Timestamp._from_iso8601>`.
 

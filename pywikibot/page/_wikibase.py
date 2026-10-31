@@ -2370,9 +2370,14 @@ class LexemePage(WikibasePage):
         explicit API data or populate the Lexeme before saving. Explicit
         data is not combined with local fields.
 
-        Forms, senses and claims must be reacquired from this Lexeme after
-        saving. Existing references are snapshots and are not updated with
-        server-assigned identifiers. Data is reloaded on the next access.
+        Forms, senses and claims must be reacquired from this Lexeme
+        after saving. Existing references are snapshots and are not
+        updated with server-assigned identifiers. Data is reloaded on
+        the next access.
+
+        .. seealso:: :ref:`Creating Lexemes`: How to create lexemes with
+           either an explicit creation dictionary or fields populated on
+           the object
 
         :param data: API changes, or None to save local changes
         """
