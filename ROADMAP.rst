@@ -1,46 +1,19 @@
-Release 11.10
-=============
+Release 12
+==========
 
-* Enable lexeme creation through :class:`LexemePage.editEntity()<pywikibot.LexemePage.editEntity>`.
-  See :ref:`Creating Lexemes` for further information. (:phab:`T442295`)
-* Initialize :class:`LexemePage<pywikibot.LexemePage>` collections for unsaved entities.
-  (:phab:`T442290`)
-* Various performance, stability, and code quality improvements.
-* Serialize nested form and sense edits in :class:`page.SubEntityCollection
-  <pywikibot.page._collections.SubEntityCollection>` and :class:`LexemePage<pywikibot.LexemePage>`
-  (:phab:`T189321`)
-* Add :attr:`ignore_save_related_errors<bot.BaseBot.ignore_save_related_errors>`
-  and :attr:`ignore_server_errors<bot.BaseBot.ignore_server_errors>` attributes
-  to :class:`bot.BaseBot` and use them in :meth:`userPut()<bot.BaseBot.userPut>`. (:phab:`T156908`)
-* Add support for Scribunto redirects. (:phab:`T417129`)
-* Serialize term removals and empty feature sets in :class:`page.LexemeSubEntity`
-  and :class:`LexemeForm<pywikibot.LexemeForm>`. (:phab:`T189321`)
-* Reload :class:`page.WikibaseEntity` entity
-  state after successful saves. (:phab:`T189321`)
-* Preserve fields during data normalization in :class:`LexemePage<pywikibot.LexemePage>`
-  and :class:`LexemeForm<pywikibot.LexemeForm>`. (:phab:`T189321`)
-* Find headings followed by a multiline comment with :func:`textlib.get_regexes('header')
-  <textlib.get_regexes>`. (:phab:`T209712`)
-* Always set the comment of a :class:`page.Contribution`. (:phab:`T442114`)
-* Keep sub-entity indexes of :class:`page.SubEntityCollection
-  <pywikibot.page._collections.SubEntityCollection>` aligned after mutations. (:phab:`T189321`)
-* Replace recursive orchestration of :class:`site.Uploader<pywikibot.site._upload.Uploader>`.
-  (:phab:`T434936`)
-* Fix :meth:`APISite.interwiki_prefix()<pywikibot.site._apisite.APISite.interwiki_prefix>`
-  functionality. (:phab:`T312699`)
-* Normalize IPv6 addresses in user titles like MediaWiki within
-  :meth:`pywikibot.Link.parse`. (:phab:`T329819`)
-* An IP range in CIDR notation is accepted as *user* in :meth:`APISite.usercontribs()
-  <pywikibot.site._generators.GeneratorsMixin.usercontribs>`. (:phab:`T362377`)
-* The *strict* parameter was added to :func:`tools.is_ip_network` to ignore host
-  bits if set to ``False``.
-* Fix result of :func:`textlib.replaceCategoryLinks` without category links.
-* Avoid mutating class attribute :attr:`BaseBot.available_options<bot.BaseBot.available_options>`
-  with :attr:`BaseBot.update_options<bot.BaseBot.update_options>`. (:phab:`T439883`)
-* Update translations (i18n).
-* Reject nested wikilinks in file captions with :attr:`textlib.FILE_LINK_REGEX`. (:phab:`T396721`)
-* Speed up parsing of API ISO timestamps in :meth:`Timestamp._from_iso8601()
-  <pywikibot.time.Timestamp._from_iso8601>`.
+**Improvements**
+
+* (No changes yet)
+
+**Bugfixes**
+
+* (No changes yet)
+
+**Code cleanups**
+
+* (No changes yet)
+
+**Other breaking changes**
 
 Deprecations
 ============

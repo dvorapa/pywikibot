@@ -443,16 +443,10 @@ def find_filename(filename):
 
         from pywikibot.i18n import set_messages_package
 
-        if sys.version_info < (3, 10):
-            entry_points_items = [
-                ep for ep in entry_points().get('pywikibot', [])
-                if ep.name == 'scriptspath'
-            ]
-        else:
-            entry_points_items = entry_points(
-                name='scriptspath',
-                group='pywikibot',
-            )
+        entry_points_items = entry_points(
+            name='scriptspath',
+            group='pywikibot',
+        )
 
         for ep in entry_points_items:
             path = ep.load()
