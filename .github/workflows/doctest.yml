@@ -22,7 +22,7 @@ env:
 jobs:
   build:
     runs-on: ${{ matrix.os || 'ubuntu-latest' }}
-    timeout-minutes: 15
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -30,7 +30,6 @@ jobs:
         os: [windows-latest, macOS-latest, ubuntu-latest]
         include:
           - python-version: 3.16-dev
-            experimental: true
         exclude:  # Test already made on Jenkins
           - python-version: '3.10'
             os: ubuntu-latest

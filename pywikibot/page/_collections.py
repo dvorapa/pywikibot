@@ -579,8 +579,11 @@ class SubEntityCollection(MutableSequence):
     def normalizeData(cls, data: list[dict]) -> list[dict]:
         """Normalize explicit API operations without inferring removals.
 
-        Each operation must identify an existing child by id, add a child
-        with ``add``, or delete one with both ``id`` and ``remove``.
+        Each operation must identify an existing child by id, add a
+        child with ``add``, or delete one with both ``id`` and ``remove``.
+
+        .. version-changed:: 11.10
+           Method was implemented.
 
         :param data: List of child operation dictionaries
         :return: Normalized operations in their original order
@@ -606,9 +609,13 @@ class SubEntityCollection(MutableSequence):
         """Serialize current children or changes against a complete baseline.
 
         Full serialization is API edit data, not replacement of server
-        content. Unsaved children carry an ``add`` marker. Only a supplied
-        baseline allows missing children to become explicit removals.
-        An empty result makes no changes; it does not clear the collection.
+        content. Unsaved children carry an ``add`` marker. Only a
+        supplied baseline allows missing children to become explicit
+        removals. An empty result makes no changes; it does not clear
+        the collection.
+
+        .. version-changed:: 11.10
+           Method was implemented.
 
         :param diffto: Complete original collection, or None for all fields
         :return: Child edits followed by removals in baseline order

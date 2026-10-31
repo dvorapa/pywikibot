@@ -10,8 +10,8 @@ import difflib
 import math
 from collections import abc
 from collections.abc import Iterable, Sequence
-from difflib import _format_range_unified  # type: ignore[attr-defined]
 from difflib import SequenceMatcher
+from difflib import _format_range_unified  # type: ignore[attr-defined]
 from heapq import nlargest
 from itertools import zip_longest
 
