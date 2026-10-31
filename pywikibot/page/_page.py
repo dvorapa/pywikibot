@@ -160,7 +160,7 @@ class Page(BasePage, WikiBlameMixin, WikiWhoMixin):
 
         .. version-changed:: 9.3
            *botflag* keyword parameter was renamed to *bot*.
-        .. version-changed:: next
+        .. version-changed:: 11.10
            Scribunto redirects use their Lua redirect syntax.
 
         :param target_page: Target of the redirect, this argument is

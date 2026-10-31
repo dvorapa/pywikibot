@@ -121,9 +121,8 @@ from collections.abc import Generator
 from typing import Any
 
 import pywikibot
-from pywikibot import WbTime
+from pywikibot import WbTime, textlib
 from pywikibot import pagegenerators as pg
-from pywikibot import textlib
 from pywikibot.bot import ConfigParserBot, OptionHandler, WikidataBot
 from pywikibot.exceptions import (
     APIError,
