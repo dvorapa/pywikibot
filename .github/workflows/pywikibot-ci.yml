@@ -29,36 +29,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version:
-          - pypy3.9
-          - pypy3.10
-          # Keep PyPy 3.11 on the 7.x series until Pillow provides pp80 wheels.
-          - pypy3.11-v7.x
-          - '3.9'
-          - '3.10'
-          - '3.11'
-          - '3.12'
-          - '3.13'
-          - '3.14'
-          - '3.15'
+        python-version: [pypy3.10, pypy3.11, '3.10', '3.11', '3.12', '3.13', '3.14', '3.15']
         site: ['wikipedia:en', 'wikisource:zh']
         include:
-          - python-version: '3.9'
-            site: wikipedia:test
-          - python-version: '3.9'
-            site: betawikipedia:en
-          - python-version: '3.9'
-            site: betawikipedia:zh
           - python-version: '3.10'
-            site: betawikisource:en
-          - python-version: '3.9'
-            site: wikidata:test
+            site: wikipedia:test
+          - python-version: '3.10'
+            site: betawikipedia:en
+          - python-version: '3.10'
+            site: betawikipedia:zh
           - python-version: '3.11'
+            site: betawikisource:en
+          - python-version: '3.10'
+            site: wikidata:test
+          - python-version: '3.12'
             site: wiktionary:ar
             test_no_rc: true
-          - python-version: '3.9'
-            site: wikidata:wikidata
           - python-version: '3.10'
+            site: wikidata:wikidata
+          - python-version: '3.11'
             site: wowwiki:uk
           - python-version: '3'
             site: wikipedia:de
@@ -71,7 +60,6 @@ jobs:
             site: wikipedia:test
           - python-version: 3.16-dev
             site: wikipedia:test
-            experimental: true
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
