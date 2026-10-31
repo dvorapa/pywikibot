@@ -86,9 +86,8 @@ from itertools import chain, islice
 from pathlib import Path
 
 import pywikibot
-from pywikibot import config
+from pywikibot import config, i18n, pagegenerators
 from pywikibot import editor as editarticle
-from pywikibot import i18n, pagegenerators
 from pywikibot.bot import (
     HighlightContextOption,
     ListOption,

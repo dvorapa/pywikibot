@@ -42,7 +42,7 @@ class XmlEntry:
 
     """Represent a page.
 
-    .. version-changed:: next
+    .. version-changed:: 11.10
        The *content_model* field was added.
     """
 

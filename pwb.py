@@ -16,7 +16,7 @@ VERSIONS_REQUIRED_MESSAGE = """
 Pywikibot is not available on:
 {version}
 
-This version of Pywikibot only supports Python 3.9+.
+This version of Pywikibot only supports Python 3.10+.
 """
 
 DEPRECATED_PYTHON_MESSAGE = """
@@ -29,7 +29,7 @@ See phab:T423572 for further information.
 
 def python_is_supported():
     """Check that Python is supported."""
-    return sys.version_info[:3] >= (3, 9)
+    return sys.version_info[:3] >= (3, 10)
 
 
 def python_is_deprecated():
