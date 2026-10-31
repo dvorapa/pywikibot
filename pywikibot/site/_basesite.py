@@ -435,7 +435,7 @@ class BaseSite(ComparableMixin):
         Group 1 in the match object is the redirect target. Matching is
         selected by *content_model*; unrecognized models use wikitext syntax.
 
-        .. version-added:: next
+        .. version-added:: 11.10
 
         :param text: Text to match.
         :param content_model: Content model used to interpret *text*.
@@ -457,7 +457,7 @@ class BaseSite(ComparableMixin):
         Formatting is selected by *content_model*; unrecognized models use
         wikitext syntax.
 
-        .. version-added:: next
+        .. version-added:: 11.10
 
         :param target_page: Target page of the redirect.
         :param content_model: Content model used to format the redirect.
