@@ -11,7 +11,6 @@ import re
 import time
 import webbrowser
 from collections import defaultdict
-from collections.abc import Iterable
 from contextlib import suppress
 from textwrap import fill
 from typing import TYPE_CHECKING, Any, Literal, NamedTuple, TypeVar
@@ -74,11 +73,9 @@ from pywikibot.site._upload import Uploader
 from pywikibot.tools import (
     MediaWikiVersion,
     cached,
-    deprecate_arg,
     deprecated,
     deprecated_args,
     deprecated_signature,
-    issue_deprecation_warning,
     merge_unique_dicts,
     normalize_username,
 )
@@ -86,6 +83,8 @@ from pywikibot.tools.collections import RateLimit
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from pywikibot.page import BasePage
 
     _CompType = int | str | pywikibot.page.Page | pywikibot.page.Revision
@@ -1467,7 +1466,6 @@ class APISite(
         # 'title' is expected to be URL-encoded already
         return self.siteinfo['articlepath'].replace('$1', title)
 
-    @deprecate_arg('all', 'all_ns')  # since 9.0
     def namespace(self, num: int, all_ns: bool = False) -> str | Namespace:
         """Return string containing local name of namespace 'num'.
 
@@ -2156,11 +2154,6 @@ class APISite(
                     raise
 
         token = self.tokens['csrf']
-        if bot is None:
-            issue_deprecation_warning("'None' argument for 'bot' parameter",
-                                      "'True' value", since='9.4.0')
-            bot = True
-
         if bot:
             bot = self.has_right('bot')
             # show a warning if user is a bot member but hasn't bot right
