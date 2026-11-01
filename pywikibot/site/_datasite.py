@@ -9,9 +9,8 @@ from __future__ import annotations
 import datetime
 import json
 import uuid
-from collections.abc import Generator, Iterable
 from contextlib import suppress
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from warnings import warn
 
 import pywikibot
@@ -26,7 +25,11 @@ from pywikibot.exceptions import (
 )
 from pywikibot.site._apisite import APISite
 from pywikibot.site._decorators import need_extension, need_right
-from pywikibot.tools import deprecated, merge_unique_dicts
+from pywikibot.tools import merge_unique_dicts
+
+
+if TYPE_CHECKING:
+    from collections.abc import Generator, Iterable
 
 
 __all__ = ('DataSite', )
@@ -269,18 +272,6 @@ class DataSite(APISite):
             )
 
         return entity['datatype']
-
-    @deprecated('get_property_type', since='9.5.0')
-    def getPropertyType(self, prop):
-        """Obtain the type of a property.
-
-        .. version-deprecated:: 9.5
-           Use :meth:`get_property_type` instead.
-        """
-        try:
-            return self.get_property_type(prop)
-        except NoWikibaseEntityError as exc:
-            raise KeyError(f'{exc.entity.id} does not exist') from None
 
     @need_right('edit')
     def editEntity(self,

@@ -12,12 +12,11 @@ import sys
 import tempfile
 import unittest
 import warnings
-from collections.abc import Sequence
 from contextlib import contextmanager, suppress
 from pathlib import Path
 from platform import python_implementation
 from subprocess import PIPE, Popen, TimeoutExpired
-from typing import NoReturn, TypedDict
+from typing import TYPE_CHECKING, NoReturn, TypedDict
 
 import pywikibot
 from pywikibot import config
@@ -26,9 +25,12 @@ from pywikibot.data.api import Request as _original_Request
 from pywikibot.exceptions import APIError
 from pywikibot.login import LoginStatus
 from pywikibot.site import Namespace
-from pywikibot.tools import PYTHON_VERSION
 from pywikibot.tools.collections import EMPTY_DEFAULT
 from tests import _pwb_py
+
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 OSWIN32 = (sys.platform == 'win32')
@@ -497,10 +499,6 @@ def execute(
         captured stderr, and the :exc:`subprocess.TimeoutExpired`
         exception if the process timed out.
     """
-    if PYTHON_VERSION < (3, 10):
-        command.insert(1, '-W ignore::FutureWarning:pwb:55')
-        command.insert(1, '-W ignore::FutureWarning:__main__:55')
-
     env = os.environ.copy()
 
     # Prevent output by test package; e.g. 'max_retries reduced from x to y'
@@ -669,8 +667,6 @@ def skipping(*exceptions: BaseException,
             self.assertRaisesRegex(SpamblacklistError, 'badsite.com'),
         ):
             page.save()
-
-    .. note:: The last sample uses Python 3.10 syntax.
 
     .. version-added:: 6.2
     .. version-changed:: 9.3

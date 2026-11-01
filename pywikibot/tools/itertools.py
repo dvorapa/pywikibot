@@ -3,21 +3,26 @@
 #
 # Distributed under the terms of the MIT license.
 #
-"""Iterator functions.
-
-.. note:: ``pairwise()`` function introduced in Python 3.10 is backported
-   in :mod:`backports`
-"""
+"""Iterator functions."""
 from __future__ import annotations
 
 import collections
 import heapq
 import itertools
-from collections.abc import Callable, Generator, Hashable, Iterable, Iterator
 from contextlib import suppress
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pywikibot.logging import debug
+
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+        Generator,
+        Hashable,
+        Iterable,
+        Iterator,
+    )
 
 
 __all__ = (
