@@ -20,10 +20,10 @@ import collections.abc
 import json
 import re
 import time
-from collections.abc import Callable, Iterable, Sequence
 from functools import partial
 from http import HTTPStatus
-from typing import Any
+from itertools import pairwise
+from typing import TYPE_CHECKING, Any
 from urllib.parse import unquote
 from weakref import WeakKeyDictionary
 
@@ -31,12 +31,16 @@ from requests.exceptions import ReadTimeout
 
 import pywikibot
 from pywikibot import textlib
-from pywikibot.backports import pairwise
 from pywikibot.comms import http
 from pywikibot.data.api import ListGenerator, Request
 from pywikibot.exceptions import Error, InvalidTitleError, OtherPageSaveError
-from pywikibot.page import PageSourceType
-from pywikibot.tools import MediaWikiVersion, cached, remove_last_args
+from pywikibot.tools import MediaWikiVersion, cached
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Sequence
+
+    from pywikibot.page import PageSourceType
 
 
 try:
@@ -1301,7 +1305,6 @@ class IndexPage(pywikibot.Page):
         return len(self._page_from_numbers)
 
     @check_if_cached
-    @remove_last_args(['content'])  # since 9.0.0
     def page_gen(
         self, start: int = 1,
         end: int | None = None,

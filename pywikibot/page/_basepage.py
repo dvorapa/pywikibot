@@ -9,17 +9,16 @@ from __future__ import annotations
 import itertools
 import re
 from collections import Counter
-from collections.abc import Generator, Iterable
 from contextlib import suppress
 from itertools import islice
 from textwrap import shorten, wrap
+from types import NoneType
 from typing import TYPE_CHECKING
 from urllib.parse import quote_from_bytes
 from warnings import warn
 
 import pywikibot
 from pywikibot import Timestamp, config, date, i18n, textlib, tools
-from pywikibot.backports import NoneType
 from pywikibot.cosmetic_changes import CANCEL, CosmeticChangesToolkit
 from pywikibot.exceptions import (
     Error,
@@ -48,6 +47,7 @@ from pywikibot.tools import (
 
 
 if TYPE_CHECKING:
+    from collections.abc import Generator, Iterable
     from typing import Any, Literal, NoReturn
 
     from pywikibot.page import Revision
@@ -954,26 +954,6 @@ class BasePage(ComparableMixin):
                 includecomments=includecomments)
         return self._expanded_text
 
-    @deprecated('latest_revision.user', since='9.3.0')
-    def userName(self) -> str:
-        """Return name or IP address of last user to edit page.
-
-        .. version-deprecated:: 9.3
-           Use :attr:`latest_revision.user<latest_revision>`
-           instead.
-        """
-        return self.latest_revision.user  # type: ignore[attr-defined]
-
-    @deprecated('latest_revision.anon', since='9.3.0')
-    def isIpEdit(self) -> bool:
-        """Return True if last editor was unregistered.
-
-        .. version-deprecated:: 9.3
-           Use :attr:`latest_revision.anon<latest_revision>`
-           instead.
-        """
-        return self.latest_revision.anon  # type: ignore[attr-defined]
-
     @cached
     def lastNonBotUser(self) -> str | None:
         """Return name or IP address of last human/non-bot user to edit page.
@@ -1475,7 +1455,6 @@ class BasePage(ComparableMixin):
         # no restricting template found
         return True
 
-    @deprecated_args(botflag='bot')  # since 9.3.0
     def save(self,
              summary: str | None = None,
              watch: str | None = None,
@@ -1620,7 +1599,6 @@ class BasePage(ComparableMixin):
                                         'pywikibot-cosmetic-changes')
         return summary
 
-    @deprecated_args(botflag='bot')  # since 9.3.0
     def put(self, newtext: str,
             summary: str | None = None,
             watch: str | None = None,
@@ -1716,7 +1694,6 @@ class BasePage(ComparableMixin):
         self.clear_cache()
         return self.site.purgepages([self], **kwargs)
 
-    @deprecated_args(botflag='bot')  # since 9.3.0
     def touch(self, callback=None, bot: bool = False, **kwargs) -> None:
         """Make a touch edit for this page.
 
@@ -1856,7 +1833,6 @@ class BasePage(ComparableMixin):
         """Convenience function to get the Wikibase item of a page."""
         return pywikibot.ItemPage.fromPage(self)
 
-    @deprecated_signature(since='9.2')
     def templates(self,
                   *,
                   content: bool = False,
@@ -1901,7 +1877,6 @@ class BasePage(ComparableMixin):
 
         return list(self._templates)
 
-    @deprecated_signature(since='9.2')
     def itertemplates(
         self,
         total: int | None = None,
