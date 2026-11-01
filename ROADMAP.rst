@@ -11,9 +11,26 @@ Release 12
 
 **Code cleanups**
 
-* (No changes yet)
+* Remove the deprecated conversion of ``bot=None`` to ``bot=True`` in
+  :meth:`APISite.editpage()<pywikibot.site._apisite.APISite.editpage>`; use
+  a boolean value for *bot*.
+* Remove the deprecated ``xmlreader.parseRestrictions`` alias; use
+  :meth:`xmlreader.XmlDump.parse_restrictions` instead.
+* Remove ``Page.main_authors()``, deprecated since 9.3. Use
+  :meth:`Page.authorship()<page._toolforge.WikiBlameMixin.authorship>` instead.
 
 **Other breaking changes**
+
+* :class:`xmlreader.XmlDump` now defaults to ``revisions='latest'`` instead of
+  ``'first_found'``. Use ``revisions='first_found'`` explicitly to retain the
+  previous revision selection. (:phab:`T340804`)
+
+* Return insertion-ordered plain dictionaries for template parameters from
+  :func:`textlib.extract_templates_and_params`,
+  :func:`textlib.extract_templates_and_params_regex_simple`, and
+  :attr:`page.Page.raw_extracted_templates`. These replace ``OrderedDict``;
+  mapping equality no longer compares parameter order, and ``OrderedDict``
+  methods such as ``move_to_end()`` are no longer available on the results.
 
 Deprecations
 ============
@@ -26,43 +43,6 @@ Users should update their code according to the recommended alternatives.
 
 Pywikibot follows a clear deprecation policy: features are typically deprecated in one release and
 removed in the third subsequent major release, remaining available for the two releases in between.
-
-
-Pending removal in Pywikibot 12
--------------------------------
-
-* 9.6.0: :meth:`BaseSite.languages()<pywikibot.site._basesite.BaseSite.languages>` will be removed in
-  favour of :attr:`BaseSite.codes<pywikibot.site._basesite.BaseSite.codes>`
-* 9.5.0: :meth:`DataSite.getPropertyType()<pywikibot.site._datasite.DataSite.getPropertyType>` will be removed
-  in favour of :meth:`DataSite.get_property_type()<pywikibot.site._datasite.DataSite.get_property_type>`
-* 9.3.0: :meth:`page.BasePage.userName` and :meth:`page.BasePage.isIpEdit` are deprecated in favour of
-  ``user`` or ``anon`` attributes of :attr:`page.BasePage.latest_revision` property
-* 9.3.0: *botflag* parameter of :meth:`Page.save()<page.BasePage.save>`, :meth:`Page.put()
-  <page.BasePage.put>`, :meth:`Page.touch()<page.BasePage.touch>` and
-  :meth:`Page.set_redirect_target()<page.Page.set_redirect_target>` was renamed to *bot*
-* 9.2.0: All parameters of :meth:`Page.templates<page.BasePage.templates>` and
-  :meth:`Page.itertemplates()<page.BasePage.itertemplates>` must be given as keyworded arguments
-* 9.2.0: Imports of :mod:`logging` functions from the :mod:`bot` module are deprecated and will be desupported
-* 9.2.0: *total* argument in ``-logevents`` pagegenerators option is deprecated;
-  use ``-limit`` instead (:phab:`T128981`)
-* 9.0.0: The *content* parameter of :meth:`proofreadpage.IndexPage.page_gen` is deprecated and will be
-  ignored (:phab:`T358635`)
-* 9.0.0: ``next`` parameter of :meth:`userinterfaces.transliteration.Transliterator.transliterate` was
-  renamed to ``succ``
-* 9.0.0: ``userinterfaces.transliteration.transliterator`` object was renamed to :class:`Transliterator
-  <userinterfaces.transliteration.Transliterator>`
-* 9.0.0: The ``type`` parameter of :meth:`site.APISite.protectedpages()
-  <pywikibot.site._generators.GeneratorsMixin.protectedpages>` was renamed to ``protect_type``
-* 9.0.0: The ``all`` parameter of :meth:`site.APISite.namespace()
-  <pywikibot.site._apisite.APISite.namespace>` was renamed to ``all_ns``
-* 9.0.0: ``filter`` parameter of :func:`date.dh` was renamed to ``filter_func``
-* 9.0.0: ``dict`` parameter of :class:`data.api.OptionSet` was renamed to ``data``
-* 9.0.0: :func:`version.get_toolforge_hostname` is deprecated with no replacement
-* 9.0.0: ``allrevisions`` parameter of :class:`xmlreader.XmlDump` is deprecated, use ``revisions`` instead
-  (:phab:`T340804`)
-* 9.0.0: ``iteritems`` method of :class:`data.api.Request` will be removed in favour of ``items``
-* 9.0.0: ``SequenceOutputter.output()`` is deprecated in favour of the
-  :attr:`tools.formatter.SequenceOutputter.out` property
 
 
 Pending removal in Pywikibot 13

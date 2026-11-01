@@ -29,7 +29,7 @@ from pywikibot.exceptions import (
 from pywikibot.page._basepage import BasePage
 from pywikibot.page._toolforge import WikiBlameMixin, WikiWhoMixin
 from pywikibot.site import Namespace
-from pywikibot.tools import cached, deprecated_args
+from pywikibot.tools import cached
 
 
 __all__ = ['Page']
@@ -80,7 +80,11 @@ class Page(BasePage, WikiBlameMixin, WikiWhoMixin):
         Disabled parts and whitespace are stripped, except for
         whitespace in anonymous positional arguments.
 
-        :rtype: list of (str, OrderedDict)
+        .. version-changed:: next
+           Parameter mappings are plain :class:`dict` instances instead of
+           :class:`collections.OrderedDict` instances.
+
+        :rtype: list of (str, dict)
         """
         return textlib.extract_templates_and_params(self.text, True, True)
 
@@ -146,7 +150,6 @@ class Page(BasePage, WikiBlameMixin, WikiWhoMixin):
             result.append((pywikibot.Page(link, self.site), positional))
         return result
 
-    @deprecated_args(botflag='bot')  # since 9.3.0
     def set_redirect_target(
         self,
         target_page: pywikibot.Page | str,

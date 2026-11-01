@@ -19,7 +19,6 @@ These parameters are supported to specify which pages titles to be used:
 """
 from __future__ import annotations
 
-from collections.abc import Callable, Generator, Iterable
 from typing import TYPE_CHECKING, Any
 
 import pywikibot
@@ -214,10 +213,9 @@ GENERATOR OPTIONS
 
                         logevent,username,start,end
 
-                    .. version-deprecated:: 9.2
-                       backward compatible *total* argument like
-                       ``logevent,username,total``; use ``-limit`` filter
-                       option instead (see below).
+                    .. version-removed:: 12.0
+                       The *total* argument in ``logevent,username,total``.
+                       Use the ``-limit`` filter option instead (see below).
 
                     To use the default value, use an empty string.
 
@@ -596,6 +594,7 @@ FILTER OPTIONS
 docuReplacements = {'&params;': parameterHelp}  # noqa: N816
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Generator, Iterable
     PRELOAD_SITE_TYPE = dict[pywikibot.site.BaseSite,
                              list[pywikibot.page.Page]]
 
